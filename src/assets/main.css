@@ -1,0 +1,167 @@
+@import 'normalize.css';
+
+:root {
+  --primary-color: #409EFF;
+  --primary-color-rgb: 64, 158, 255;
+  --success-color: #67C23A;
+  --warning-color: #E6A23C;
+  --danger-color: #F56C6C;
+  --info-color: #909399;
+  --text-color: #303133;
+  --text-color-secondary: #909399;
+  --border-color: #DCDFE6;
+  --border-color-rgb: 220, 223, 230;
+  --background-color: #F5F7FA;
+  
+  /* 响应式断点 */
+  --mobile-width: 768px;
+  --tablet-width: 1024px;
+  
+  /* 响应式间距 */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mb-20 {
+  margin-bottom: var(--space-lg);
+}
+
+.mt-20 {
+  margin-top: var(--space-lg);
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card {
+  background: #fff;
+  border-radius: 4px;
+  padding: var(--space-lg);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  :root {
+    /* 移动端间距调整 */
+    --space-lg: 16px;
+    --space-xl: 24px;
+  }
+
+  .page-container {
+    padding: var(--space-sm);
+  }
+
+  .card {
+    padding: var(--space-md);
+  }
+
+  .flex-between {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  /* 移动端字体大小调整 */
+  h1 {
+    font-size: 24px !important;
+  }
+
+  h2 {
+    font-size: 20px !important;
+  }
+
+  h3 {
+    font-size: 18px !important;
+  }
+
+  /* 移动端表格滚动 */
+  .el-table {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  /* 移动端按钮组 */
+  .el-button-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .el-button-group .el-button {
+    margin-left: 0 !important;
+    margin-top: var(--space-xs);
+  }
+
+  /* 移动端表单 */
+  .el-form-item {
+    margin-bottom: var(--space-md);
+  }
+
+  .el-form-item__label {
+    float: none;
+    display: block;
+    text-align: left;
+    margin-bottom: var(--space-xs);
+  }
+
+  .el-form-item__content {
+    margin-left: 0 !important;
+  }
+}
+
+/* 平板响应式 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .page-container {
+    padding: var(--space-md);
+  }
+}

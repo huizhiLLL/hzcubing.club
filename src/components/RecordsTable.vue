@@ -1,0 +1,472 @@
+<template>
+  <div class="table-container">
+    <el-table
+      :data="filteredRecords"
+      style="width: 100%"
+      :stripe="true"
+      class="records-table glass-table"
+      v-loading="loading"
+    >
+      <el-table-column
+        label="项目"
+        min-width="100"
+      >
+        <template #default="scope">
+          {{ getEventName(scope.row.event) }}
+        </template>
+      </el-table-column>
+      
+      <!-- 昵称列 - 只在桌面端显示 -->
+      <el-table-column
+        label="昵称"
+        min-width="120"
+        class-name="nickname-column"
+      >
+        <template #default="scope">
+          <router-link v-if="scope.row.single?.userId" :to="`/user/${scope.row.single.userId}`" class="player-name-link">
+          {{ scope.row.single?.nickname || '-' }}
+          </router-link>
+          <span v-else>{{ scope.row.single?.nickname || '-' }}</span>
+        </template>
+      </el-table-column>
+      
+      <el-table-column
+        label="单次"
+        min-width="100"
+      >
+        <template #default="scope">
+          <div class="record-cell">
+          <span v-if="scope.row.single?.time !== undefined" class="record-value">
+            {{ formatTime(scope.row.single.time) }}
+            <span v-if="scope.row.singleRank" class="rank">(#{{ scope.row.singleRank }})</span>
+          </span>
+          <template v-else>
+            <span>-</span>
+          </template>
+            
+            <!-- 移动端下显示的昵称 -->
+            <span v-if="scope.row.single?.nickname" class="mobile-nickname">
+              <router-link v-if="scope.row.single?.userId" :to="`/user/${scope.row.single.userId}`" class="player-name-link">
+              {{ scope.row.single.nickname }}
+              </router-link>
+              <span v-else>{{ scope.row.single.nickname }}</span>
+            </span>
+          </div>
+        </template>
+      </el-table-column>
+      
+      <el-table-column
+        label="平均"
+        min-width="100"
+      >
+        <template #default="scope">
+          <div class="record-cell">
+          <span v-if="scope.row.average?.time !== undefined" class="record-value">
+            {{ formatTime(scope.row.average.time) }}
+            <span v-if="scope.row.averageRank" class="rank">(#{{ scope.row.averageRank }})</span>
+          </span>
+          <template v-else>
+            <span>-</span>
+          </template>
+            
+            <!-- 移动端下显示的昵称 -->
+            <span v-if="scope.row.average?.nickname" class="mobile-nickname">
+              <router-link v-if="scope.row.average?.userId" :to="`/user/${scope.row.average.userId}`" class="player-name-link">
+              {{ scope.row.average.nickname }}
+              </router-link>
+              <span v-else>{{ scope.row.average.nickname }}</span>
+            </span>
+          </div>
+        </template>
+      </el-table-column>
+      
+      <!-- 昵称列 - 只在桌面端显示 -->
+      <el-table-column
+        label="昵称"
+        min-width="120"
+        class-name="nickname-column"
+      >
+        <template #default="scope">
+          <router-link v-if="scope.row.average?.userId" :to="`/user/${scope.row.average.userId}`" class="player-name-link">
+          {{ scope.row.average?.nickname || '-' }}
+          </router-link>
+          <span v-else>{{ scope.row.average?.nickname || '-' }}</span>
+        </template>
+      </el-table-column>
+    </el-table>
+    
+    <!-- 成绩详情对话框 -->
+    <el-dialog
+      v-model="detailsDialogVisible"
+      title="成绩详情"
+      width="500px"
+      class="glass-dialog"
+    >
+      <div v-if="selectedRecord" class="record-details glass-form">
+        <div class="detail-item">
+          <span class="label">项目:</span>
+          <span class="value">{{ getEventName(selectedRecord.event) }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <span class="label">单次成绩:</span>
+          <span class="value">{{ selectedRecord.single?.time ? formatTime(selectedRecord.single.time) : '-' }}</span>
+        </div>
+        
+        <div v-if="selectedRecord.single" class="detail-item">
+          <span class="label">单次保持者:</span>
+          <span class="value">
+            <router-link v-if="selectedRecord.single.userId" :to="`/user/${selectedRecord.single.userId}`" class="player-name-link">
+              {{ selectedRecord.single.nickname || '-' }}
+            </router-link>
+            <span v-else>{{ selectedRecord.single.nickname || '-' }}</span>
+          </span>
+        </div>
+        
+        <div class="detail-item" v-if="isValidField(getCubeValue(selectedRecord))">
+          <span class="label">使用魔方:</span>
+          <span class="value">{{ getCubeValue(selectedRecord) }}</span>
+        </div>
+        
+        <div class="detail-item" v-if="isValidField(getMethodValue(selectedRecord))">
+          <span class="label">使用方法:</span>
+          <span class="value">{{ getMethodValue(selectedRecord) }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <span class="label">平均成绩:</span>
+          <span class="value">{{ selectedRecord.average?.time ? formatTime(selectedRecord.average.time) : '-' }}</span>
+        </div>
+        
+        <div v-if="selectedRecord.average" class="detail-item">
+          <span class="label">平均保持者:</span>
+          <span class="value">
+            <router-link v-if="selectedRecord.average.userId" :to="`/user/${selectedRecord.average.userId}`" class="player-name-link">
+              {{ selectedRecord.average.nickname || '-' }}
+            </router-link>
+            <span v-else>{{ selectedRecord.average.nickname || '-' }}</span>
+          </span>
+        </div>
+        
+        <div class="detail-item" v-if="isValidField(selectedRecord.remark)">
+          <span class="label">备注:</span>
+          <span class="value">{{ selectedRecord.remark }}</span>
+        </div>
+        
+        <div v-if="selectedRecord.videoLink" class="detail-item">
+          <span class="label">视频链接:</span>
+          <a :href="selectedRecord.videoLink" target="_blank" class="video-link">{{ selectedRecord.videoLink }}</a>
+        </div>
+        
+        <div class="detail-item" v-if="selectedRecord.timestamp">
+          <span class="label">提交时间:</span>
+          <span class="value">{{ formatDate(selectedRecord.timestamp, true) }}</span>
+        </div>
+        
+        <div v-if="isCurrentUserRecord(selectedRecord)" class="actions">
+          <el-button type="danger" size="small" @click="confirmDelete">删除</el-button>
+        </div>
+      </div>
+    </el-dialog>
+    
+    <!-- 删除确认对话框 -->
+    <el-dialog
+      v-model="deleteConfirmVisible"
+      title="确认删除"
+      width="300px"
+      class="glass-dialog"
+    >
+      <p>确定要删除这条成绩记录吗？此操作不可恢复。</p>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="deleteConfirmVisible = false">取消</el-button>
+          <el-button type="danger" @click="deleteRecord" :loading="deleteLoading">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, defineProps, defineEmits } from 'vue'
+import { useRecordsStore } from '@/stores/records'
+import { useUserStore } from '@/stores/user'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getEventName } from '@/config/events'
+
+const props = defineProps({
+  records: {
+    type: Array,
+    default: () => []
+  },
+  showActions: {
+    type: Boolean,
+    default: true
+  },
+  autoRefresh: {
+    type: Boolean,
+    default: true
+  },
+  isDebug: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['refresh', 'delete'])
+
+const recordsStore = useRecordsStore()
+const userStore = useUserStore()
+const loading = ref(false)
+const deleteLoading = ref(false)
+const detailsDialogVisible = ref(false)
+const deleteConfirmVisible = ref(false)
+const selectedRecord = ref(null)
+
+// 从记录中获取魔方信息，尝试多个可能的位置
+const getCubeValue = (record) => {
+  return record.cube || record.single?.cube || record.average?.cube || ''
+}
+
+// 从记录中获取方法信息，尝试多个可能的位置
+const getMethodValue = (record) => {
+  return record.method || record.single?.method || record.average?.method || ''
+}
+
+// 检查字段是否有效
+const isValidField = (value) => {
+  return value !== null && value !== undefined && value !== 'null' && value !== ''
+}
+
+// 格式化时间
+const formatTime = (time) => {
+  return recordsStore.formatTime(time)
+}
+
+// 格式化日期
+const formatDate = (dateString, showTime = false) => {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  if (isNaN(date)) return '-'
+  
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  
+  let result = `${year}.${month}.${day}`
+  
+  if (showTime) {
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    result += ` ${hours}:${minutes}`
+  }
+  
+  return result
+}
+
+// 直接使用传入的记录
+const filteredRecords = computed(() => {
+  return props.records
+})
+
+// 查看详情
+const viewDetails = (record) => {
+  selectedRecord.value = record
+  detailsDialogVisible.value = true
+}
+
+// 刷新数据
+const refresh = async () => {
+  if (props.autoRefresh) {
+    loading.value = true
+    try {
+      await recordsStore.fetchRecords()
+      emit('refresh')
+    } catch (error) {
+      ElMessage.error('刷新数据失败')
+    } finally {
+      loading.value = false
+    }
+  } else {
+    emit('refresh')
+  }
+}
+
+// 检查记录是否属于当前用户
+const isCurrentUserRecord = (record) => {
+  if (!userStore.user || !record) return false
+  
+  // 如果记录有userId字段
+  if (record.userId) {
+    return record.userId === userStore.user._id
+  }
+  
+  // 检查单次或平均成绩的用户ID
+  const singleUserId = record.single?.userId
+  const averageUserId = record.average?.userId
+  
+  return (singleUserId && singleUserId === userStore.user._id) || 
+         (averageUserId && averageUserId === userStore.user._id)
+}
+
+// 确认删除
+const confirmDelete = () => {
+  deleteConfirmVisible.value = true
+}
+
+// 删除记录
+const deleteRecord = async () => {
+  if (!selectedRecord.value || !selectedRecord.value._id) {
+    ElMessage.error('无法删除，记录ID不存在')
+    deleteConfirmVisible.value = false
+    return
+  }
+  
+  deleteLoading.value = true
+  
+  try {
+    await recordsStore.deleteRecord(selectedRecord.value._id)
+    ElMessage.success('记录已删除')
+    deleteConfirmVisible.value = false
+    detailsDialogVisible.value = false
+    emit('delete', selectedRecord.value._id)
+    refresh()
+  } catch (error) {
+    ElMessage.error('删除失败: ' + error.message)
+  } finally {
+    deleteLoading.value = false
+  }
+}
+
+onMounted(() => {
+  if (props.autoRefresh) {
+    refresh()
+  }
+})
+</script>
+
+<style scoped>
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.records-table {
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rank {
+  font-size: 12px;
+  color: #909399;
+  margin-left: 4px;
+}
+
+.record-value {
+  position: relative;
+  display: inline-block;
+}
+
+.record-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+}
+
+.label {
+  flex: 0 0 80px;
+  font-weight: 500;
+  color: #606266;
+}
+
+.value {
+  flex: 1;
+  color: #303133;
+}
+
+.video-link {
+  color: #409EFF;
+  text-decoration: none;
+}
+
+.video-link:hover {
+  text-decoration: underline;
+}
+
+.actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 添加移动端样式 */
+.record-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-nickname {
+  display: none;
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+/* 添加选手名字链接样式 */
+.player-name-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.player-name-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .mobile-nickname {
+    display: block;
+  }
+  
+  :deep(.nickname-column) {
+    display: none !important;
+  }
+  
+  .record-value {
+    font-weight: bold;
+  }
+
+  :deep(.el-table .cell) {
+    padding: 8px 5px;
+    font-size: 14px;
+  }
+
+  :deep(.el-table__header th) {
+    font-size: 14px;
+    padding: 8px 5px;
+  }
+  
+  :deep(.el-table) {
+    font-size: 14px;
+  }
+  
+  .table-container {
+    margin: 0 -10px;
+    width: calc(100% + 20px);
+  }
+  
+  :deep(.el-table__body td) {
+    padding: 8px 5px;
+  }
+  
+  .rank {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+  }
+}
+</style> 
