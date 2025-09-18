@@ -1,7 +1,6 @@
 # 会枝Cubing
 
-一个基于 Vue 3 为群友服务的魔方网站[(hzcubing.club)
-](hzcubing.club)，提供成绩记录、排行榜、选手信息等功能。
+一个基于 Vue 3 为群友服务的魔方网站[(hzcubing.club)](hzcubing.club)，提供成绩记录、排行榜、选手信息等功能。
 
 ## 功能特性
 
@@ -19,7 +18,6 @@
 - [Pinia](https://pinia.vuejs.org/) - Vue 状态管理
 - [Vue Router](https://router.vuejs.org/) - Vue 应用路由
 - [Tailwind CSS](https://tailwindcss.com/) - 实用优先的 CSS 框架
-- [GSAP](https://greensock.com/gsap/) - 专业的动画库
 
 ## 环境要求
 
