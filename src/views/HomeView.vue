@@ -72,14 +72,14 @@
                 </div>
                 <div class="record-content">
                   <div class="record-user">
-                    <span class="user-name">{{ record.single?.nickname || record.average?.nickname || '匿名' }}</span>
+                    <span class="user-name">{{ record.nickname || '匿名' }}</span>
                   </div>
                   <div class="record-times">
                     <span v-if="record.isSingleRecord" class="record-single">
-                      单次: {{ formatTime(record.single?.time) }}
+                      单次: {{ formatTime(record.singleSeconds) }}
                     </span>
                     <span v-if="record.isAverageRecord" class="record-average">
-                      平均: {{ formatTime(record.average?.time) }}
+                      平均: {{ formatTime(record.averageSeconds) }}
                     </span>
                   </div>
                 </div>
@@ -247,9 +247,9 @@ const fetchRecentRecords = async () => {
       sortedRecords.forEach(record => {
         let isBreakingRecord = false
         
-        // 确保有效地转换时间
-        const singleTime = record.single?.time ? recordsStore.convertToSeconds(record.single.time) : null
-        const averageTime = record.average?.time ? recordsStore.convertToSeconds(record.average.time) : null
+        // 直接使用秒字段
+        const singleTime = typeof record.singleSeconds === 'number' ? record.singleSeconds : null
+        const averageTime = typeof record.averageSeconds === 'number' ? record.averageSeconds : null
         
         // 检查单次是否打破记录
         if (singleTime !== null && singleTime < bestSingleTime) {
@@ -268,7 +268,10 @@ const fetchRecentRecords = async () => {
           recordBreakHistory.push({
             ...record,
             isSingleRecord: singleTime !== null && singleTime === bestSingleTime,
-            isAverageRecord: averageTime !== null && averageTime === bestAverageTime
+            isAverageRecord: averageTime !== null && averageTime === bestAverageTime,
+            singleSeconds: singleTime,
+            averageSeconds: averageTime,
+            nickname: record.nickname || recordsStore.getNicknameForUser(record.userId) || ''
           })
         }
       })

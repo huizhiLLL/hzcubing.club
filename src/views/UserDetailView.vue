@@ -43,8 +43,8 @@
               <el-table-column label="项目" prop="eventName" min-width="120" />
               <el-table-column label="单次" min-width="120">
                 <template #default="scope">
-                  <div class="record-value" v-if="scope.row.single && !isNaN(scope.row.single.time)">
-                    {{ formatTime(scope.row.single.time) }}
+                  <div class="record-value" v-if="!isNaN(scope.row.singleSeconds)">
+                    {{ formatTime(scope.row.singleSeconds) }}
                     <el-tag v-if="scope.row.singleRank === 1" size="small" type="danger" effect="dark" class="gr-tag">
                       GR
                     </el-tag>
@@ -54,8 +54,8 @@
               </el-table-column>
               <el-table-column label="平均" min-width="120">
                 <template #default="scope">
-                  <div class="record-value" v-if="scope.row.average && !isNaN(scope.row.average.time)">
-                    {{ formatTime(scope.row.average.time) }}
+                  <div class="record-value" v-if="!isNaN(scope.row.averageSeconds)">
+                    {{ formatTime(scope.row.averageSeconds) }}
                     <el-tag v-if="scope.row.averageRank === 1" size="small" type="danger" effect="dark" class="gr-tag">
                       GR
                     </el-tag>
@@ -98,12 +98,12 @@
               <el-table-column label="项目" prop="eventName" min-width="100" />
               <el-table-column label="单次" min-width="100">
                 <template #default="scope">
-                  <span>{{ formatTime(scope.row.single?.time) }}</span>
+                  <span>{{ formatTime(scope.row.singleSeconds) }}</span>
                 </template>
               </el-table-column>
               <el-table-column label="平均" min-width="100">
                 <template #default="scope">
-                  <span>{{ formatTime(scope.row.average?.time) }}</span>
+                  <span>{{ formatTime(scope.row.averageSeconds) }}</span>
                 </template>
               </el-table-column>
               <el-table-column label="提交时间" min-width="160">
@@ -226,10 +226,10 @@
           <span class="detail-value">{{ getEventName(selectedRecord.event) }}</span>
         </div>
         
-        <template v-if="selectedRecord.single && !isNaN(selectedRecord.single.time)">
+        <template v-if="!isNaN(selectedRecord.singleSeconds)">
           <div class="detail-item">
             <span class="detail-label">单次成绩:</span>
-            <span class="detail-value">{{ formatTime(selectedRecord.single.time) }}</span>
+            <span class="detail-value">{{ formatTime(selectedRecord.singleSeconds) }}</span>
           </div>
           
           <div class="detail-item" v-if="selectedRecord.singleRank">
@@ -238,10 +238,10 @@
           </div>
         </template>
         
-        <template v-if="selectedRecord.average && !isNaN(selectedRecord.average.time)">
+        <template v-if="!isNaN(selectedRecord.averageSeconds)">
           <div class="detail-item">
             <span class="detail-label">平均成绩:</span>
-            <span class="detail-value">{{ formatTime(selectedRecord.average.time) }}</span>
+            <span class="detail-value">{{ formatTime(selectedRecord.averageSeconds) }}</span>
           </div>
           
           <div class="detail-item" v-if="selectedRecord.averageRank">
@@ -293,6 +293,7 @@ import { useRecordsStore } from '@/stores/records'
 import ElementTransition from '@/components/ElementTransition.vue'
 import { ElMessage } from 'element-plus'
 import { categories, events, getEventName, getEventType, getAllEvents } from '@/config/events'
+import api from '@/api'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -323,7 +324,7 @@ const formattedPersonalBests = computed(() => {
   const result = []
   
   for (const [eventCode, record] of Object.entries(personalBests.value || {})) {
-    if (record && ((record.single && !isNaN(record.single.time)) || (record.average && !isNaN(record.average.time)))) {
+    if (record && (!isNaN(record.singleSeconds) || !isNaN(record.averageSeconds))) {
       result.push({
         event: eventCode,
         eventName: getEventName(eventCode),
@@ -393,8 +394,8 @@ const filteredHistoryRecords = computed(() => {
   // 排序
   if (sortOrder.value === 'fastest') {
     records.sort((a, b) => {
-      const aTime = a.single?.time || Infinity
-      const bTime = b.single?.time || Infinity
+      const aTime = a.singleSeconds ?? Infinity
+      const bTime = b.singleSeconds ?? Infinity
       return aTime - bTime
     })
   } else {
@@ -507,9 +508,8 @@ const showRecordDetails = (record) => {
   // 处理记录对象，但保留null或undefined值
   const processedRecord = {
     ...record,
-    // 尝试从不同位置获取字段，但不设置默认值
-    cube: record.cube || record.single?.cube || record.average?.cube,
-    method: record.method || record.single?.method || record.average?.method,
+    cube: record.cube,
+    method: record.method,
     remark: record.remark,
     videoLink: record.videoLink
   }
@@ -532,12 +532,7 @@ const handleCurrentChange = (page) => {
 const fetchUserData = async () => {
   loading.value = true
   try {
-    const response = await fetch(`https://w3mavh11ex.bja.sealos.run/user?userId=${userId.value}`)
-    if (!response.ok) {
-      throw new Error('获取用户信息失败')
-    }
-    
-    const result = await response.json()
+    const result = await api.getUser(userId.value)
     if (result.code === 0 && result.data) {
       user.value = result.data
     } else {
@@ -554,14 +549,17 @@ const fetchUserData = async () => {
 // 获取用户个人最佳记录
 const fetchUserRecords = async () => {
   try {
-    const response = await fetch(`https://w3mavh11ex.bja.sealos.run/users-best-record?userId=${userId.value}`)
-    if (!response.ok) {
-      throw new Error('获取用户成绩失败')
-    }
-    
-    const result = await response.json()
-    if (result.code === 0 && result.data) {
-      personalBests.value = result.data
+    const result = await api.getUsersBestRecord(userId.value)
+    if (result.code === 200 && result.data) {
+      // 统一为 seconds 结构
+      const map = {}
+      ;(result.data || []).forEach(it => {
+        map[it.event] = {
+          singleSeconds: typeof it.bestSingleSeconds === 'number' ? it.bestSingleSeconds : null,
+          averageSeconds: typeof it.bestAverageSeconds === 'number' ? it.bestAverageSeconds : null
+        }
+      })
+      personalBests.value = map
     } else {
       console.error('获取用户成绩失败:', result.message)
     }
@@ -574,14 +572,14 @@ const fetchUserRecords = async () => {
 const fetchUserHistoryRecords = async () => {
   historyLoading.value = true
   try {
-    const response = await fetch(`https://w3mavh11ex.bja.sealos.run/users-history-record?userId=${userId.value}`)
-    if (!response.ok) {
-      throw new Error('获取用户历史成绩失败')
-    }
-    
-    const result = await response.json()
-    if (result.code === 0 && result.data) {
-      historyRecords.value = result.data
+    const result = await api.getUsersHistoryRecord(userId.value)
+    if (result.code === 200 && result.data) {
+      const rows = (result.data || []).map(r => ({
+        ...r,
+        singleSeconds: typeof r.singleSeconds === 'number' ? r.singleSeconds : (r.single && typeof r.single.time === 'number' ? r.single.time : null),
+        averageSeconds: typeof r.averageSeconds === 'number' ? r.averageSeconds : (r.average && typeof r.average.time === 'number' ? r.average.time : null)
+      }))
+      historyRecords.value = rows
       // 计算排名前先确保recordsStore有数据
       await ensureRecordsLoaded()
     } else {
@@ -628,17 +626,16 @@ const calculateRankings = () => {
       const eventRecords = recordsStore.getRecordsByEvent(eventCode)
       
       // 计算单次排名
-      if (record.single && record.single.time) {
+      if (!isNaN(record.singleSeconds)) {
         // 创建用户单次最佳记录映射
         const userBestSingles = new Map()
         
         eventRecords.forEach(er => {
-          if (!er.userId || !er.single || !er.single.time) return
-          
-          if (!userBestSingles.has(er.userId) || er.single.time < userBestSingles.get(er.userId).time) {
+          if (!er.userId || er.singleSeconds == null) return
+          if (!userBestSingles.has(er.userId) || er.singleSeconds < userBestSingles.get(er.userId).time) {
             userBestSingles.set(er.userId, {
               userId: er.userId,
-              time: er.single.time
+              time: er.singleSeconds
             })
           }
         })
@@ -655,17 +652,16 @@ const calculateRankings = () => {
       }
       
       // 计算平均排名
-      if (record.average && record.average.time) {
+      if (!isNaN(record.averageSeconds)) {
         // 创建用户平均最佳记录映射
         const userBestAverages = new Map()
         
         eventRecords.forEach(er => {
-          if (!er.userId || !er.average || !er.average.time) return
-          
-          if (!userBestAverages.has(er.userId) || er.average.time < userBestAverages.get(er.userId).time) {
+          if (!er.userId || er.averageSeconds == null) return
+          if (!userBestAverages.has(er.userId) || er.averageSeconds < userBestAverages.get(er.userId).time) {
             userBestAverages.set(er.userId, {
               userId: er.userId,
-              time: er.average.time
+              time: er.averageSeconds
             })
           }
         })

@@ -64,13 +64,13 @@
                       <div class="record-main">
                         <span class="event-name">{{ getEventName(record.event) }}</span>
                         <div class="record-times">
-                          <template v-if="record.single?.time">
+                          <template v-if="record.singleSeconds !== null && record.singleSeconds !== undefined">
                             <span class="record-label">单次:</span>
-                            <span class="record-time">{{ formatTime(record.single.time) }}</span>
+                            <span class="record-time">{{ formatTime(record.singleSeconds) }}</span>
                           </template>
-                          <template v-if="record.average?.time">
+                          <template v-if="record.averageSeconds !== null && record.averageSeconds !== undefined">
                             <span class="record-label">平均:</span>
-                            <span class="record-time">{{ formatTime(record.average.time) }}</span>
+                            <span class="record-time">{{ formatTime(record.averageSeconds) }}</span>
                           </template>
                         </div>
                       </div>
@@ -320,7 +320,12 @@ const fetchUserHistory = async () => {
   try {
     // 使用recordsStore提供的方法获取用户记录
     const records = await recordsStore.fetchUserRecords(userStore.user._id)
-    userRecords.value = records
+    // 兼容旧结构，确保 seconds 字段存在
+    userRecords.value = (records || []).map(r => ({
+      ...r,
+      singleSeconds: typeof r.singleSeconds === 'number' ? r.singleSeconds : (r.single && typeof r.single.time === 'number' ? r.single.time : null),
+      averageSeconds: typeof r.averageSeconds === 'number' ? r.averageSeconds : (r.average && typeof r.average.time === 'number' ? r.average.time : null)
+    }))
   } catch (error) {
     console.error('获取历史记录出错:', error)
     userRecords.value = []
@@ -387,8 +392,8 @@ const detectTimeFormat = (singleTime, averageTime) => {
 
 const handleEdit = (record) => {
   editingRecord.value = record
-  const singleTime = record.single?.time || null
-  const averageTime = record.average?.time || null
+  const singleTime = record.singleSeconds ?? null
+  const averageTime = record.averageSeconds ?? null
   
   // 检测是否应该使用分钟格式
   const useMinutes = detectTimeFormat(singleTime, averageTime)
@@ -449,16 +454,10 @@ const confirmEdit = async () => {
     
     // 更新数据
     const updateData = {
-      single: editForm.value.single ? {
-        time: editForm.value.single,
-        nickname: userStore.user.nickname,
-        userId: userStore.user._id
-      } : null,
-      average: editForm.value.average ? {
-        time: editForm.value.average,
-        nickname: userStore.user.nickname,
-        userId: userStore.user._id
-      } : null,
+      singleSeconds: editForm.value.single ?? null,
+      averageSeconds: editForm.value.average ?? null,
+      nickname: userStore.user.nickname,
+      userId: userStore.user._id,
       cube: editForm.value.cube,
       method: editForm.value.method,
       videoLink: editForm.value.videoLink,

@@ -497,19 +497,13 @@ const submitForm = async (formEl) => {
           const averageTime = validateTimeInput('average') ? 
             calculateTimeInSeconds('average') : null;
           
-          // 创建记录对象
+          // 创建记录对象（统一 seconds 与顶层用户信息）
           const record = {
             event: form.event,
-            single: singleTime ? {
-              time: singleTime,
-              nickname: userStore.user.nickname,
-              userId: userStore.user._id
-            } : null,
-            average: averageTime ? {
-              time: averageTime,
-              nickname: userStore.user.nickname,
-              userId: userStore.user._id
-            } : null,
+            singleSeconds: singleTime ?? null,
+            averageSeconds: averageTime ?? null,
+            nickname: userStore.user.nickname,
+            userId: userStore.user._id,
             cube: form.cube || '',
             method: form.method || '',
             remark: form.remark || '',

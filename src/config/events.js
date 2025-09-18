@@ -84,6 +84,11 @@ export const events = {
       { label: '250ml牛奶', value: '250ml牛奶' },
       { label: 'FTO BO5', value: 'FTO BO5' },
       { label: '二阶盲拧', value: '二阶盲拧' },
+      { label: '默写群管真名（alpt除外）', value: '默写群管真名（alpt除外）' },
+      { label: '打出群管真名（alpt除外）', value: '打出群管真名（alpt除外）' },
+      { label: '二三阶连拧', value: '二三阶连拧' },
+      { label: '默写Jb perm', value: '默写Jb perm' },
+
     ]
   }
 }

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useUserStore } from './user'
+import api from '@/api'
 
 export const useRecordsStore = defineStore('records', () => {
   const userStore = useUserStore()
@@ -8,32 +9,48 @@ export const useRecordsStore = defineStore('records', () => {
   const personalBests = ref({})
   const isLoading = ref(false)
   const error = ref(null)
+  const userNicknameCache = ref({})
 
   // 将时间字符串或数字转换为秒数
   function convertToSeconds(time) {
     if (time === null || time === undefined) return null
     
-    // 如果已经是数字，直接返回
-    if (typeof time === 'number') return time
-    
-    // 处理字符串格式的时间 (例如: '1:23.45' 或 '2:34:56.78')
-    const parts = time.toString().split(':')
-    let seconds = 0
-    
-    if (parts.length === 3) {
-      // 处理小时格式 (h:mm:ss.xx)
-      seconds = parseInt(parts[0]) * 3600 + 
-                parseInt(parts[1]) * 60 + 
-                parseFloat(parts[2])
-    } else if (parts.length === 2) {
-      // 处理分钟格式 (m:ss.xx)
-      seconds = parseInt(parts[0]) * 60 + 
-                parseFloat(parts[1])
-    } else {
-      // 处理纯秒格式
-      seconds = parseFloat(time)
+    // 如果已经是数字，直接返回（确保不是 NaN）
+    if (typeof time === 'number') return Number.isNaN(time) ? null : time
+
+    // 标准化字符串
+    const raw = time.toString().trim()
+    if (!raw) return null
+    const s = raw.toUpperCase()
+
+    // 处理特殊值
+    if (s === 'DNF' || s === 'DNS') return null
+
+    const parts = s.split(':')
+    let seconds = null
+
+    try {
+      if (parts.length === 3) {
+        // h:mm:ss.xx
+        const h = parseInt(parts[0], 10)
+        const m = parseInt(parts[1], 10)
+        const sec = parseFloat(parts[2])
+        seconds = h * 3600 + m * 60 + sec
+      } else if (parts.length === 2) {
+        // m:ss.xx
+        const m = parseInt(parts[0], 10)
+        const sec = parseFloat(parts[1])
+        seconds = m * 60 + sec
+      } else {
+        // 纯秒
+        seconds = parseFloat(s)
+      }
+    } catch (e) {
+      seconds = null
     }
-    
+
+    // 兜底：NaN 转 null
+    if (seconds === null || Number.isNaN(seconds)) return null
     return seconds
   }
 
@@ -57,26 +74,25 @@ export const useRecordsStore = defineStore('records', () => {
     error.value = null
     
     try {
-      const token = localStorage.getItem('token')
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {}
-      
-      const response = await fetch(`https://w3mavh11ex.bja.sealos.run/record?pattern=/records`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('获取成绩记录失败')
-      }
-      
-      const result = await response.json()
+      // 拉取全量或足够大的数据集，避免分页导致“最佳记录”不完整
+      const result = await api.getRecords({ page: 1, pageSize: 10000 })
       
       if (result.code === 200) {
-        records.value = result.data || []
+        records.value = (result.data || []).map((r) => {
+          // 兼容旧结构：在缺少 seconds 时从旧字段转换
+          if (typeof r.singleSeconds !== 'number' && r.single && typeof r.single.time !== 'undefined') {
+            const sec = convertToSeconds(r.single.time)
+            if (typeof sec === 'number') r.singleSeconds = sec
+          }
+          if (typeof r.averageSeconds !== 'number' && r.average && typeof r.average.time !== 'undefined') {
+            const sec = convertToSeconds(r.average.time)
+            if (typeof sec === 'number') r.averageSeconds = sec
+          }
+          return r
+        })
+        await ensureNicknamesForRecords(records.value)
         // 更新个人最佳记录
+        personalBests.value = {}
         records.value.forEach(record => {
           updatePersonalBests(record)
         })
@@ -91,28 +107,44 @@ export const useRecordsStore = defineStore('records', () => {
     }
   }
 
+  // 为缺失昵称的记录补齐昵称（基于 userId），并做简单缓存
+  async function ensureNicknamesForRecords(list) {
+    if (!Array.isArray(list) || list.length === 0) return
+    const cache = userNicknameCache.value || {}
+    const missingUserIds = new Set()
+    for (const rec of list) {
+      if (rec && rec.userId && (!rec.nickname || rec.nickname === '')) {
+        if (!cache[rec.userId]) missingUserIds.add(rec.userId)
+      }
+    }
+    if (missingUserIds.size === 0) return
+    const tasks = Array.from(missingUserIds).map(async (uid) => {
+      try {
+        const resp = await api.getUser(uid)
+        const nickname = resp?.data?.nickname || resp?.nickname || resp?.data?.user?.nickname || ''
+        if (nickname) cache[uid] = nickname
+      } catch (e) {
+        // 忽略单个失败
+      }
+    })
+    await Promise.all(tasks)
+    userNicknameCache.value = cache
+    // 回填到记录列表
+    for (const rec of list) {
+      if (rec && rec.userId && (!rec.nickname || rec.nickname === '')) {
+        const nk = cache[rec.userId]
+        if (nk) rec.nickname = nk
+      }
+    }
+  }
+
   // 获取用户个人记录
   async function fetchUserRecords(userId) {
     isLoading.value = true
     error.value = null
     
     try {
-      const token = localStorage.getItem('token')
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {}
-      
-      const response = await fetch(`https://w3mavh11ex.bja.sealos.run/record?pattern=/user-records&userId=${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('获取个人成绩记录失败')
-      }
-      
-      const result = await response.json()
+      const result = await api.getUserRecords(userId)
       
       if (result.code === 200) {
         return result.data || []
@@ -133,60 +165,59 @@ export const useRecordsStore = defineStore('records', () => {
     // 这个函数现在不再需要做任何事情，因为数据已经在数据库中
   }
 
-  // 添加新记录到后端
-  async function addRecord(record, submitToBackend = true) {
-    // 处理可能为空的字段，确保使用实际的null而不是字符串"null"
-    const cleanRecord = { ...record }
-    for (const key in cleanRecord) {
-      if (cleanRecord[key] === 'null' || cleanRecord[key] === '') {
-        cleanRecord[key] = null
+  // 递归清洗空值：将 'null'、'' 转为 null
+  function cleanNullishDeep(obj) {
+    if (obj === null || obj === undefined) return obj
+    if (Array.isArray(obj)) return obj.map(cleanNullishDeep)
+    if (typeof obj === 'object') {
+      const out = {}
+      for (const k in obj) {
+        const v = obj[k]
+        if (v === 'null' || v === '') {
+          out[k] = null
+        } else {
+          out[k] = cleanNullishDeep(v)
+        }
       }
+      return out
     }
-    
-    // 如果没有时间戳，添加当前时间
+    return obj
+  }
+
+  // 添加新记录到后端（使用 seconds 字段）
+  async function addRecord(record, submitToBackend = true) {
+    const cleanRecord = cleanNullishDeep({ ...record })
     const recordWithTimestamp = {
       ...cleanRecord,
       timestamp: cleanRecord.timestamp || new Date().toISOString(),
       userId: userStore.user?._id || null,
-      singleRank: calculateRank(cleanRecord.event, cleanRecord.single?.time, 'single'),
-      averageRank: calculateRank(cleanRecord.event, cleanRecord.average?.time, 'average')
+      nickname: cleanRecord.nickname || userStore.user?.nickname || cleanRecord.nickname || null
+    }
+    // 规范化：允许传入旧结构，自动转为 seconds
+    if (cleanRecord.single && typeof cleanRecord.single.time !== 'undefined') {
+      recordWithTimestamp.singleSeconds = convertToSeconds(cleanRecord.single.time)
+      delete recordWithTimestamp.single
+    }
+    if (cleanRecord.average && typeof cleanRecord.average.time !== 'undefined') {
+      recordWithTimestamp.averageSeconds = convertToSeconds(cleanRecord.average.time)
+      delete recordWithTimestamp.average
     }
     
-    // 如果需要提交到后端
     if (submitToBackend) {
       isLoading.value = true
       error.value = null
-      
       try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          throw new Error('请先登录')
-        }
-        
-        const response = await fetch(`https://w3mavh11ex.bja.sealos.run/record?pattern=/add-record`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(recordWithTimestamp)
-        })
-        
-        if (!response.ok) {
-          throw new Error('提交成绩失败')
-        }
-        
-        const result = await response.json()
-        
+        const result = await api.addRecord(recordWithTimestamp)
         if (result.code === 200) {
-          // 使用后端返回的ID
-          const savedRecord = {
-            ...recordWithTimestamp,
-            _id: result.data._id
+          const savedRecord = { ...recordWithTimestamp, _id: result.data._id }
+          // 本地也补齐昵称
+          if (savedRecord.userId && (!savedRecord.nickname || savedRecord.nickname === '')) {
+            await ensureNicknamesForRecords([savedRecord])
           }
-          
           records.value.push(savedRecord)
           updatePersonalBests(savedRecord)
+          // 新增后重算 rank
+          updateAllRanks()
           return savedRecord
         } else {
           throw new Error(result.message || '提交成绩失败')
@@ -200,61 +231,37 @@ export const useRecordsStore = defineStore('records', () => {
       }
     } else {
       // 本地添加
-    records.value.push(recordWithTimestamp)
-    updatePersonalBests(recordWithTimestamp)
+      records.value.push(recordWithTimestamp)
+      updatePersonalBests(recordWithTimestamp)
+      updateAllRanks()
     }
   }
 
   function updatePersonalBests(record) {
-    if (!personalBests.value[record.event]) {
-      personalBests.value[record.event] = {
-        single: record.single,
-        average: record.average,
-        singleRank: record.singleRank || null,
-        averageRank: record.averageRank || null
+    const eventCode = record.event
+    if (!eventCode) return
+    const recSingle = record.singleSeconds
+    const recAverage = record.averageSeconds
+    if (!personalBests.value[eventCode]) {
+      personalBests.value[eventCode] = {
+        singleSeconds: typeof recSingle === 'number' ? recSingle : null,
+        averageSeconds: typeof recAverage === 'number' ? recAverage : null
       }
-    } else {
-      const current = personalBests.value[record.event]
-      const currentSingleTime = current.single ? convertToSeconds(current.single.time) : null
-      const newSingleTime = record.single ? convertToSeconds(record.single.time) : null
-      const currentAverageTime = current.average ? convertToSeconds(current.average.time) : null
-      const newAverageTime = record.average ? convertToSeconds(record.average.time) : null
-
-      if (newSingleTime && (!currentSingleTime || newSingleTime < currentSingleTime)) {
-        current.single = record.single
-        current.singleRank = record.singleRank
-      }
-      if (newAverageTime && (!currentAverageTime || newAverageTime < currentAverageTime)) {
-        current.average = record.average
-        current.averageRank = record.averageRank
-      }
+      return
+    }
+    const current = personalBests.value[eventCode]
+    const currentSingle = typeof current.singleSeconds === 'number' ? current.singleSeconds : null
+    const currentAverage = typeof current.averageSeconds === 'number' ? current.averageSeconds : null
+    if (typeof recSingle === 'number' && (currentSingle === null || recSingle < currentSingle)) {
+      current.singleSeconds = recSingle
+    }
+    if (typeof recAverage === 'number' && (currentAverage === null || recAverage < currentAverage)) {
+      current.averageSeconds = recAverage
     }
   }
 
-  // 计算排名
-  function calculateRank(event, time, type) {
-    if (!time) return null
-    
-    const eventRecords = records.value
-      .filter(r => r.event === event)
-      .map(r => type === 'single' ? 
-        (r.single?.time ? convertToSeconds(r.single.time) : null) : 
-        (r.average?.time ? convertToSeconds(r.average.time) : null))
-      .filter(Boolean)
-      .sort((a, b) => a - b)
-
-    const timeInSeconds = convertToSeconds(time)
-    const rank = eventRecords.indexOf(timeInSeconds) + 1
-    return rank > 0 ? rank : null
-  }
-
-  // 更新所有记录的排名
-  function updateAllRanks() {
-    records.value.forEach(record => {
-      record.singleRank = calculateRank(record.event, record.single?.time, 'single')
-      record.averageRank = calculateRank(record.event, record.average?.time, 'average')
-    })
-  }
+  // 已不持久化排名，保留空实现以减少入侵
+  function updateAllRanks() {}
 
   // 删除记录
   async function deleteRecord(recordId) {
@@ -262,36 +269,18 @@ export const useRecordsStore = defineStore('records', () => {
     error.value = null
     
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        throw new Error('请先登录')
-      }
-      
-      const response = await fetch(`https://w3mavh11ex.bja.sealos.run/record?pattern=/delete-record`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ recordId })
-      })
-      
-      if (!response.ok) {
-        throw new Error('删除成绩失败')
-      }
-      
-      const result = await response.json()
+      const result = await api.deleteRecord(recordId)
       
       if (result.code === 200) {
-        // 从本地记录中删除
         const index = records.value.findIndex(r => r._id === recordId)
         if (index !== -1) {
           records.value.splice(index, 1)
-          // 重新计算个人最佳
           personalBests.value = {}
           records.value.forEach(record => {
             updatePersonalBests(record)
           })
+          // 删除后重算 rank
+          updateAllRanks()
         }
         return true
       } else {
@@ -312,45 +301,41 @@ export const useRecordsStore = defineStore('records', () => {
     error.value = null
     
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        throw new Error('请先登录')
-      }
-      
-      // 准备请求数据，按照后端API的期望格式
       const requestData = {
         recordId: record._id,
         updateData: { ...record }
       }
-      
-      // 移除recordId，因为它已经在外层
       delete requestData.updateData._id
-      
-      const response = await fetch(`https://w3mavh11ex.bja.sealos.run/record?pattern=/update-record`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(requestData)
-      })
-      
-      if (!response.ok) {
-        throw new Error('更新成绩失败')
+      // 确保顶层昵称存在
+      if (!requestData.updateData.nickname && record.userId) {
+        const cached = userNicknameCache.value[record.userId]
+        if (cached) requestData.updateData.nickname = cached
+      }
+      // 规范化：若存在旧结构则转 seconds
+      if (requestData.updateData.single && typeof requestData.updateData.single.time !== 'undefined') {
+        requestData.updateData.singleSeconds = convertToSeconds(requestData.updateData.single.time)
+        delete requestData.updateData.single
+      }
+      if (requestData.updateData.average && typeof requestData.updateData.average.time !== 'undefined') {
+        requestData.updateData.averageSeconds = convertToSeconds(requestData.updateData.average.time)
+        delete requestData.updateData.average
       }
       
-      const result = await response.json()
+      const result = await api.updateRecord(requestData)
       
       if (result.code === 200) {
-        // 更新本地记录
         const index = records.value.findIndex(r => r._id === record._id)
         if (index !== -1) {
-          records.value[index] = { ...records.value[index], ...record }
-          // 重新计算个人最佳
+          const merged = { ...records.value[index], ...record }
+          // 本地也补齐昵称
+          await ensureNicknamesForRecords([merged])
+          records.value[index] = merged
           personalBests.value = {}
           records.value.forEach(record => {
             updatePersonalBests(record)
           })
+          // 更新后重算 rank
+          updateAllRanks()
         }
         return true
       } else {
@@ -374,26 +359,24 @@ export const useRecordsStore = defineStore('records', () => {
   // 获取用户的个人最佳成绩
   function getUserPersonalBests(userId) {
     const userRecords = records.value.filter(r => r.userId === userId)
-    
     return userRecords.reduce((bestRecords, record) => {
-      if (!bestRecords[record.event]) {
-        bestRecords[record.event] = {
-          event: record.event,
-          single: record.single,
-          average: record.average
+      const event = record.event
+      if (!event) return bestRecords
+      const s = record.singleSeconds
+      const a = record.averageSeconds
+      if (!bestRecords[event]) {
+        bestRecords[event] = {
+          event,
+          singleSeconds: typeof s === 'number' ? s : null,
+          averageSeconds: typeof a === 'number' ? a : null
         }
       } else {
-        const current = bestRecords[record.event]
-        const currentSingleTime = current.single ? convertToSeconds(current.single.time) : null
-        const newSingleTime = record.single ? convertToSeconds(record.single.time) : null
-        const currentAverageTime = current.average ? convertToSeconds(current.average.time) : null
-        const newAverageTime = record.average ? convertToSeconds(record.average.time) : null
-
-        if (newSingleTime && (!currentSingleTime || newSingleTime < currentSingleTime)) {
-          current.single = record.single
+        const cur = bestRecords[event]
+        if (typeof s === 'number' && (cur.singleSeconds == null || s < cur.singleSeconds)) {
+          cur.singleSeconds = s
         }
-        if (newAverageTime && (!currentAverageTime || newAverageTime < currentAverageTime)) {
-          current.average = record.average
+        if (typeof a === 'number' && (cur.averageSeconds == null || a < cur.averageSeconds)) {
+          cur.averageSeconds = a
         }
       }
       return bestRecords
@@ -402,49 +385,51 @@ export const useRecordsStore = defineStore('records', () => {
 
   function getBestRecords() {
     return records.value.reduce((bestRecords, record) => {
-      if (!bestRecords[record.event]) {
-        bestRecords[record.event] = {
-          event: record.event,
-          single: record.single,
-          average: record.average,
-          timestamp: record.timestamp
+      const event = record.event
+      if (!event) return bestRecords
+      const s = record.singleSeconds
+      const a = record.averageSeconds
+      const nicknameFromCache = (uid) => (uid ? (userNicknameCache.value?.[uid] || '') : '')
+      if (!bestRecords[event]) {
+        bestRecords[event] = {
+          event,
+          // 单次最佳
+          singleSeconds: typeof s === 'number' ? s : null,
+          singleHolderUserId: typeof s === 'number' ? (record.userId || null) : null,
+          singleHolderNickname: typeof s === 'number' ? (record.nickname || nicknameFromCache(record.userId) || '') : '',
+          singleTimestamp: typeof s === 'number' ? record.timestamp : null,
+          // 平均最佳
+          averageSeconds: typeof a === 'number' ? a : null,
+          averageHolderUserId: typeof a === 'number' ? (record.userId || null) : null,
+          averageHolderNickname: typeof a === 'number' ? (record.nickname || nicknameFromCache(record.userId) || '') : '',
+          averageTimestamp: typeof a === 'number' ? record.timestamp : null
         }
       } else {
-        const current = bestRecords[record.event]
-        const currentSingleTime = current.single ? convertToSeconds(current.single.time) : null
-        const newSingleTime = record.single ? convertToSeconds(record.single.time) : null
-        const currentAverageTime = current.average ? convertToSeconds(current.average.time) : null
-        const newAverageTime = record.average ? convertToSeconds(record.average.time) : null
-
-        // 更新单次最佳记录
-        if (newSingleTime !== null && (currentSingleTime === null || newSingleTime < currentSingleTime)) {
-          current.single = record.single
-          
-          // 如果这是一个新的单次记录，更新时间戳
-          if (current.single && !current.average) {
-            current.timestamp = record.timestamp;
-          }
+        const current = bestRecords[event]
+        if (typeof s === 'number' && (current.singleSeconds == null || s < current.singleSeconds)) {
+          current.singleSeconds = s
+          current.singleHolderUserId = record.userId || null
+          current.singleHolderNickname = record.nickname || nicknameFromCache(record.userId) || ''
+          current.singleTimestamp = record.timestamp
         }
-        
-        // 更新平均最佳记录
-        if (newAverageTime !== null && (currentAverageTime === null || newAverageTime < currentAverageTime)) {
-          current.average = record.average
-          
-          // 如果这是一个新的平均记录，更新时间戳
-          if (current.average && !current.single) {
-            current.timestamp = record.timestamp;
-          }
-        }
-        
-        // 如果单次和平均都更新了，使用最新的时间戳
-        if (current.single && current.average && 
-            current.single.time === record.single?.time && 
-            current.average.time === record.average?.time) {
-          current.timestamp = record.timestamp;
+        if (typeof a === 'number' && (current.averageSeconds == null || a < current.averageSeconds)) {
+          current.averageSeconds = a
+          current.averageHolderUserId = record.userId || null
+          current.averageHolderNickname = record.nickname || nicknameFromCache(record.userId) || ''
+          current.averageTimestamp = record.timestamp
         }
       }
       return bestRecords
     }, {})
+  }
+
+  // 通过 userId 获取昵称（先读缓存，再从已加载记录里找）
+  function getNicknameForUser(userId) {
+    if (!userId) return ''
+    const cached = userNicknameCache.value?.[userId]
+    if (cached) return cached
+    const fromRecords = records.value.find(r => r.userId === userId && r.nickname)
+    return fromRecords?.nickname || ''
   }
 
   // 清除所有记录的函数（用于测试）
@@ -486,6 +471,8 @@ export const useRecordsStore = defineStore('records', () => {
     addRecord,
     getRecordsByEvent,
     getBestRecords,
+    getNicknameForUser,
+    ensureNicknamesForRecords,
     initializeRecords,
     clearRecords,
     updateAllRanks,

@@ -168,12 +168,12 @@
         
         <div class="detail-item">
           <span class="label">单次成绩:</span>
-          <span class="value">{{ selectedRecord.single?.time ? formatTime(selectedRecord.single.time) : '-' }}</span>
+          <span class="value">{{ selectedRecord.singleSeconds ? formatTime(selectedRecord.singleSeconds) : '-' }}</span>
         </div>
         
         <div class="detail-item">
           <span class="label">平均成绩:</span>
-          <span class="value">{{ selectedRecord.average?.time ? formatTime(selectedRecord.average.time) : '-' }}</span>
+          <span class="value">{{ selectedRecord.averageSeconds ? formatTime(selectedRecord.averageSeconds) : '-' }}</span>
         </div>
         
         <div class="detail-item" v-if="isValidField(getCubeValue(selectedRecord))">
@@ -283,13 +283,11 @@ const leaderboardData = computed(() => {
     const userId = record.userId
     if (!userId) return
 
-    const currentTime = rankType.value === 'single' ? record.single?.time : record.average?.time
+    const currentTime = rankType.value === 'single' ? record.singleSeconds : record.averageSeconds
     if (currentTime === undefined || currentTime === null) return
 
-    // 确保获取正确的用户昵称
-    const nickname = rankType.value === 'single'
-      ? (record.single?.nickname || record.average?.nickname || '未知用户')
-      : (record.average?.nickname || record.single?.nickname || '未知用户')
+    // 确保获取正确的用户昵称（优先顶层，其次缓存/其他记录）
+    const nickname = record.nickname || recordsStore.getNicknameForUser(userId) || '未知用户'
 
     if (!userBestRecords.has(userId)) {
       userBestRecords.set(userId, {

@@ -1,6 +1,13 @@
 // 更新日志数据
 export const changelogData = [
   {
+    version: '4.5',
+    date: '2025-8-20 ',
+    changes: [
+      '后端重构修复数据显示异常bug',
+    ]
+  },
+  {
     version: '4.3',
     date: '2025-7-31 ',
     changes: [

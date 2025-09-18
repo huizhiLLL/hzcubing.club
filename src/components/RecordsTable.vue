@@ -16,19 +16,21 @@
         </template>
       </el-table-column>
       
-      <!-- 昵称列 - 只在桌面端显示 -->
+      <!-- 昵称列（桌面端）：单次持有人 -->
       <el-table-column
         label="昵称"
         min-width="120"
         class-name="nickname-column"
       >
         <template #default="scope">
-          <router-link v-if="scope.row.single?.userId" :to="`/user/${scope.row.single.userId}`" class="player-name-link">
-          {{ scope.row.single?.nickname || '-' }}
+          <router-link v-if="scope.row.singleHolderUserId" :to="`/user/${scope.row.singleHolderUserId}`" class="player-name-link">
+            {{ scope.row.singleHolderNickname || '-' }}
           </router-link>
-          <span v-else>{{ scope.row.single?.nickname || '-' }}</span>
+          <span v-else>{{ scope.row.singleHolderNickname || '-' }}</span>
         </template>
       </el-table-column>
+      
+      
       
       <el-table-column
         label="单次"
@@ -36,63 +38,66 @@
       >
         <template #default="scope">
           <div class="record-cell">
-          <span v-if="scope.row.single?.time !== undefined" class="record-value">
-            {{ formatTime(scope.row.single.time) }}
+          <span v-if="scope.row.singleSeconds !== undefined" class="record-value">
+            {{ formatTime(scope.row.singleSeconds) }}
             <span v-if="scope.row.singleRank" class="rank">(#{{ scope.row.singleRank }})</span>
           </span>
           <template v-else>
             <span>-</span>
           </template>
             
-            <!-- 移动端下显示的昵称 -->
-            <span v-if="scope.row.single?.nickname" class="mobile-nickname">
-              <router-link v-if="scope.row.single?.userId" :to="`/user/${scope.row.single.userId}`" class="player-name-link">
-              {{ scope.row.single.nickname }}
+            <!-- 显示单次记录持有人（桌面/移动统一） -->
+            <span v-if="scope.row.singleHolderNickname" class="holder-nickname">
+              <router-link v-if="scope.row.singleHolderUserId" :to="`/user/${scope.row.singleHolderUserId}`" class="player-name-link">
+                {{ scope.row.singleHolderNickname }}
               </router-link>
-              <span v-else>{{ scope.row.single.nickname }}</span>
+              <span v-else>{{ scope.row.singleHolderNickname }}</span>
             </span>
           </div>
         </template>
       </el-table-column>
       
+      <!-- 平均成绩列 -->
       <el-table-column
         label="平均"
         min-width="100"
       >
         <template #default="scope">
           <div class="record-cell">
-          <span v-if="scope.row.average?.time !== undefined" class="record-value">
-            {{ formatTime(scope.row.average.time) }}
+          <span v-if="scope.row.averageSeconds !== undefined" class="record-value">
+            {{ formatTime(scope.row.averageSeconds) }}
             <span v-if="scope.row.averageRank" class="rank">(#{{ scope.row.averageRank }})</span>
           </span>
           <template v-else>
             <span>-</span>
           </template>
             
-            <!-- 移动端下显示的昵称 -->
-            <span v-if="scope.row.average?.nickname" class="mobile-nickname">
-              <router-link v-if="scope.row.average?.userId" :to="`/user/${scope.row.average.userId}`" class="player-name-link">
-              {{ scope.row.average.nickname }}
+            <!-- 显示平均记录持有人（桌面/移动统一） -->
+            <span v-if="scope.row.averageHolderNickname" class="holder-nickname">
+              <router-link v-if="scope.row.averageHolderUserId" :to="`/user/${scope.row.averageHolderUserId}`" class="player-name-link">
+                {{ scope.row.averageHolderNickname }}
               </router-link>
-              <span v-else>{{ scope.row.average.nickname }}</span>
+              <span v-else>{{ scope.row.averageHolderNickname }}</span>
             </span>
           </div>
         </template>
       </el-table-column>
       
-      <!-- 昵称列 - 只在桌面端显示 -->
+      <!-- 昵称列（桌面端）：平均持有人 -->
       <el-table-column
         label="昵称"
         min-width="120"
         class-name="nickname-column"
       >
         <template #default="scope">
-          <router-link v-if="scope.row.average?.userId" :to="`/user/${scope.row.average.userId}`" class="player-name-link">
-          {{ scope.row.average?.nickname || '-' }}
+          <router-link v-if="scope.row.averageHolderUserId" :to="`/user/${scope.row.averageHolderUserId}`" class="player-name-link">
+            {{ scope.row.averageHolderNickname || '-' }}
           </router-link>
-          <span v-else>{{ scope.row.average?.nickname || '-' }}</span>
+          <span v-else>{{ scope.row.averageHolderNickname || '-' }}</span>
         </template>
       </el-table-column>
+      
+      
     </el-table>
     
     <!-- 成绩详情对话框 -->
@@ -110,16 +115,16 @@
         
         <div class="detail-item">
           <span class="label">单次成绩:</span>
-          <span class="value">{{ selectedRecord.single?.time ? formatTime(selectedRecord.single.time) : '-' }}</span>
+          <span class="value">{{ selectedRecord.singleSeconds ? formatTime(selectedRecord.singleSeconds) : '-' }}</span>
         </div>
         
-        <div v-if="selectedRecord.single" class="detail-item">
+        <div v-if="selectedRecord.singleHolderUserId || selectedRecord.singleHolderNickname" class="detail-item">
           <span class="label">单次保持者:</span>
           <span class="value">
-            <router-link v-if="selectedRecord.single.userId" :to="`/user/${selectedRecord.single.userId}`" class="player-name-link">
-              {{ selectedRecord.single.nickname || '-' }}
+            <router-link v-if="selectedRecord.singleHolderUserId" :to="`/user/${selectedRecord.singleHolderUserId}`" class="player-name-link">
+              {{ selectedRecord.singleHolderNickname || '-' }}
             </router-link>
-            <span v-else>{{ selectedRecord.single.nickname || '-' }}</span>
+            <span v-else>{{ selectedRecord.singleHolderNickname || '-' }}</span>
           </span>
         </div>
         
@@ -135,16 +140,16 @@
         
         <div class="detail-item">
           <span class="label">平均成绩:</span>
-          <span class="value">{{ selectedRecord.average?.time ? formatTime(selectedRecord.average.time) : '-' }}</span>
+          <span class="value">{{ selectedRecord.averageSeconds !== undefined ? formatTime(selectedRecord.averageSeconds) : '-' }}</span>
         </div>
         
-        <div v-if="selectedRecord.average" class="detail-item">
+        <div v-if="selectedRecord.averageHolderUserId || selectedRecord.averageHolderNickname" class="detail-item">
           <span class="label">平均保持者:</span>
           <span class="value">
-            <router-link v-if="selectedRecord.average.userId" :to="`/user/${selectedRecord.average.userId}`" class="player-name-link">
-              {{ selectedRecord.average.nickname || '-' }}
+            <router-link v-if="selectedRecord.averageHolderUserId" :to="`/user/${selectedRecord.averageHolderUserId}`" class="player-name-link">
+              {{ selectedRecord.averageHolderNickname || '-' }}
             </router-link>
-            <span v-else>{{ selectedRecord.average.nickname || '-' }}</span>
+            <span v-else>{{ selectedRecord.averageHolderNickname || '-' }}</span>
           </span>
         </div>
         
@@ -301,12 +306,8 @@ const isCurrentUserRecord = (record) => {
     return record.userId === userStore.user._id
   }
   
-  // 检查单次或平均成绩的用户ID
-  const singleUserId = record.single?.userId
-  const averageUserId = record.average?.userId
-  
-  return (singleUserId && singleUserId === userStore.user._id) || 
-         (averageUserId && averageUserId === userStore.user._id)
+  // 统一顶层用户ID判断
+  return record.userId && record.userId === userStore.user._id
 }
 
 // 确认删除
@@ -410,7 +411,7 @@ onMounted(() => {
   flex-direction: column;
 }
 
-.mobile-nickname {
+.holder-nickname {
   display: none;
   font-size: 12px;
   color: #909399;
@@ -428,13 +429,10 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .mobile-nickname {
-    display: block;
-  }
+  .holder-nickname { display: block; }
+  :deep(.nickname-column) { display: none !important; }
   
-  :deep(.nickname-column) {
-    display: none !important;
-  }
+  
   
   .record-value {
     font-weight: bold;

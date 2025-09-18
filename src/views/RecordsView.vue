@@ -117,21 +117,21 @@
                   <div class="detail-item">
                     <span class="detail-label">单次成绩：</span>
                     <span class="detail-value">
-                      {{ formatTime(props.row.single?.time) }}
+                      {{ formatTime(props.row.singleSeconds) }}
                       <el-tag v-if="props.row.isSingleRecord" size="small" type="danger" effect="dark">GR</el-tag>
                     </span>
                   </div>
                   <div class="detail-item">
                     <span class="detail-label">单次保持者：</span>
                     <span class="detail-value">
-                      <template v-if="props.row.single?.userId">
-                        <router-link :to="`/user/${props.row.single.userId}`" class="player-link">
-                          {{ props.row.single.nickname || '未知' }}
+                      <template v-if="props.row.userId">
+                        <router-link :to="`/user/${props.row.userId}`" class="player-link">
+                          {{ props.row.nickname || '未知' }}
                         </router-link>
                       </template>
                       <template v-else>
-                        <span>{{ props.row.single?.nickname || '-' }}</span>
-                        <el-tooltip content="该选手暂未注册账号" placement="top" v-if="props.row.single?.nickname">
+                        <span>{{ props.row.nickname || '-' }}</span>
+                        <el-tooltip content="该选手暂未注册账号" placement="top" v-if="props.row.nickname">
                           <el-icon class="info-icon"><InfoFilled /></el-icon>
                         </el-tooltip>
                       </template>
@@ -140,21 +140,21 @@
                   <div class="detail-item">
                     <span class="detail-label">平均成绩：</span>
                     <span class="detail-value">
-                      {{ formatTime(props.row.average?.time) }}
+                      {{ formatTime(props.row.averageSeconds) }}
                       <el-tag v-if="props.row.isAverageRecord" size="small" type="danger" effect="dark">GR</el-tag>
                     </span>
                   </div>
                   <div class="detail-item">
                     <span class="detail-label">平均保持者：</span>
                     <span class="detail-value">
-                      <template v-if="props.row.average?.userId">
-                        <router-link :to="`/user/${props.row.average.userId}`" class="player-link">
-                          {{ props.row.average.nickname || '未知' }}
+                      <template v-if="props.row.userId">
+                        <router-link :to="`/user/${props.row.userId}`" class="player-link">
+                          {{ props.row.nickname || '未知' }}
                         </router-link>
                       </template>
                       <template v-else>
-                        <span>{{ props.row.average?.nickname || '-' }}</span>
-                        <el-tooltip content="该选手暂未注册账号" placement="top" v-if="props.row.average?.nickname">
+                        <span>{{ props.row.nickname || '-' }}</span>
+                        <el-tooltip content="该选手暂未注册账号" placement="top" v-if="props.row.nickname">
                           <el-icon class="info-icon"><InfoFilled /></el-icon>
                         </el-tooltip>
                       </template>
@@ -181,18 +181,18 @@
               <template #default="scope">
                 <div class="record-cell">
                   <div class="record-main">
-                    {{ formatTime(scope.row.single?.time) }}
+                    {{ formatTime(scope.row.singleSeconds) }}
                     <el-tag v-if="scope.row.isSingleRecord" size="small" type="danger" effect="dark">GR</el-tag>
                   </div>
                   <div class="record-sub">
-                    <template v-if="scope.row.single?.userId">
-                      <router-link :to="`/user/${scope.row.single.userId}`" class="player-link">
-                        {{ scope.row.single.nickname || '未知' }}
+                    <template v-if="scope.row.userId">
+                      <router-link :to="`/user/${scope.row.userId}`" class="player-link">
+                        {{ scope.row.nickname || '未知' }}
                       </router-link>
                     </template>
                     <template v-else>
-                      <span>{{ scope.row.single?.nickname || '-' }}</span>
-                      <el-tooltip content="该选手暂未注册账号" placement="top" v-if="scope.row.single?.nickname">
+                      <span>{{ scope.row.nickname || '-' }}</span>
+                      <el-tooltip content="该选手暂未注册账号" placement="top" v-if="scope.row.nickname">
                         <el-icon class="info-icon"><InfoFilled /></el-icon>
                       </el-tooltip>
                     </template>
@@ -207,18 +207,18 @@
               <template #default="scope">
                 <div class="record-cell">
                   <div class="record-main">
-                    {{ formatTime(scope.row.average?.time) }}
+                    {{ formatTime(scope.row.averageSeconds) }}
                     <el-tag v-if="scope.row.isAverageRecord" size="small" type="danger" effect="dark">GR</el-tag>
                   </div>
                   <div class="record-sub">
-                    <template v-if="scope.row.average?.userId">
-                      <router-link :to="`/user/${scope.row.average.userId}`" class="player-link">
-                        {{ scope.row.average.nickname || '未知' }}
+                    <template v-if="scope.row.userId">
+                      <router-link :to="`/user/${scope.row.userId}`" class="player-link">
+                        {{ scope.row.nickname || '未知' }}
                       </router-link>
                     </template>
                     <template v-else>
-                      <span>{{ scope.row.average?.nickname || '-' }}</span>
-                      <el-tooltip content="该选手暂未注册账号" placement="top" v-if="scope.row.average?.nickname">
+                      <span>{{ scope.row.nickname || '-' }}</span>
+                      <el-tooltip content="该选手暂未注册账号" placement="top" v-if="scope.row.nickname">
                         <el-icon class="info-icon"><InfoFilled /></el-icon>
                       </el-tooltip>
                     </template>
@@ -301,6 +301,9 @@ onMounted(async () => {
   try {
     // 从后端获取所有记录
     await recordsStore.fetchRecords()
+    // 补齐当前历史项目下的昵称
+    const currentList = recordsStore.getRecordsByEvent(selectedHistoryEvent.value)
+    await recordsStore.ensureNicknamesForRecords(currentList)
   } catch (err) {
     console.error('获取记录失败:', err)
     error.value = err.message || '获取数据失败，请稍后再试'
@@ -383,8 +386,8 @@ const historyRecords = computed(() => {
     let isBreakingRecord = false
     
     // 确保有效地转换时间
-    const singleTime = record.single?.time ? recordsStore.convertToSeconds(record.single.time) : null
-    const averageTime = record.average?.time ? recordsStore.convertToSeconds(record.average.time) : null
+    const singleTime = typeof record.singleSeconds === 'number' ? record.singleSeconds : null
+    const averageTime = typeof record.averageSeconds === 'number' ? record.averageSeconds : null
     
     // 检查单次是否打破记录
     if (singleTime !== null && singleTime < bestSingleTime) {
@@ -403,7 +406,8 @@ const historyRecords = computed(() => {
       recordBreakHistory.push({
         ...record,
         isSingleRecord: singleTime !== null && singleTime === bestSingleTime,
-        isAverageRecord: averageTime !== null && averageTime === bestAverageTime
+        isAverageRecord: averageTime !== null && averageTime === bestAverageTime,
+        nickname: record.nickname || recordsStore.getNicknameForUser(record.userId) || ''
       })
     }
   })
@@ -438,8 +442,8 @@ const totalRecords = computed(() => {
     let isBreakingRecord = false
     
     // 确保有效地转换时间
-    const singleTime = record.single?.time ? recordsStore.convertToSeconds(record.single.time) : null
-    const averageTime = record.average?.time ? recordsStore.convertToSeconds(record.average.time) : null
+    const singleTime = typeof record.singleSeconds === 'number' ? record.singleSeconds : null
+    const averageTime = typeof record.averageSeconds === 'number' ? record.averageSeconds : null
     
     // 检查单次是否打破记录
     if (singleTime !== null && singleTime < bestSingleTime) {
@@ -465,6 +469,9 @@ const totalRecords = computed(() => {
 // 重置分页
 watch(selectedHistoryEvent, () => {
   currentPage.value = 1
+  // 切换项目时也补齐昵称
+  const list = recordsStore.getRecordsByEvent(selectedHistoryEvent.value)
+  recordsStore.ensureNicknamesForRecords(list)
 })
 
 const formatTime = (time) => {

@@ -59,8 +59,8 @@
               <el-table-column label="项目" prop="eventName" min-width="120" />
               <el-table-column label="单次" min-width="120">
                 <template #default="scope">
-                  <div class="record-value" v-if="scope.row.single && !isNaN(scope.row.single.time)">
-                    {{ formatTime(scope.row.single.time) }}
+                  <div class="record-value" v-if="!isNaN(scope.row.singleSeconds)">
+                    {{ formatTime(scope.row.singleSeconds) }}
                     <el-tag v-if="scope.row.singleRank === 1" size="small" type="danger" effect="dark" class="gr-tag">
                       GR
                     </el-tag>
@@ -70,8 +70,8 @@
               </el-table-column>
               <el-table-column label="平均" min-width="120">
                 <template #default="scope">
-                  <div class="record-value" v-if="scope.row.average && !isNaN(scope.row.average.time)">
-                    {{ formatTime(scope.row.average.time) }}
+                  <div class="record-value" v-if="!isNaN(scope.row.averageSeconds)">
+                    {{ formatTime(scope.row.averageSeconds) }}
                     <el-tag v-if="scope.row.averageRank === 1" size="small" type="danger" effect="dark" class="gr-tag">
                       GR
                     </el-tag>
@@ -114,12 +114,12 @@
               <el-table-column label="项目" prop="eventName" min-width="100" />
               <el-table-column label="单次" min-width="100">
                 <template #default="scope">
-                  <span>{{ formatTime(scope.row.single?.time) }}</span>
+                  <span>{{ formatTime(scope.row.singleSeconds) }}</span>
                 </template>
               </el-table-column>
               <el-table-column label="平均" min-width="100">
                 <template #default="scope">
-                  <span>{{ formatTime(scope.row.average?.time) }}</span>
+                  <span>{{ formatTime(scope.row.averageSeconds) }}</span>
                 </template>
               </el-table-column>
               <el-table-column label="提交时间" min-width="160">
@@ -288,10 +288,10 @@
           <span class="detail-value">{{ getEventName(selectedRecord.event) }}</span>
         </div>
         
-        <template v-if="selectedRecord.single && !isNaN(selectedRecord.single.time)">
+        <template v-if="!isNaN(selectedRecord.singleSeconds)">
           <div class="detail-item">
             <span class="detail-label">单次成绩:</span>
-            <span class="detail-value">{{ formatTime(selectedRecord.single.time) }}</span>
+            <span class="detail-value">{{ formatTime(selectedRecord.singleSeconds) }}</span>
           </div>
           
           <div class="detail-item" v-if="selectedRecord.singleRank">
@@ -300,10 +300,10 @@
           </div>
         </template>
         
-        <template v-if="selectedRecord.average && !isNaN(selectedRecord.average.time)">
+        <template v-if="!isNaN(selectedRecord.averageSeconds)">
           <div class="detail-item">
             <span class="detail-label">平均成绩:</span>
-            <span class="detail-value">{{ formatTime(selectedRecord.average.time) }}</span>
+            <span class="detail-value">{{ formatTime(selectedRecord.averageSeconds) }}</span>
           </div>
           
           <div class="detail-item" v-if="selectedRecord.averageRank">
@@ -355,6 +355,7 @@ import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import ElementTransition from '@/components/ElementTransition.vue'
 import { categories, events, getEventName, getEventType, getAllEvents } from '@/config/events'
+import api from '@/api'
 
 const router = useRouter()
 
@@ -381,7 +382,7 @@ const formattedPersonalBests = computed(() => {
   const result = []
   
   for (const [eventCode, record] of Object.entries(personalBests.value || {})) {
-    if (record && ((record.single && !isNaN(record.single.time)) || (record.average && !isNaN(record.average.time)))) {
+    if (record && (!isNaN(record.singleSeconds) || !isNaN(record.averageSeconds))) {
       result.push({
         event: eventCode,
         eventName: getEventName(eventCode),
@@ -451,8 +452,8 @@ const filteredHistoryRecords = computed(() => {
   // 排序
   if (sortOrder.value === 'fastest') {
     records.sort((a, b) => {
-      const aTime = a.single?.time || Infinity
-      const bTime = b.single?.time || Infinity
+      const aTime = a.singleSeconds ?? Infinity
+      const bTime = b.singleSeconds ?? Infinity
       return aTime - bTime
     })
   } else {
@@ -608,26 +609,25 @@ const fetchUserRecords = async (userId) => {
     }
 
     console.log('开始请求个人最佳记录API, userId:', currentUserId)
-    const response = await fetch(`https://w3mavh11ex.bja.sealos.run/users-best-record?userId=${currentUserId}`)
-    console.log('个人最佳记录API响应状态:', response.status, response.statusText)
-    
-    if (!response.ok) {
-      throw new Error(`获取用户成绩失败: ${response.status} ${response.statusText}`)
-    }
-    
-    const result = await response.json()
+    const result = await api.getUsersBestRecord(currentUserId)
     console.log('个人最佳记录API响应数据:', JSON.stringify(result))
     // 详细调试API返回结构
     debugApiResponse(result, '个人最佳记录')
     
-    if (result.code === 0 && result.data) {
-      personalBests.value = result.data
-      console.log('个人最佳记录数据已加载, 条目数:', Object.keys(result.data).length)
+    if (result.code === 200 && result.data) {
+      const map = {}
+      ;(result.data || []).forEach(it => {
+        map[it.event] = {
+          singleSeconds: typeof it.bestSingleSeconds === 'number' ? it.bestSingleSeconds : null,
+          averageSeconds: typeof it.bestAverageSeconds === 'number' ? it.bestAverageSeconds : null
+        }
+      })
+      personalBests.value = map
+      console.log('个人最佳记录数据已加载, 条目数:', Object.keys(map).length)
       
-      // 检查数据格式是否符合预期
-      if (Object.keys(result.data).length > 0) {
-        const firstEvent = Object.keys(result.data)[0]
-        console.log('第一个项目的数据结构:', JSON.stringify(result.data[firstEvent]))
+      if (Object.keys(map).length > 0) {
+        const firstEvent = Object.keys(map)[0]
+        console.log('第一个项目的数据结构:', JSON.stringify(map[firstEvent]))
       }
     } else {
       console.error('获取用户成绩失败:', result.message, '响应码:', result.code)
@@ -661,28 +661,23 @@ const fetchUserHistoryRecords = async (userId) => {
     }
 
     console.log('开始请求历史记录API, userId:', currentUserId)
-    const response = await fetch(`https://w3mavh11ex.bja.sealos.run/users-history-record?userId=${currentUserId}`)
-    console.log('历史记录API响应状态:', response.status, response.statusText)
-    
-    if (!response.ok) {
-      throw new Error(`获取用户历史成绩失败: ${response.status} ${response.statusText}`)
-    }
-    
-    const result = await response.json()
+    const result = await api.getUsersHistoryRecord(currentUserId)
     console.log('历史记录API响应数据:', JSON.stringify(result))
-    // 详细调试API返回结构
     debugApiResponse(result, '历史记录')
     
-    if (result.code === 0 && result.data) {
-      historyRecords.value = result.data
-      console.log('历史记录数据已加载, 条目数:', result.data.length)
+    if (result.code === 200 && result.data) {
+      const rows = (result.data || []).map(r => ({
+        ...r,
+        singleSeconds: typeof r.singleSeconds === 'number' ? r.singleSeconds : (r.single && typeof r.single.time === 'number' ? r.single.time : null),
+        averageSeconds: typeof r.averageSeconds === 'number' ? r.averageSeconds : (r.average && typeof r.average.time === 'number' ? r.average.time : null)
+      }))
+      historyRecords.value = rows
+      console.log('历史记录数据已加载, 条目数:', rows.length)
       
-      // 检查数据格式是否符合预期
-      if (result.data.length > 0) {
-        console.log('第一条历史记录的数据结构:', JSON.stringify(result.data[0]))
+      if (rows.length > 0) {
+        console.log('第一条历史记录的数据结构:', JSON.stringify(rows[0]))
       }
       
-      // 计算排名前先确保recordsStore有数据
       await ensureRecordsLoaded(currentUserId)
     } else {
       console.error('获取用户历史成绩失败:', result.message, '响应码:', result.code)
@@ -806,17 +801,16 @@ const calculateRankings = (hardcodedId) => {
       console.log(`项目 ${eventCode} 的记录数:`, eventRecords.length)
       
       // 计算单次排名
-      if (record.single && record.single.time) {
+      if (!isNaN(record.singleSeconds)) {
         // 创建用户单次最佳记录映射
         const userBestSingles = new Map()
         
         eventRecords.forEach(er => {
-          if (!er.userId || !er.single || !er.single.time) return
-          
-          if (!userBestSingles.has(er.userId) || er.single.time < userBestSingles.get(er.userId).time) {
+          if (!er.userId || er.singleSeconds == null) return
+          if (!userBestSingles.has(er.userId) || er.singleSeconds < userBestSingles.get(er.userId).time) {
             userBestSingles.set(er.userId, {
               userId: er.userId,
-              time: er.single.time
+              time: er.singleSeconds
             })
           }
         })
@@ -849,17 +843,16 @@ const calculateRankings = (hardcodedId) => {
       }
       
       // 计算平均排名
-      if (record.average && record.average.time) {
+      if (!isNaN(record.averageSeconds)) {
         // 创建用户平均最佳记录映射
         const userBestAverages = new Map()
         
         eventRecords.forEach(er => {
-          if (!er.userId || !er.average || !er.average.time) return
-          
-          if (!userBestAverages.has(er.userId) || er.average.time < userBestAverages.get(er.userId).time) {
+          if (!er.userId || er.averageSeconds == null) return
+          if (!userBestAverages.has(er.userId) || er.averageSeconds < userBestAverages.get(er.userId).time) {
             userBestAverages.set(er.userId, {
               userId: er.userId,
-              time: er.average.time
+              time: er.averageSeconds
             })
           }
         })
@@ -1432,40 +1425,9 @@ const initializeData = async () => {
     
     console.log('使用当前用户ID获取成绩记录:', currentUserId)
     
-    // 获取个人最佳记录
-    console.log('获取个人最佳记录')
-    const bestRecordResponse = await fetch(`https://w3mavh11ex.bja.sealos.run/users-best-record?userId=${currentUserId}`)
-    
-    if (bestRecordResponse.ok) {
-      const bestRecordResult = await bestRecordResponse.json()
-      if (bestRecordResult.code === 0 && bestRecordResult.data) {
-        personalBests.value = bestRecordResult.data
-        console.log('个人最佳记录数据已加载, 条目数:', Object.keys(bestRecordResult.data).length)
-      } else {
-        console.error('获取个人最佳记录失败:', bestRecordResult.message)
-      }
-    } else {
-      console.error('获取个人最佳记录请求失败:', bestRecordResponse.status)
-    }
-    
-    // 获取历史记录
-    console.log('获取历史记录')
-    const historyResponse = await fetch(`https://w3mavh11ex.bja.sealos.run/users-history-record?userId=${currentUserId}`)
-    
-    if (historyResponse.ok) {
-      const historyResult = await historyResponse.json()
-      if (historyResult.code === 0 && historyResult.data) {
-        historyRecords.value = historyResult.data
-        console.log('历史记录数据已加载, 条目数:', historyResult.data.length)
-      } else {
-        console.error('获取历史记录失败:', historyResult.message)
-      }
-    } else {
-      console.error('获取历史记录请求失败:', historyResponse.status)
-    }
-    
-    // 确保排行榜数据已加载并计算排名
-    console.log('确保排行榜数据已加载...')
+    // 使用统一 API 并映射到 seconds 结构
+    await fetchUserRecords(currentUserId)
+    await fetchUserHistoryRecords(currentUserId)
     await ensureRecordsLoaded(currentUserId)
     
     console.log('初始化完成，检查排名结果:', {
