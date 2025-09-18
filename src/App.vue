@@ -313,7 +313,7 @@ const handleLoginSuccess = () => {
                     </el-dropdown-item>
                     <el-dropdown-item @click="router.push('/online-competition')">
                       <Icon icon="mdi:trophy-award" class="dropdown-icon" />
-                      线上赛（临时）
+                      线上赛
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
