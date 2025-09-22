@@ -1,5 +1,6 @@
 import './assets/main.css'
 import './assets/glassmorphism.css'
+import './assets/animations.css'
 import './assets/fonts.css'
 
 import { createApp } from 'vue'

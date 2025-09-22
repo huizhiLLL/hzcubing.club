@@ -5,7 +5,7 @@
         class="hero-section glass-section"
       >
         <div class="hero-inner">
-          <h1 class="hero-title">
+          <h1 class="hero-title text-fade-in">
             <span class="welcome-text"></span>
             <span class="title-inline">
               <span class="title-part chinese">会枝</span>
@@ -25,7 +25,7 @@
                 <div class="feature-card-wrapper">
                   <div 
                     ref="featureCardRefs"
-                    class="feature-card" 
+                    class="feature-card card-hover" 
                     :class="{ 'clickable': feature.link }"
                     @mousemove="(e) => handleFeatureMouseMove(e, index)"
                     @mouseenter="() => handleFeatureMouseEnter(index)"
@@ -38,9 +38,9 @@
                   >
                     <template v-if="feature.localIcon">
                       <!-- 完全移除logo容器 -->
-                      <Icon icon="mdi:minecraft" class="feature-icon" />
+                      <Icon icon="mdi:minecraft" class="feature-icon icon-bounce" />
                     </template>
-                    <Icon v-else :icon="feature.icon" class="feature-icon" />
+                    <Icon v-else :icon="feature.icon" class="feature-icon icon-bounce" />
                     <h3 class="feature-title">{{ feature.title }}</h3>
                     <p class="feature-description">{{ feature.description }}</p>
                   </div>
@@ -317,7 +317,10 @@ onMounted(() => {
 .home-container {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: var(--space-3xl);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
 }
 
 .hero-section-wrapper {
@@ -327,13 +330,17 @@ onMounted(() => {
 
 .hero-section {
   text-align: center;
-  padding: 60px 24px;
-  background: linear-gradient(135deg, rgba(var(--primary-color-rgb, 64, 158, 255), 0.8), rgba(var(--success-color-rgb, 103, 194, 58), 0.8));
-  border-radius: 12px;
+  padding: 80px 32px;
+  background: linear-gradient(135deg, 
+    rgba(64, 158, 255, 0.8) 0%, 
+    rgba(103, 194, 58, 0.8) 100%);
+  border-radius: var(--radius-2xl);
   color: #fff;
   position: relative;
   overflow: hidden;
   width: 100%;
+  box-shadow: var(--shadow-2xl);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .hero-inner {
@@ -418,18 +425,30 @@ onMounted(() => {
 
 .feature-card {
   height: 100%;
-  padding: 16px;
+  padding: 24px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all var(--duration-normal) var(--ease-in-out);
   transform-style: preserve-3d;
   will-change: transform;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px);
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius-xl);
   border: 1px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
 }
 
 .feature-card.clickable {
@@ -437,15 +456,24 @@ onMounted(() => {
 }
 
 .feature-card.clickable:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .feature-icon {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   color: #ffffff;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   transform: translateZ(20px);
+  transition: all var(--duration-normal) var(--ease-in-out);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.feature-card:hover .feature-icon {
+  transform: translateZ(20px) scale(1.1);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
 }
 
 .feature-local-icon {
@@ -456,39 +484,70 @@ onMounted(() => {
 }
 
 .feature-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 6px;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 8px;
   color: #ffffff;
   transform: translateZ(15px);
+  transition: all var(--duration-normal) var(--ease-in-out);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .feature-description {
   color: rgba(255, 255, 255, 0.9);
-  line-height: 1.4;
+  line-height: 1.5;
   transform: translateZ(10px);
-  font-size: 14px;
+  font-size: 15px;
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.feature-card:hover .feature-title {
+  transform: translateZ(15px) scale(1.05);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.feature-card:hover .feature-description {
+  transform: translateZ(10px) scale(1.02);
+  color: rgba(255, 255, 255, 1);
 }
 
 /* 内容区域样式 */
 .content-section {
-  margin: 32px 0;
+  margin: var(--space-2xl) 0;
 }
 
 .section-card {
-  padding: 24px 24px 0 24px;
+  padding: var(--space-xl);
   height: 100%;
-  border-radius: 12px;
-  margin-bottom: 24px;
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--space-lg);
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.section-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
 }
 
 .section-title {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 16px;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: var(--space-lg);
   color: var(--text-color);
-  border-bottom: 1px solid rgba(var(--border-color-rgb), 0.1);
-  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border-light);
+  padding-bottom: var(--space-md);
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: var(--primary-color);
+  border-radius: var(--radius-full);
 }
 
 /* 记录列表样式 */
@@ -603,32 +662,77 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .home-container {
+    padding: 0 var(--space-md);
+    gap: var(--space-2xl);
+  }
+  
+  .hero-section {
+    padding: var(--space-2xl) var(--space-lg);
+    border-radius: var(--radius-xl);
+  }
+  
   .welcome-text {
-    font-size: 30px;
+    font-size: 28px;
   }
   
   .title-part.chinese {
-    font-size: 60px;
+    font-size: 56px;
   }
   
   .title-part.cubing {
-    font-size: 45px;
+    font-size: 42px;
   }
   
   .title-inline {
-    gap: 10px;
+    gap: var(--space-sm);
   }
   
   .hero-features {
-    margin-top: 24px;
+    margin-top: var(--space-lg);
+  }
+  
+  .feature-card {
+    padding: var(--space-lg) var(--space-md);
+  }
+  
+  .feature-icon {
+    width: 36px;
+    height: 36px;
+    margin-bottom: var(--space-md);
+  }
+  
+  .feature-title {
+    font-size: 18px;
+    margin-bottom: var(--space-sm);
   }
   
   .feature-description {
-    display: none;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .section-card {
+    padding: var(--space-lg);
+    margin-bottom: var(--space-md);
+  }
+  
+  .section-title {
+    font-size: 20px;
+    margin-bottom: var(--space-md);
   }
 }
 
 @media (max-width: 480px) {
+  .home-container {
+    padding: 0 var(--space-sm);
+    gap: var(--space-xl);
+  }
+  
+  .hero-section {
+    padding: var(--space-xl) var(--space-md);
+  }
+  
   .welcome-text {
     font-size: 24px;
   }
@@ -642,12 +746,33 @@ onMounted(() => {
   }
   
   .title-inline {
-    gap: 8px;
+    gap: var(--space-xs);
     flex-direction: column;
   }
   
+  .feature-card {
+    padding: var(--space-md);
+  }
+  
+  .feature-icon {
+    width: 32px;
+    height: 32px;
+  }
+  
   .feature-title {
-    font-size: 14px;
+    font-size: 16px;
+  }
+  
+  .feature-description {
+    font-size: 13px;
+  }
+  
+  .section-card {
+    padding: var(--space-md);
+  }
+  
+  .section-title {
+    font-size: 18px;
   }
   
   .hero-features .el-row {

@@ -533,17 +533,34 @@ const viewRecord = async (recordId) => {
 
 .player-name {
   font-weight: 600;
-  color:rgb(106, 145, 208);
+  color: inherit;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 16px;
   letter-spacing: 0.5px;
   text-decoration: none;
+  transition: all var(--duration-normal) var(--ease-in-out);
+  position: relative;
+}
+
+.player-name::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary-color);
+  transition: width var(--duration-normal) var(--ease-in-out);
 }
 
 .player-name:hover {
-  text-decoration: underline;
+  transform: translateY(-1px);
+}
+
+.player-name:hover::after {
+  width: 100%;
 }
 
 .time-cell {

@@ -184,26 +184,39 @@ defineExpose({
 }
 
 :deep(.el-dialog) {
-  background-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-2xl);
   overflow: hidden;
+  transition: all var(--duration-normal) var(--ease-in-out);
 }
 
 :deep(.el-dialog__header) {
-  padding: 16px 20px;
+  padding: var(--space-lg) var(--space-xl);
   margin-right: 0;
-  background-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  border-bottom: 1px solid rgba(229, 231, 235, 0.3);
+  border-bottom: 1px solid var(--border-light);
+  position: relative;
+}
+
+:deep(.el-dialog__header)::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(64, 158, 255, 0.3), transparent);
 }
 
 :deep(.el-dialog__title) {
   font-weight: 600;
-  color: var(--el-color-primary);
+  color: var(--text-color);
   font-size: 20px;
 }
 
@@ -212,22 +225,22 @@ defineExpose({
 }
 
 :deep(.el-dialog__headerbtn:hover .el-dialog__close) {
-  color: var(--el-color-primary);
+  color: var(--primary-color);
 }
 
 :deep(.el-dialog__body) {
-  padding: 20px;
-  background-color: rgba(255, 255, 255, 0.5);
+  padding: var(--space-xl);
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
 }
 
 :deep(.el-dialog__footer) {
-  padding: 16px 20px;
-  background-color: rgba(255, 255, 255, 0.6);
+  padding: var(--space-lg) var(--space-xl);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  border-top: 1px solid rgba(229, 231, 235, 0.3);
+  border-top: 1px solid var(--border-light);
 }
 
 :deep(.el-form-item) {
@@ -236,52 +249,57 @@ defineExpose({
 
 :deep(.el-input__wrapper),
 :deep(.el-textarea__inner) {
-  background-color: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(229, 231, 235, 0.6);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--duration-normal) var(--ease-in-out);
 }
 
 :deep(.el-input__wrapper:hover),
 :deep(.el-textarea__inner:hover) {
-  border-color: var(--el-color-primary-light-5);
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.08);
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-md);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 :deep(.el-input__wrapper:focus-within),
 :deep(.el-textarea__inner:focus) {
-  border-color: var(--el-color-primary);
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
-  background-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 :deep(.el-button) {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: all 0.3s ease;
-  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all var(--duration-normal) var(--ease-in-out);
+  border-radius: var(--radius-md);
+  font-weight: 500;
 }
 
 :deep(.el-button:not(.el-button--primary)) {
-  background-color: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(229, 231, 235, 0.6);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--border-light);
+  color: var(--text-color);
 }
 
 :deep(.el-button:not(.el-button--primary):hover) {
-  background-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-light);
 }
 
 :deep(.el-button--primary) {
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
+  box-shadow: var(--shadow-md);
 }
 
 :deep(.el-button--primary:hover) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
+  box-shadow: var(--shadow-lg);
 }
 
 /* 添加移动端样式 */

@@ -354,8 +354,15 @@ onMounted(() => {
 
 .records-table {
   width: 100%;
-  border-radius: 4px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.records-table:hover {
+  box-shadow: var(--shadow-lg);
 }
 
 .rank {
@@ -367,6 +374,14 @@ onMounted(() => {
 .record-value {
   position: relative;
   display: inline-block;
+  font-weight: 600;
+  color: var(--text-color);
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.record-value:hover {
+  color: var(--primary-color);
+  transform: scale(1.02);
 }
 
 .record-details {
@@ -418,53 +433,88 @@ onMounted(() => {
   margin-top: 4px;
 }
 
-/* 添加选手名字链接样式 */
+/* 选手名字链接样式 - 无颜色但有下划线动画 */
 .player-name-link {
   color: inherit;
   text-decoration: none;
+  font-weight: 500;
+  transition: all var(--duration-normal) var(--ease-in-out);
+  position: relative;
+}
+
+.player-name-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary-color);
+  transition: width var(--duration-normal) var(--ease-in-out);
 }
 
 .player-name-link:hover {
-  text-decoration: underline;
+  transform: translateY(-1px);
+}
+
+.player-name-link:hover::after {
+  width: 100%;
 }
 
 @media (max-width: 768px) {
-  .holder-nickname { display: block; }
-  :deep(.nickname-column) { display: none !important; }
+  .holder-nickname { 
+    display: block; 
+    font-size: 12px;
+    color: var(--text-color-secondary);
+    margin-top: var(--space-xs);
+  }
   
-  
+  :deep(.nickname-column) { 
+    display: none !important; 
+  }
   
   .record-value {
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 15px;
   }
 
   :deep(.el-table .cell) {
-    padding: 8px 5px;
+    padding: var(--space-sm) var(--space-xs);
     font-size: 14px;
   }
 
   :deep(.el-table__header th) {
-    font-size: 14px;
-    padding: 8px 5px;
+    font-size: 13px;
+    padding: var(--space-sm) var(--space-xs);
+    font-weight: 600;
   }
   
   :deep(.el-table) {
     font-size: 14px;
+    border-radius: var(--radius-md);
   }
   
   .table-container {
-    margin: 0 -10px;
-    width: calc(100% + 20px);
+    margin: 0 calc(-1 * var(--space-md));
+    width: calc(100% + 2 * var(--space-md));
+    border-radius: var(--radius-md);
+    overflow: hidden;
   }
   
   :deep(.el-table__body td) {
-    padding: 8px 5px;
+    padding: var(--space-sm) var(--space-xs);
   }
   
   .rank {
     display: block;
-    margin-top: 2px;
+    margin-top: var(--space-xs);
     font-size: 11px;
+    color: var(--text-color-muted);
+  }
+  
+  /* 移动端表格行悬停效果 */
+  :deep(.el-table__body tr:hover > td) {
+    background-color: rgba(64, 158, 255, 0.05) !important;
   }
 }
 </style> 
