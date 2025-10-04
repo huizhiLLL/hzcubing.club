@@ -222,16 +222,17 @@ defineExpose({
 </script>
 
 <style scoped>
-/* 增强毛玻璃效果 */
+/* 现代化毛玻璃效果 */
 .auth-dialog :deep(.el-dialog) {
-  background-color: rgba(255, 255, 255, 0.85) !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
-  border-radius: 16px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-2xl) !important;
+  border: 1px solid var(--border-light) !important;
   overflow: hidden !important;
   padding: 0 !important;
+  transition: all var(--duration-normal) var(--ease-in-out) !important;
 }
 
 /* 自定义遮罩层 */
@@ -282,10 +283,10 @@ defineExpose({
 }
 
 .auth-title {
-  font-size: 30px;
-  font-weight: bold;
+  font-size: 28px;
+  font-weight: 600;
   margin: 0 0 5px;
-  color: var(--primary-color);
+  color: var(--text-color);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   line-height: 1;
   font-family: 'CustomChinese', sans-serif;
@@ -307,23 +308,29 @@ defineExpose({
 }
 
 .auth-dialog :deep(.el-input__wrapper) {
-  background-color: rgba(240, 242, 245, 0.8) !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid var(--border-light) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border-radius: var(--radius-md) !important;
   padding: 0 15px !important;
-  transition: all 0.3s ease;
+  transition: all var(--duration-normal) var(--ease-in-out);
 }
 
-.auth-dialog :deep(.el-input__wrapper:hover),
+.auth-dialog :deep(.el-input__wrapper:hover) {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: var(--primary-light) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
 .auth-dialog :deep(.el-input__wrapper.is-focus) {
-  background-color: rgba(240, 242, 245, 0.95) !important;
-  box-shadow: 0 0 0 1px var(--primary-color) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2) !important;
 }
 
 .auth-dialog :deep(.el-form-item__label) {
   padding: 0 0 8px;
-  color: #333 !important;
+  color: var(--text-color) !important;
   font-weight: 500;
   font-size: 14px;
 }
@@ -350,12 +357,13 @@ defineExpose({
   height: 46px;
   font-size: 16px;
   font-weight: 500;
-  letter-spacing: 2px;
-  transition: all 0.3s ease;
-  border-radius: 23px;
+  letter-spacing: 1px;
+  transition: all var(--duration-normal) var(--ease-in-out);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--shadow-md);
 }
 
 .button-icon {
@@ -365,7 +373,7 @@ defineExpose({
 
 .submit-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(var(--primary-color-rgb, 64, 158, 255), 0.3);
+  box-shadow: var(--shadow-lg);
 }
 
 .switch-mode {

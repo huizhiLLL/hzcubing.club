@@ -1,6 +1,13 @@
 // 更新日志数据
 export const changelogData = [
   {
+    version: '4.6',
+    date: '2025-9-22 ',
+    changes: [
+      'ui部分优化',
+    ]
+  },
+  {
     version: '4.5',
     date: '2025-8-20 ',
     changes: [

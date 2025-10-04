@@ -279,15 +279,15 @@ const handleLoginSuccess = () => {
               <span class="logo-text">会枝Cubing</span>
             </router-link>
             <div class="nav-menu">
-              <el-button text @click="router.push('/')">首页</el-button>
-              <el-button text @click="router.push('/records')">记录</el-button>
-              <el-button text @click="router.push('/leaderboard')">排行榜</el-button>
-              <el-button text @click="router.push('/users')">选手</el-button>
-              <el-button text @click="router.push('/minecraft')">MC</el-button>
+              <el-button text @click="router.push('/')" class="btn-animated">首页</el-button>
+              <el-button text @click="router.push('/records')" class="btn-animated">记录</el-button>
+              <el-button text @click="router.push('/leaderboard')" class="btn-animated">排行榜</el-button>
+              <el-button text @click="router.push('/users')" class="btn-animated">选手</el-button>
+              <el-button text @click="router.push('/minecraft')" class="btn-animated">MC</el-button>
               
               <!-- 更多菜单下拉按钮 -->
               <el-dropdown trigger="click" @visible-change="moreMenuVisible = $event" class="more-menu-dropdown">
-                <el-button text class="more-menu-btn">
+                <el-button text class="more-menu-btn btn-animated">
                   更多
                   <el-icon class="el-icon--right">
                     <Icon :icon="moreMenuVisible ? 'mdi:chevron-up' : 'mdi:chevron-down'" />
@@ -337,9 +337,9 @@ const handleLoginSuccess = () => {
             </template>
             <template v-else>
               <div class="auth-buttons">
-                <el-button text @click="showAuthDialog('login')" class="auth-btn">登录</el-button>
+                <el-button text @click="showAuthDialog('login')" class="auth-btn btn-animated">登录</el-button>
                 <span class="auth-divider">|</span>
-                <el-button text @click="showAuthDialog('register')" class="auth-btn">注册</el-button>
+                <el-button text @click="showAuthDialog('register')" class="auth-btn btn-animated">注册</el-button>
               </div>
             </template>
           </div>
@@ -350,13 +350,13 @@ const handleLoginSuccess = () => {
     <el-main :class="{ 'standalone-main': isStandalonePage }">
       <div v-if="!isStandalonePage" class="page-container">
         <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
+          <transition name="page" mode="out-in">
             <component :is="Component" />
           </transition>
         </router-view>
       </div>
       <router-view v-else v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
+        <transition name="page" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
@@ -470,15 +470,17 @@ const handleLoginSuccess = () => {
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
-  background-color: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 64px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-lg);
   z-index: 1000;
-  padding: 0 16px;
+  padding: 0 20px;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid var(--border-light);
+  transition: all var(--duration-normal) var(--ease-in-out);
 }
 
 .mobile-navbar-left, .mobile-navbar-right {
@@ -488,8 +490,19 @@ const handleLoginSuccess = () => {
 }
 
 .menu-button {
-  color: #303133;
-  padding: 8px;
+  color: var(--text-color);
+  padding: 10px;
+  border-radius: var(--radius-md);
+  transition: all var(--duration-normal) var(--ease-in-out);
+  background: rgba(64, 158, 255, 0.05);
+  border: 1px solid rgba(64, 158, 255, 0.1);
+}
+
+.menu-button:hover {
+  background: rgba(64, 158, 255, 0.1);
+  color: var(--primary-color);
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
 .mobile-user-info {
@@ -519,12 +532,40 @@ const handleLoginSuccess = () => {
   }
   
   .el-main {
-    padding-top: 70px !important; /* 为固定的移动导航栏留出空间 */
-    padding-left: 10px !important;
-    padding-right: 10px !important;
+    padding-top: 80px !important; /* 为固定的移动导航栏留出空间 */
+    padding-left: var(--space-md) !important;
+    padding-right: var(--space-md) !important;
+    padding-bottom: var(--space-lg) !important;
   }
   
-  /* 其他现有的移动端样式... */
+  .page-container {
+    padding: 0 !important;
+  }
+  
+  /* 移动端导航栏优化 */
+  .mobile-navbar {
+    height: 64px;
+    padding: 0 var(--space-lg);
+  }
+  
+  .menu-button {
+    padding: 12px;
+    border-radius: var(--radius-md);
+  }
+  
+  /* 移动端用户信息优化 */
+  .mobile-user-info {
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    background: rgba(64, 158, 255, 0.05);
+    border: 1px solid rgba(64, 158, 255, 0.1);
+  }
+  
+  .mobile-username {
+    font-size: 14px;
+    font-weight: 500;
+    max-width: 100px;
+  }
 }
 
 /* 侧边栏样式 */
@@ -620,29 +661,36 @@ const handleLoginSuccess = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at top left, rgba(64, 158, 255, 0.08), transparent 50%),
-              radial-gradient(circle at bottom right, rgba(103, 194, 58, 0.08), transparent 50%);
+  background: radial-gradient(circle at top left, rgba(64, 158, 255, 0.05), transparent 50%),
+              radial-gradient(circle at bottom right, rgba(103, 194, 58, 0.05), transparent 50%);
   z-index: -1;
 }
 
 .desktop-header {
-  background-color: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.5);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-light);
   padding: 0;
-  height: 64px;
+  height: 72px;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-md);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.desktop-header:hover {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-lg);
 }
 
 .el-main {
-  padding-top: 20px;
+  padding-top: var(--space-lg);
+  padding-bottom: var(--space-xl);
 }
 
 /* 非独立页面保持正常的最小高度 */
@@ -651,12 +699,13 @@ const handleLoginSuccess = () => {
 }
 
 .glass-footer {
-  background-color: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-top: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
-  padding: 20px 0;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-light);
+  padding: var(--space-2xl) 0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+  margin-top: auto;
 }
 
 .navbar-content {
@@ -707,19 +756,38 @@ const handleLoginSuccess = () => {
 
 .nav-menu .el-button {
   font-size: 15px;
-  height: 38px;
-  padding: 0 16px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: var(--radius-lg);
+  transition: all var(--duration-normal) var(--ease-in-out);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-menu .el-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(64, 158, 255, 0.1), transparent);
+  transition: left var(--duration-slow) var(--ease-in-out);
 }
 
 .nav-menu .el-button:hover {
-  background-color: rgba(var(--primary-color-rgb, 64, 158, 255), 0.1);
+  background: rgba(64, 158, 255, 0.1);
   transform: translateY(-2px);
   color: var(--primary-color);
+  box-shadow: var(--shadow-md);
+}
+
+.nav-menu .el-button:hover::before {
+  left: 100%;
 }
 
 .nav-right {
@@ -748,20 +816,31 @@ const handleLoginSuccess = () => {
   align-items: center;
   text-decoration: none;
   margin-right: 0;
-  padding: 4px 12px;
-  border-radius: 20px;
-  transition: all 0.2s ease;
-  height: 38px;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  transition: all var(--duration-normal) var(--ease-in-out);
+  height: 44px;
+  background: rgba(64, 158, 255, 0.05);
+  border: 1px solid rgba(64, 158, 255, 0.1);
 }
 
 .user-info .el-avatar {
-  height: 30px;
-  width: 30px;
+  height: 32px;
+  width: 32px;
+  border: 2px solid rgba(64, 158, 255, 0.2);
+  transition: all var(--duration-normal) var(--ease-in-out);
 }
 
 .user-info:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background: rgba(64, 158, 255, 0.1);
   transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(64, 158, 255, 0.2);
+}
+
+.user-info:hover .el-avatar {
+  border-color: rgba(64, 158, 255, 0.4);
+  transform: scale(1.05);
 }
 
 .username {

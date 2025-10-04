@@ -651,14 +651,30 @@ const allEvents = computed(() => {
 }
 
 .player-link {
-  color: var(--el-color-primary);
+  color: inherit;
   text-decoration: none;
   font-weight: 500;
+  transition: all var(--duration-normal) var(--ease-in-out);
+  position: relative;
+}
+
+.player-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary-color);
+  transition: width var(--duration-normal) var(--ease-in-out);
 }
 
 .player-link:hover {
-  text-decoration: underline;
-  color:  #1e88a8;
+  transform: translateY(-1px);
+}
+
+.player-link:hover::after {
+  width: 100%;
 }
 
 .info-icon {
