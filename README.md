@@ -1,6 +1,6 @@
 # 会枝Cubing
 
-一个基于 Vue 3 为群友服务的魔方网站[(hzcubing.club)](hzcubing.club)，提供成绩记录、排行榜、选手信息等功能。
+一个基于 Vue 3 为群友服务的魔方网站[(hzcubing.club)](hzcubing.club)，提供成绩记录、排行榜等功能。
 
 ## 功能特性
 
@@ -87,7 +87,7 @@ npm run preview
 项目使用 Vite 构建，生成的 [dist/](file:///home/devbox/project/dist/) 目录可部署到任何静态文件服务器上。
 
 推荐部署平台：
-- Sealos Cloud
+- Github Pages
 
 ## 开发规范
 
