@@ -59,12 +59,13 @@ const router = createRouter({
       name: 'players',
       component: () => import('../views/PlayersView.vue')
     },
-    {
-      path: '/cube-timer',
-      name: 'cube-timer',
-      component: () => import('../views/CubeTimer.vue'),
-      meta: { requiresAuth: false, standalone: true }
-    },
+    // 魔方计时器路由已隐藏
+    // {
+    //   path: '/cube-timer',
+    //   name: 'cube-timer',
+    //   component: () => import('../views/CubeTimer.vue'),
+    //   meta: { requiresAuth: false, standalone: true }
+    // },
     {
       path: '/online-competition',
       name: 'online-competition',

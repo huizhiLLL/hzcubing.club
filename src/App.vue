@@ -228,10 +228,11 @@ const handleLoginSuccess = () => {
           <el-icon><Icon icon="mdi:minecraft" /></el-icon>
           <span>MC</span>
         </el-menu-item>
-        <el-menu-item index="/cube-timer">
+        <!-- 魔方计时器入口已隐藏 -->
+        <!-- <el-menu-item index="/cube-timer">
           <el-icon><Icon icon="mdi:timer" /></el-icon>
           <span>魔方计时器</span>
-        </el-menu-item>
+        </el-menu-item> -->
         <el-menu-item v-if="user" index="/submit-record">
           <el-icon><Icon icon="mdi:upload" /></el-icon>
           <span>上传成绩</span>
@@ -299,10 +300,11 @@ const handleLoginSuccess = () => {
                       <Icon icon="mdi:upload" class="dropdown-icon" />
                       上传成绩
                     </el-dropdown-item>
-                    <el-dropdown-item @click="router.push('/cube-timer')">
+                    <!-- 魔方计时器入口已隐藏 -->
+                    <!-- <el-dropdown-item @click="router.push('/cube-timer')">
                       <Icon icon="mdi:timer" class="dropdown-icon" />
                       魔方计时器
-                    </el-dropdown-item>
+                    </el-dropdown-item> -->
                     <el-dropdown-item @click="showChangelog">
                       <Icon icon="mdi:history" class="dropdown-icon" />
                       更新日志

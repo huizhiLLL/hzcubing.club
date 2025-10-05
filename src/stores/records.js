@@ -74,7 +74,7 @@ export const useRecordsStore = defineStore('records', () => {
     error.value = null
     
     try {
-      // 拉取全量或足够大的数据集，避免分页导致“最佳记录”不完整
+      // 拉取全量或足够大的数据集，避免分页导致"最佳记录"不完整
       const result = await api.getRecords({ page: 1, pageSize: 10000 })
       
       if (result.code === 200) {

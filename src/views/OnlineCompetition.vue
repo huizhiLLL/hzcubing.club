@@ -201,6 +201,7 @@ import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Loading, Warning, Plus, Edit, Delete, ZoomOut, ZoomIn } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import api from '@/api/index.js'
 
 // 当前选中的项目
 const activeEvent = ref('333')
@@ -280,23 +281,11 @@ const fetchCompetitionResults = async () => {
   errorMessage.value = ''
   
   try {
-    // 调用Sealos云开发后端接口获取比赛结果
-    const response = await fetch(`https://w3mavh11ex.bja.sealos.run/online-match`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        event: activeEvent.value,
-        action: 'getResults'
-      })
+    // 调用统一API获取比赛结果
+    const data = await api.getOnlineMatchResults({
+      event: activeEvent.value,
+      action: 'getResults'
     })
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-    
-    const data = await response.json()
     
     if (data.success) {
       competitionResults.value = data.results || []
@@ -373,21 +362,13 @@ const submitScore = async () => {
     
     const currentUserEmail = getCurrentUserEmail()
     
-    const response = await fetch('https://w3mavh11ex.bja.sealos.run/online-match', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        event: activeEvent.value,
-        action: 'addScore',
-        playerName: scoreForm.value.playerName,
-        scores: scoreForm.value.scores,
-        email: currentUserEmail
-      })
+    const data = await api.submitOnlineMatchResult({
+      event: activeEvent.value,
+      action: 'addScore',
+      playerName: scoreForm.value.playerName,
+      scores: scoreForm.value.scores,
+      email: currentUserEmail
     })
-    
-    const data = await response.json()
     
     if (data.success) {
       ElMessage.success('成绩录入成功')
@@ -424,22 +405,14 @@ const updateScore = async () => {
     
     const currentUserEmail = getCurrentUserEmail()
     
-    const response = await fetch('https://w3mavh11ex.bja.sealos.run/online-match', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        event: activeEvent.value,
-        action: 'updateScore',
-        playerId: editForm.value.playerId,
-        playerName: editForm.value.playerName,
-        scores: editForm.value.scores,
-        email: currentUserEmail
-      })
+    const data = await api.submitOnlineMatchResult({
+      event: activeEvent.value,
+      action: 'updateScore',
+      playerId: editForm.value.playerId,
+      playerName: editForm.value.playerName,
+      scores: editForm.value.scores,
+      email: currentUserEmail
     })
-    
-    const data = await response.json()
     
     if (data.success) {
       ElMessage.success('成绩更新成功')
@@ -471,20 +444,12 @@ const deleteScore = async (row) => {
     
     const currentUserEmail = getCurrentUserEmail()
     
-    const response = await fetch('https://w3mavh11ex.bja.sealos.run/online-match', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        event: activeEvent.value,
-        action: 'deleteScore',
-        playerId: row.playerId || row._id,
-        email: currentUserEmail
-      })
+    const data = await api.submitOnlineMatchResult({
+      event: activeEvent.value,
+      action: 'deleteScore',
+      playerId: row.playerId || row._id,
+      email: currentUserEmail
     })
-    
-    const data = await response.json()
     
     if (data.success) {
       ElMessage.success('删除成功')

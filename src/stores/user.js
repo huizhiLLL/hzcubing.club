@@ -1,45 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import api from '@/api/index.js'
 
-// API基础URL配置（使用时替换为实际地址）
-const API_BASE_URL = 'https://w3mavh11ex.bja.sealos.run'  // 直接使用完整的后端API地址
+// 使用统一的API模块，不再需要单独的BASE_URL
 
-// 当前前端调用的API接口列表：
-// 1. 用户初始化接口
-//   - 路径: /init
-//   - 方法: GET
-//   - 使用函数: initUser()
-
-// 2. 用户登录接口
-//   - 路径: /user-login
-//   - 方法: POST
-//   - 使用函数: login()
-
-// 3. 用户注册接口
-//   - 路径: /user-register
-//   - 方法: POST
-//   - 使用函数: register()
-
-// 4. 用户登出接口
-//   - 路径: /user-logout
-//   - 方法: POST
-//   - 使用函数: logout()
-
-// 5. 用户资料更新接口
-//   - 路径: /user-profile
-//   - 方法: PUT
-//   - 使用函数: updateProfile()
-
-// 6. 用户密码更新接口
-//   - 路径: /user-password
-//   - 方法: PUT
-//   - 使用函数: updatePassword()
-
-// 7. 头像上传接口
-//   - 路径: /upload-avatar
-//   - 方法: POST
-//   - 使用函数: uploadAvatar()
+// 所有API调用现在通过统一的api模块处理
+// 详细的API接口列表请参考 src/api/index.js
 
 export const useUserStore = defineStore('user', () => {
   const user = ref(null)
@@ -63,25 +30,13 @@ export const useUserStore = defineStore('user', () => {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000)
       
-      const response = await fetch(`${API_BASE_URL}/health`, {
-        method: 'GET',
-        signal: controller.signal
-      }).catch(error => {
-        console.error('健康检查请求失败:', error)
-        return { ok: false }
-      })
+      // 使用统一的API模块进行健康检查
+      await api.initUser()
       
       clearTimeout(timeoutId)
-      
-      if (response.ok) {
-        console.log('checkApiHealth - API服务正常')
-        apiStatus.value = true
-        return true
-      } else {
-        console.error('checkApiHealth - API服务异常')
-        apiStatus.value = false
-        return false
-      }
+      console.log('checkApiHealth - API服务正常')
+      apiStatus.value = true
+      return true
     } catch (error) {
       console.error('checkApiHealth - 检查失败:', error)
       apiStatus.value = false
@@ -132,35 +87,13 @@ export const useUserStore = defineStore('user', () => {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 10000) // 10秒超时
       
-      console.log('initUser - 发送初始化请求到:', `${API_BASE_URL}/init`)
-      const response = await fetch(`${API_BASE_URL}/init`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token.value}`
-        },
-        signal: controller.signal
-      }).catch(error => {
+      console.log('initUser - 发送初始化请求')
+      const result = await api.initUser().catch(error => {
         console.error('initUser - 请求失败:', error)
-        return { ok: false }
+        return { ok: false, code: 500 }
       })
       
       clearTimeout(timeoutId)
-      
-      console.log('initUser - 收到响应, 状态:', response.status)
-      
-      // 如果请求失败
-      if (!response.ok) {
-        console.error('initUser - HTTP错误:', response.status)
-        const errorText = await response.text().catch(() => '')
-        console.error('initUser - 错误详情:', errorText)
-        return false
-      }
-      
-      const result = await response.json().catch(error => {
-        console.error('initUser - 解析JSON失败:', error)
-        return null
-      })
       
       console.log('initUser - 接口返回:', result)
 
@@ -244,35 +177,13 @@ export const useUserStore = defineStore('user', () => {
         password
       }
       
-      console.log('login - 发送登录请求到:', `${API_BASE_URL}/user-login`)
-      const response = await fetch(`${API_BASE_URL}/user-login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody),
-        signal: controller.signal
-      }).catch(error => {
+      console.log('login - 发送登录请求')
+      const result = await api.loginUser(requestBody).catch(error => {
         console.error('login - 请求失败:', error)
         throw new Error('网络连接失败，请检查您的网络连接')
       })
       
       clearTimeout(timeoutId)
-      
-      console.log('login - 收到响应, 状态:', response.status)
-      
-      // 如果请求失败
-      if (!response.ok) {
-        console.error('login - HTTP错误:', response.status)
-        const errorText = await response.text().catch(() => '')
-        console.error('login - 错误详情:', errorText)
-        throw new Error(`登录失败 (${response.status}): ${errorText || '未知错误'}`)
-      }
-      
-      const result = await response.json().catch(error => {
-        console.error('login - 解析JSON失败:', error)
-        throw new Error('无法解析服务器响应')
-      })
       
       console.log('login - 登录接口返回:', result)
       
@@ -338,18 +249,9 @@ export const useUserStore = defineStore('user', () => {
   // API注册
   async function register(userData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/user-register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeader()
-        },
-        credentials: 'include',
-        body: JSON.stringify(userData)
-      })
-      const data = await response.json()
+      const data = await api.registerUser(userData)
       // 新增：判断后端返回的 code 字段
-      if (!response.ok || data.code === 400) throw new Error(data.message || '注册失败')
+      if (data.code === 400) throw new Error(data.message || '注册失败')
       
       // 注册成功后自动登录
       await login(userData.email, userData.password)
@@ -411,24 +313,8 @@ export const useUserStore = defineStore('user', () => {
         
       console.log('updateProfile - 请求体:', JSON.stringify(requestBody))
 
-      // 使用正确的API路径 - 根据之前的注释，应该是/user-profile
-        const response = await fetch(`${API_BASE_URL}/user-profile`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token.value}`
-          },
-        body: JSON.stringify(requestBody)
-      })
-      
-      // 检查HTTP状态
-        if (!response.ok) {
-        const errorText = await response.text()
-        console.error('updateProfile - HTTP错误:', response.status, errorText)
-        throw new Error(`服务器错误 (${response.status}): ${errorText || '未知错误'}`)
-        }
-        
-        const result = await response.json()
+      // 使用统一API更新用户资料
+      const result = await api.updateUserProfile(requestBody)
       console.log('updateProfile - 接口返回:', result)
         
       // 更新本地用户信息
@@ -453,16 +339,8 @@ export const useUserStore = defineStore('user', () => {
   // API更新密码
   async function updatePassword(oldPassword, newPassword) {
     try {
-      const response = await fetch(`${API_BASE_URL}/user-password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeader()
-        },
-        credentials: 'include',
-        body: JSON.stringify({ oldPassword, newPassword })
-      })
-      if (!response.ok) throw new Error('密码更新失败')
+      const result = await api.updateUserPassword({ oldPassword, newPassword })
+      if (result.code !== 200) throw new Error('密码更新失败')
       return true
     } catch (error) {
       console.error('更新密码失败:', error)
@@ -485,7 +363,6 @@ export const useUserStore = defineStore('user', () => {
     clearToken,
     checkApiHealth,
     getAuthHeader,
-    logDebug,
-    API_BASE_URL
+    logDebug
   }
 })

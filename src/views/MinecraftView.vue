@@ -393,6 +393,7 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Picture, Loading, CopyDocument, Check, Plus, Location, Delete, Edit, Search } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import api from '@/api/index.js'
 
 // 标签页状态
 const activeTab = ref('locations')
@@ -609,12 +610,7 @@ const fetchLocations = async () => {
   loading.value = true
   try {
     // 使用现有的API端点，确保后端已经部署此接口
-    const response = await fetch('https://w3mavh11ex.bja.sealos.run/mc-location?action=list')
-    if (!response.ok) {
-      throw new Error('获取坐标信息失败')
-    }
-    
-    const result = await response.json()
+    const result = await api.getMcLocations('list')
     if (result.code === 0) {
       locations.value = result.data || []
       // 重置页码
@@ -665,22 +661,7 @@ const submitLocation = async () => {
         console.log('提交坐标数据:', submitData)
         
         // 发送请求
-        const response = await fetch('https://w3mavh11ex.bja.sealos.run/mc-location', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(submitData)
-        })
-        
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error('服务器响应错误:', errorText)
-          throw new Error('添加坐标失败: ' + errorText)
-        }
-        
-        const result = await response.json()
+        const result = await api.addMcLocation(submitData)
         if (result.code === 0) {
           ElMessage.success('坐标添加成功')
           resetLocationForm()
@@ -724,18 +705,7 @@ const deleteLocation = async (locationId) => {
     }
     
     // 发送请求
-    const response = await fetch(`https://w3mavh11ex.bja.sealos.run/mc-location?id=${locationId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('删除坐标失败')
-    }
-    
-    const result = await response.json()
+    const result = await api.deleteMcLocation(locationId)
     if (result.code === 0) {
       ElMessage.success('坐标删除成功')
       // 重新获取坐标列表
@@ -840,22 +810,7 @@ const submitEditLocation = async () => {
         console.log('提交坐标数据:', submitData)
         
         // 发送请求
-        const response = await fetch(`https://w3mavh11ex.bja.sealos.run/mc-location?id=${submitData._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(submitData)
-        })
-        
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error('服务器响应错误:', errorText)
-          throw new Error('修改坐标失败: ' + errorText)
-        }
-        
-        const result = await response.json()
+        const result = await api.updateMcLocation(submitData._id, submitData)
         if (result.code === 0) {
           ElMessage.success('坐标修改成功')
           editLocationDialogVisible.value = false
@@ -891,18 +846,7 @@ const confirmDeleteCurrentLocation = async () => {
     }
     
     // 发送请求
-    const response = await fetch(`https://w3mavh11ex.bja.sealos.run/mc-location?id=${editLocationForm.value._id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('删除坐标失败')
-    }
-    
-    const result = await response.json()
+    const result = await api.deleteMcLocation(editLocationForm.value._id)
     if (result.code === 0) {
       ElMessage.success('坐标删除成功')
       editLocationDialogVisible.value = false

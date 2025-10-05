@@ -76,6 +76,7 @@ import { Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import ElementTransition from '@/components/ElementTransition.vue'
+import api from '@/api/index.js'
 
 const router = useRouter()
 const players = ref([])
@@ -140,8 +141,7 @@ const handleCurrentChange = (page) => {
 const fetchPlayers = async () => {
   loading.value = true
   try {
-    const response = await fetch('https://w3mavh11ex.bja.sealos.run/get-players')
-    const data = await response.json()
+    const data = await api.getPlayers()
     
     if (data.code === 0) {
       players.value = data.data || []

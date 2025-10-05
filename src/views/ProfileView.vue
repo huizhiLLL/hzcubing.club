@@ -1261,22 +1261,31 @@ const testApi = async () => {
     console.log('开始测试API连接...')
     
     // 测试用户API
-    const userApiUrl = 'https://w3mavh11ex.bja.sealos.run/user'
-    console.log('测试用户API:', userApiUrl)
-    const userResponse = await fetch(userApiUrl)
-    console.log('用户API响应状态:', userResponse.status, userResponse.statusText)
+    console.log('测试用户API')
+    try {
+      const userResponse = await api.getUser('test-user-id')
+      console.log('用户API响应:', userResponse)
+    } catch (error) {
+      console.log('用户API错误:', error)
+    }
     
     // 测试个人最佳记录API
-    const bestRecordApiUrl = 'https://w3mavh11ex.bja.sealos.run/users-best-record'
-    console.log('测试个人最佳记录API:', bestRecordApiUrl)
-    const bestRecordResponse = await fetch(bestRecordApiUrl)
-    console.log('个人最佳记录API响应状态:', bestRecordResponse.status, bestRecordResponse.statusText)
+    console.log('测试个人最佳记录API')
+    try {
+      const bestRecordResponse = await api.getUsersBestRecord('test-user-id')
+      console.log('个人最佳记录API响应:', bestRecordResponse)
+    } catch (error) {
+      console.log('个人最佳记录API错误:', error)
+    }
     
     // 测试历史记录API
-    const historyApiUrl = 'https://w3mavh11ex.bja.sealos.run/users-history-record'
-    console.log('测试历史记录API:', historyApiUrl)
-    const historyResponse = await fetch(historyApiUrl)
-    console.log('历史记录API响应状态:', historyResponse.status, historyResponse.statusText)
+    console.log('测试历史记录API')
+    try {
+      const historyResponse = await api.getUsersHistoryRecord('test-user-id')
+      console.log('历史记录API响应:', historyResponse)
+    } catch (error) {
+      console.log('历史记录API错误:', error)
+    }
     
     console.log('API测试完成')
   } catch (error) {
@@ -1297,11 +1306,8 @@ const testApiWithHardcodedId = async () => {
     
     // 测试个人最佳记录API
     console.log('测试个人最佳记录API')
-    const bestRecordResponse = await fetch(`https://w3mavh11ex.bja.sealos.run/users-best-record?userId=${currentUserId}`)
-    console.log('个人最佳记录API响应状态:', bestRecordResponse.status, bestRecordResponse.statusText)
-    
-    if (bestRecordResponse.ok) {
-      const bestRecordResult = await bestRecordResponse.json()
+    try {
+      const bestRecordResult = await api.getUsersBestRecord(currentUserId)
       console.log('硬编码ID测试 - 个人最佳记录响应:', JSON.stringify(bestRecordResult))
       debugApiResponse(bestRecordResult, '硬编码ID测试 - 个人最佳记录')
       
@@ -1310,26 +1316,17 @@ const testApiWithHardcodedId = async () => {
         personalBests.value = bestRecordResult.data
         console.log('已直接使用测试数据更新个人最佳记录')
       }
+    } catch (error) {
+      console.error('个人最佳记录API错误:', error)
     }
     
     // 测试历史记录API
     console.log('测试历史记录API')
-    const historyResponse = await fetch(`https://w3mavh11ex.bja.sealos.run/users-history-record?userId=${currentUserId}`)
-    console.log('历史记录API响应状态:', historyResponse.status, historyResponse.statusText)
-    
-    if (historyResponse.ok) {
-      const historyResult = await historyResponse.json()
-      console.log('硬编码ID测试 - 历史记录响应:', JSON.stringify(historyResult))
-      debugApiResponse(historyResult, '硬编码ID测试 - 历史记录')
-      
-      // 直接使用测试结果更新数据
-      if (historyResult.code === 0 && historyResult.data) {
-        historyRecords.value = historyResult.data
-        console.log('已直接使用测试数据更新历史记录')
-        
-        // 计算排名
-        await ensureRecordsLoaded(currentUserId)
-      }
+    try {
+      const historyResult = await api.getUsersHistoryRecord(currentUserId)
+      console.log('历史记录API响应:', historyResult)
+    } catch (error) {
+      console.error('历史记录API错误:', error)
     }
     
     console.log('硬编码ID API测试完成')
@@ -1546,33 +1543,10 @@ const handleAvatarChange = async (event) => {
         console.log('有token:', !!token)
         
         // API URL
-        const apiUrl = 'https://w3mavh11ex.bja.sealos.run/avater'
-        console.log('上传到:', apiUrl)
-        
-        // 发送请求到API端点
+        // 使用统一API上传头像
         console.log('开始发送上传请求...')
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-          },
-          body: JSON.stringify(requestData)
-        })
-        
-        console.log('上传响应状态:', response.status, response.statusText)
-        
-        const responseText = await response.text()
-        console.log('原始响应:', responseText)
-        
-        let result
-        try {
-          result = JSON.parse(responseText)
-          console.log('解析响应:', result)
-        } catch (e) {
-          console.error('响应解析失败:', e)
-          throw new Error('服务器响应格式错误')
-        }
+        const result = await api.uploadAvatar(requestData)
+        console.log('解析响应:', result)
         
         if (result.code === 200 && result.data?.avatarUrl) {
           // 更新用户头像

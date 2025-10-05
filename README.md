@@ -87,7 +87,8 @@ npm run preview
 项目使用 Vite 构建，生成的 [dist/](file:///home/devbox/project/dist/) 目录可部署到任何静态文件服务器上。
 
 推荐部署平台：
-- Github Pages
+- Github Pages(前端静态资源)
+- Sealos (后端及数据库)
 
 ## 开发规范
 

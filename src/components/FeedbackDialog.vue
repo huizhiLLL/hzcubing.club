@@ -50,6 +50,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import api from '@/api/index.js'
 
 const visible = ref(false)
 const feedbackFormRef = ref(null)
@@ -88,16 +89,7 @@ const submitFeedback = async () => {
   await feedbackFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        const response = await fetch('https://w3mavh11ex.bja.sealos.run/feedback', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(feedbackForm.value)
-        })
-        
-        const result = await response.json()
+        const result = await api.submitFeedback(feedbackForm.value)
         
         if (result.code === 0) {
           ElMessage({
