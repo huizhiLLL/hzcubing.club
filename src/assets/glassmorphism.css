@@ -99,23 +99,7 @@
   transform: translateY(-2px);
 }
 
-.glass-footer {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border-light);
-  position: relative;
-}
-
-.glass-footer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(64, 158, 255, 0.3), transparent);
-}
+/* glass-footer 样式已移除，使用透明背景 */
 
 /* 现代化表格毛玻璃效果 */
 .glass-table {

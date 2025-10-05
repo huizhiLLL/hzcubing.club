@@ -298,12 +298,15 @@ import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRecordsStore } from '@/stores/records'
 import { useUserStore } from '@/stores/user'
+import { usePermissionStore } from '@/stores/permission'
 import { useRouter } from 'vue-router'
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 import { categories, events } from '@/config/events'
+import { canSubmitRecord } from '@/utils/permissions'
 
 const recordsStore = useRecordsStore()
 const userStore = useUserStore()
+const permissionStore = usePermissionStore()
 const router = useRouter()
 const loading = ref(false)
 const showMoreOptions = ref(false)

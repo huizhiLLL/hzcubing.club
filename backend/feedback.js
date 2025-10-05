@@ -14,7 +14,7 @@ export default async function (ctx) {
   // 验证请求体
   if (!ctx.body || typeof ctx.body !== 'object') {
     return {
-      code: 1,
+      code: 400,
       message: '无效的请求数据'
     }
   }
@@ -24,7 +24,7 @@ export default async function (ctx) {
   // 验证必填字段
   if (!content || typeof content !== 'string') {
     return {
-      code: 1,
+      code: 400,
       message: '反馈内容不能为空'
     }
   }
@@ -41,14 +41,14 @@ export default async function (ctx) {
     })
 
     return {
-      code: 0,
+      code: 200,
       data: result,
       message: '反馈提交成功'
     }
   } catch (error) {
     console.error('保存反馈失败:', error)
     return {
-      code: 1,
+      code: 500,
       error: error.message,
       message: '反馈提交失败'
     }

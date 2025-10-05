@@ -1,7 +1,7 @@
 <template>
   <div class="minecraft-container">
     <div class="mc-header glass-header">
-      <h1 class="page-title">会枝 Minecraft 服务器</h1>
+      <h1 class="page-title">Minecraft 服务器</h1>
     </div>
     
     <!-- 添加标签页切换 -->
@@ -11,7 +11,7 @@
           <!-- 坐标信息板块 -->
           <div class="mc-locations">
         <div class="card-header">
-          <h2>坐标信息</h2>
+          <h2>坐标信息（旧服已结档）</h2>
           <div class="location-controls">
             <!-- 添加搜索框 -->
             <el-input
@@ -108,7 +108,7 @@
           </div>
         </el-tab-pane>
     
-        <el-tab-pane label="原版生电服" name="server">
+        <el-tab-pane label="原版模组服" name="server">
           <!-- 服务器信息板块 -->
           <div class="mc-info">
           <div class="card-header">
@@ -116,16 +116,13 @@
           </div>
         <div class="server-info">
           <el-descriptions :column="1" border>
-            <el-descriptions-item label="名称">
-              <span class="server-value">HZ</span>
-            </el-descriptions-item>
             <el-descriptions-item label="地址">
               <span class="server-value">play.simpfun.cn</span>
             </el-descriptions-item>
             <el-descriptions-item label="端口">
-              <span class="server-value">33520</span>
+              <span class="server-value">22788</span>
             </el-descriptions-item>
-            <el-descriptions-item label="种子">
+            <!-- <el-descriptions-item label="种子">
               <span class="server-value seed-value">6782181293532081135</span>
               <el-button 
                 type="text" 
@@ -135,20 +132,21 @@
               >
                 <el-icon><CopyDocument /></el-icon>
               </el-button>
-            </el-descriptions-item>
+            </el-descriptions-item> -->
             <el-descriptions-item label="版本">
               <div class="server-value-multi">
-                <div class="version-tag">Java&基岩互通</div>
-                <div>Java：1.20</div>
-                <div>基岩：1.21</div>
+                <div class="version-tag">Java 1.20.1</div>
               </div>
             </el-descriptions-item>
             <el-descriptions-item label="类型">
               <div class="server-type-tags">
-                <span class="mc-tag">生存</span>
-                <span class="mc-tag">生电</span>
-                <span class="mc-tag">整活</span>
+                <span class="mc-tag">永恒枪械</span>
+                <span class="mc-tag">原版优化</span>
+                <span class="mc-tag">YSM</span>
               </div>
+            </el-descriptions-item>
+            <el-descriptions-item label="说明">
+              <div>客户端见群文件</div>
             </el-descriptions-item>
           </el-descriptions>
           
@@ -162,73 +160,6 @@
           </div>
         </el-tab-pane>
       </el-tabs>
-    </div>
-      
-      <!-- 隐藏服务器风景板块 -->
-      <el-card class="mc-gallery glass-card" v-if="false">
-        <template #header>
-          <div class="card-header">
-            <h2>服务器风景</h2>
-            <div class="gallery-controls">
-              <el-switch
-                v-model="showOriginal"
-                active-text="高清原图"
-                inactive-text="快速加载"
-                class="quality-switch"
-              />
-              <span class="loading-status" v-if="!imagesLoaded">
-                <el-icon class="is-loading"><Loading /></el-icon>
-                图片加载中...
-              </span>
-              <span class="loading-status success" v-else>
-                <el-icon><Check /></el-icon>
-                图片加载完成
-              </span>
-            </div>
-          </div>
-        </template>
-        <div class="gallery-content">
-          <el-carousel v-if="serverImages.length > 0" height="400px" indicator-position="outside" arrow="always" class="mc-carousel">
-            <el-carousel-item v-for="(image, index) in serverImages" :key="index" class="glass-effect-light">
-              <el-image 
-                :src="getImageSrc(image)" 
-                fit="contain"
-                class="gallery-image"
-                lazy
-                :preview-src-list="getPreviewList()"
-                :initial-index="index"
-              >
-                <template #placeholder>
-                  <div class="image-placeholder">
-                    <el-icon class="is-loading"><Loading /></el-icon>
-                    <span>加载中...</span>
-                  </div>
-                </template>
-                <template #error>
-                  <div class="image-error">
-                    <el-icon><Picture /></el-icon>
-                    <span>加载图片失败</span>
-                  </div>
-                </template>
-              </el-image>
-              <div class="image-caption glass-effect" v-if="image.caption">{{ image.caption }}</div>
-            </el-carousel-item>
-          </el-carousel>
-          
-          <div v-else class="gallery-empty">
-            <el-icon><Picture /></el-icon>
-            敬请期待服务器精彩截图
-          </div>
-        </div>
-      </el-card>
-
-    <!-- 隐藏加入服务器板块 -->
-    <div class="join-server" v-if="false">
-      <h2 class="join-title">加入我们的服务器</h2>
-      <p class="join-desc">随时欢迎新玩家加入，一起构建精彩世界！</p>
-      <el-button type="success" size="large" class="join-button" @click="copyServerAddress">
-        立即加入
-      </el-button>
     </div>
   </div>
 
@@ -415,7 +346,6 @@ const handleResize = () => {
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)
-  preloadImages()
   fetchLocations()
 })
 
@@ -423,42 +353,6 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
 })
 
-// 服务器图片数组 - 开发者可以直接在这里添加图片
-const serverImages = ref([
-   {
-     src: '/images/alpt.png',  // 图片路径，可以是相对路径或绝对URL
-     caption: '万顷茫然',  // 图片说明，可选
-     loaded: false,
-     // 低质量占位图数据（Base64编码的极小图片）
-     placeholder: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAUABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAUGBwT/xAAlEAABAwMEAgIDAAAAAAAAAAABAgMEAAURBhIhMQcTIkEUYYH/xAAWAQEBAQAAAAAAAAAAAAAAAAADAgX/xAAcEQACAgIDAAAAAAAAAAAAAAAAAQIRAxIEITH/2gAMAwEAAhEDEQA/ANHuWtbXaJSoS0OyJSRkNNDOPvNQu4+Z5ynCmJbWmAScBTpJP8FRjVkVu5XuS+w0AXHCQrGcE9ilkK0NzHEMpQXXFHCUJGST+hVGXLKXSK8OGEFbZZf+rLjLkJZtVnkTXM4LhGxI/pqtaL1Xd7pIVGvNsXBcSMpcBJQr9EVK9GWuJp+2vOSHUvTpJBccA+KAOkj7zUxuV5fk3UvMOKZbxgBJxgfVc8pSUqZbjhGUbRpC7QI9xjFmS0lxB7B7B+x9UjuWnZMVRXGdDqM5wrhX+1Xfxpqe5XKLLtd3dLrjKMsOq5JT2kn7xRWhlJKPRRCKadnB4/s7cOCZTyAt9zgE9hP0KX3G3tyVFxKAlzOSQODRRSeaTkJQVDzTdnYt8UJZSEgkkkdzRRRXNnf/2Q=='
-   },
-   {
-     src: '/images/rodcube.png',
-     caption: '佩奇',
-     loaded: false,
-     placeholder: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAUABQDASIAAhEBAxEB/8QAGAABAAMBAAAAAAAAAAAAAAAABgMEBwX/xAAmEAABAwQBBAMBAAAAAAAAAAABAgMEAAUGERITITFBFCJhcf/EABUBAQEAAAAAAAAAAAAAAAAAAAAB/8QAFREBAQAAAAAAAAAAAAAAAAAAAAH/2gAMAwEAAhEDEQA/ANV3HVKjTqe5UKVSXKjTwSFONgFTYPcKA7fOqKn723G8+mXqM1TwfhRcJt9AXP61M9YN0VOuVZ2j0p8tMtEJfWg2K1d7H4H71Iqe3nqXTGqZTnQt1CAhTvkqPcqPyTrB5HJcnXg6/HxRjG32M6L6j1umrSKpTHHwfLjJCx/Dg/2tCpG76BVgOhVWXCo4Q6ML/Fcj+61bQdD/2Q=='
-   },
-   {
-     src: '/images/soda1.png',
-     caption: '苏打',
-     loaded: false,
-     placeholder: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAUABQDASIAAhEBAxEB/8QAGAABAQEBAQAAAAAAAAAAAAAAAAUGBwT/xAAjEAABAwQBBAMBAAAAAAAAAAABAgMEAAUGERITITFBFCJhcf/EABUBAQEAAAAAAAAAAAAAAAAAAAAB/8QAFREBAQAAAAAAAAAAAAAAAAAAAAH/2gAMAwEAAhEDEQA/ANJyXLrfYGFJfJkSyO0aOe5/T7CqiTmt5uMgRrVbgHFHQU6rZ/gFVeQY2q7XWRcZMpyO266VBptWgkE+/wBqzjx0sMKWGUJQkbKiNAD8qolKTdIZGMkrdmjWTL8jskgOQpbEyGT3ZkJ2R+K8iq+43qJdYCZcB8ONK8eBHkH2D7FZpjbEeXkEVqS0h1vqAhKhuoHJrVFt9uuDKXGHEOtLGwoHYIohtO0f/9k='
-   },
-   {
-     src: '/images/soda2.png',
-     caption: '苏打',
-     loaded: false,
-     placeholder: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAUABQDASIAAhEBAxEB/8QAGAABAAMBAAAAAAAAAAAAAAAABgMEBwX/xAAlEAABAwMEAQUBAAAAAAAAAAABAgMEAAUREiExQQYHEyJRYXH/xAAVAQEBAAAAAAAAAAAAAAAAAAABAv/EABcRAQEBAQAAAAAAAAAAAAAAAAABESH/2gAMAwEAAhEDEQA/ANO8g8osdgthuNxcw4rZppPKj9Cq+z+oVjvVwRBaQ/HcWcBLyNOT9E7GsZ9XvILhcfJXIkWQpqE04G0adtWBgk9k5zWXWJy4RZUeXGdcYlMuBba0HCkqByCD0c1LqyPXaJKjzYyJEV1t1lYylaTkGrCFcrjbXEuWu4SIrqTlJacIB/R0aNGlxX//2Q=='
-   }
-])
-
-// 是否显示原图
-const showOriginal = ref(false)
-
-// 图片是否已加载
-const imagesLoaded = computed(() => {
-  return serverImages.value.every(img => img.loaded)
-})
 
 // 坐标相关
 const locations = ref([])
@@ -556,49 +450,13 @@ const locationRules = {
   ]
 }
 
-// 预加载图片
-const preloadImages = () => {
-  // 加载原始图片
-  serverImages.value.forEach((image, index) => {
-    const img = new Image()
-    img.onload = () => {
-      serverImages.value[index].loaded = true
-    }
-    img.src = image.src
-  })
-}
-
-// 获取预览图片列表
-const getPreviewList = () => {
-  return serverImages.value.map(img => img.src)
-}
-
-// 获取当前显示的图片源
-const getImageSrc = (image) => {
-  if (showOriginal || image.loaded) {
-    return image.src
-  }
-  return image.placeholder
-}
 
 // 复制服务器地址到剪贴板
 const copyServerAddress = () => {
-  const serverAddress = 'play.simpfun.cn:33520'
+  const serverAddress = 'play.simpfun.cn:22788'
   navigator.clipboard.writeText(serverAddress)
     .then(() => {
       ElMessage.success('服务器地址已复制到剪贴板')
-    })
-    .catch(() => {
-      ElMessage.error('复制失败，请手动复制')
-    })
-}
-
-// 复制落幕曲服务器地址到剪贴板
-const copyLuomuquServerAddress = () => {
-  const serverAddress = '' // 落幕曲服务器地址，待填写
-  navigator.clipboard.writeText(serverAddress)
-    .then(() => {
-      ElMessage.success('落幕曲服务器地址已复制到剪贴板')
     })
     .catch(() => {
       ElMessage.error('复制失败，请手动复制')
@@ -910,7 +768,7 @@ const confirmDeleteCurrentLocation = async () => {
   margin-bottom: 32px;
 }
 
-.mc-info, .mc-gallery {
+.mc-info {
   margin-bottom: 0;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   border-radius: 16px;
@@ -918,7 +776,7 @@ const confirmDeleteCurrentLocation = async () => {
   overflow: hidden;
 }
 
-.mc-info:hover, .mc-gallery:hover {
+.mc-info:hover {
   transform: translateY(-5px);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
@@ -1010,104 +868,6 @@ const confirmDeleteCurrentLocation = async () => {
   transform: scale(1.05);
 }
 
-.gallery-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.quality-switch {
-  font-size: 14px;
-}
-
-.loading-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: white;
-}
-
-.loading-status.success {
-  color: white;
-}
-
-.gallery-content {
-  position: relative;
-  padding: 8px;
-}
-
-.mc-carousel {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-:deep(.el-carousel__indicators) {
-  margin-top: 8px;
-}
-
-:deep(.el-carousel__arrow) {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-.glass-effect-light {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(5px);
-  border-radius: 8px;
-}
-
-.gallery-image {
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-  transition: transform 0.5s ease;
-}
-
-.gallery-image:hover {
-  transform: scale(1.02);
-}
-
-.image-placeholder,
-.image-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--el-text-color-secondary);
-  gap: 8px;
-}
-
-.image-caption {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 12px 24px;
-  text-align: center;
-  color: #fff;
-  font-weight: 500;
-  font-size: 18px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(5px);
-  border-radius: 24px;
-  transition: transform 0.3s ease;
-}
-
-.image-caption:hover {
-  transform: translateX(-50%) scale(1.1);
-}
-
-.gallery-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  color: var(--el-text-color-secondary);
-  gap: 16px;
-}
 
 /* 坐标信息样式 */
 .mc-locations {
@@ -1479,11 +1239,6 @@ const confirmDeleteCurrentLocation = async () => {
     gap: 12px;
   }
 
-  .gallery-controls {
-    width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
   
   /* 减小卡片容器的边距 */
   .locations-content {

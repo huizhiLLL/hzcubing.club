@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api/index.js'
+import { ROLES } from './permission'
 
 // 使用统一的API模块，不再需要单独的BASE_URL
 
@@ -14,19 +15,10 @@ export const useUserStore = defineStore('user', () => {
   const userInfo = ref(null)
   const router = useRouter()
   const apiStatus = ref(true) // API服务状态
-  const debug = ref(true) // 调试模式
-
-  // 调试日志
-  function logDebug(...args) {
-    if (debug.value) {
-      console.log(...args)
-    }
-  }
 
   // 检查API服务是否可用
   async function checkApiHealth() {
     try {
-      console.log('checkApiHealth - 检查API服务状态')
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000)
       
@@ -34,11 +26,9 @@ export const useUserStore = defineStore('user', () => {
       await api.initUser()
       
       clearTimeout(timeoutId)
-      console.log('checkApiHealth - API服务正常')
       apiStatus.value = true
       return true
     } catch (error) {
-      console.error('checkApiHealth - 检查失败:', error)
       apiStatus.value = false
       return false
     }
@@ -51,17 +41,9 @@ export const useUserStore = defineStore('user', () => {
 
   // 存储Token
   function setToken(newToken) {
-    if (!newToken) {
-      console.warn('setToken - 试图设置空token')
-      return
-    }
-    console.log('setToken - 设置新token:', newToken)
+    if (!newToken) return
     token.value = newToken
     localStorage.setItem('token', newToken)
-    console.log('setToken - 验证token设置:', {
-      storeToken: token.value,
-      localStorageToken: localStorage.getItem('token')
-    })
   }
 
   // 清除Token
@@ -73,29 +55,17 @@ export const useUserStore = defineStore('user', () => {
   // 从API初始化用户状态
   async function initUser() {
     try {
-      console.log('initUser - 开始初始化用户状态')
-      console.log('initUser - token值:', token.value)
-      console.log('initUser - localStorage token:', localStorage.getItem('token'))
-      
-      // 检查是否有token
-      if (!token.value) {
-        console.log('initUser - 没有token，返回false')
-        return false
-      }
+      if (!token.value) return false
 
       // 添加超时控制
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10秒超时
+      const timeoutId = setTimeout(() => controller.abort(), 10000)
       
-      console.log('initUser - 发送初始化请求')
       const result = await api.initUser().catch(error => {
-        console.error('initUser - 请求失败:', error)
         return { ok: false, code: 500 }
       })
       
       clearTimeout(timeoutId)
-      
-      console.log('initUser - 接口返回:', result)
 
       // 如果响应成功且有数据
       if (result && result.code === 200 && result.data) {
@@ -104,40 +74,26 @@ export const useUserStore = defineStore('user', () => {
         
         if (!userData._id && userData.id) {
           userData._id = userData.id
-          console.log('initUser - 添加_id字段:', userData._id)
         }
         
         if (!userData.id && userData._id) {
           userData.id = userData._id
-          console.log('initUser - 添加id字段:', userData.id)
         }
-        
-        console.log('initUser - 处理后的用户数据:', {
-          id: userData.id,
-          _id: userData._id,
-          hasId: !!userData.id,
-          has_Id: !!userData._id
-        })
         
         user.value = userData
         
         // 将用户信息保存到localStorage
         localStorage.setItem('userInfo', JSON.stringify(userData))
-        console.log('initUser - 用户信息已保存到localStorage:', userData)
-        
-        console.log('initUser - 用户信息设置成功:', user.value)
         return true
       }
       
       // 如果响应不成功或没有数据
-      console.log('initUser - 初始化失败，清除状态')
       user.value = null
       clearToken()
       localStorage.removeItem('userInfo')
       return false
       
     } catch (error) {
-      console.error('初始化用户失败:', error)
       return false
     }
   }
@@ -152,7 +108,6 @@ export const useUserStore = defineStore('user', () => {
       }).join(''));
       return JSON.parse(jsonPayload);
     } catch (e) {
-      console.error('解析JWT失败:', e);
       return null;
     }
   }
@@ -164,28 +119,19 @@ export const useUserStore = defineStore('user', () => {
       clearToken()
       user.value = null
       
-      console.log('login - 开始登录流程')
-      console.log('login - 登录参数:', { email })
-      
       // 添加超时控制
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10秒超时
+      const timeoutId = setTimeout(() => controller.abort(), 10000)
       
       // 构建请求体
-      const requestBody = {
-        email,
-        password
-      }
+      const requestBody = { email, password }
       
-      console.log('login - 发送登录请求')
       const result = await api.loginUser(requestBody).catch(error => {
-        console.error('login - 请求失败:', error)
         throw new Error('网络连接失败，请检查您的网络连接')
       })
       
       clearTimeout(timeoutId)
       
-      console.log('login - 登录接口返回:', result)
       
       if (result.code !== 200) {
         throw new Error(result.message || '登录失败')
@@ -196,34 +142,21 @@ export const useUserStore = defineStore('user', () => {
       const userData = result.data.user
       
       if (!newToken) {
-        console.error('login - 服务器未返回token')
         throw new Error('登录失败: 服务器未返回有效的认证信息')
       }
       
       if (!userData) {
-        console.error('login - 服务器未返回用户信息')
         throw new Error('登录失败: 服务器未返回用户信息')
       }
-      
-      console.log('login - 登录成功，收到token:', newToken)
       
       // 确保用户数据中同时包含id和_id字段
       if (!userData._id && userData.id) {
         userData._id = userData.id
-        console.log('login - 添加_id字段:', userData._id)
       }
       
       if (!userData.id && userData._id) {
         userData.id = userData._id
-        console.log('login - 添加id字段:', userData.id)
       }
-      
-      console.log('login - 处理后的用户数据:', {
-        id: userData.id,
-        _id: userData._id,
-        hasId: !!userData.id,
-        has_Id: !!userData._id
-      })
       
       // 先设置token，再初始化用户信息
       setToken(newToken)
@@ -232,16 +165,11 @@ export const useUserStore = defineStore('user', () => {
       
       // 将用户信息保存到localStorage
       localStorage.setItem('userInfo', JSON.stringify(userData))
-      console.log('login - 用户信息已保存到localStorage:', userData)
-      
-      console.log('login - token已保存，当前store token:', token.value)
-      console.log('login - localStorage token:', localStorage.getItem('token'))
       
       // 登录成功后刷新页面以更新状态
       window.location.reload()
       return user.value
     } catch (error) {
-      console.error('登录失败:', error)
       throw error
     }
   }
@@ -259,7 +187,6 @@ export const useUserStore = defineStore('user', () => {
       return user.value
 
     } catch (error) {
-      console.error('注册失败:', error)
       throw error
     }
   }
@@ -282,22 +209,16 @@ export const useUserStore = defineStore('user', () => {
   // 更新用户资料
   async function updateProfile(profileData) {
     try {
-      console.log('updateProfile - 开始更新用户资料:', profileData)
-        
       // 检查用户是否已登录
       if (!user.value || !token.value) {
-        console.error('updateProfile - 用户未登录')
         throw new Error('用户未登录')
-        }
+      }
 
       // 获取用户ID - 使用_id，因为这是后端数据库中的文档ID
       const userId = user.value._id
-        if (!userId) {
-        console.error('updateProfile - 用户ID不存在')
+      if (!userId) {
         throw new Error('用户ID不存在')
-        }
-
-      console.log('updateProfile - 使用用户ID:', userId)
+      }
         
       // 构建请求体 - 根据后端API期望的格式
         const requestBody = {
@@ -311,11 +232,8 @@ export const useUserStore = defineStore('user', () => {
           }
         }
         
-      console.log('updateProfile - 请求体:', JSON.stringify(requestBody))
-
       // 使用统一API更新用户资料
       const result = await api.updateUserProfile(requestBody)
-      console.log('updateProfile - 接口返回:', result)
         
       // 更新本地用户信息
       if (result && result.data) {
@@ -328,11 +246,9 @@ export const useUserStore = defineStore('user', () => {
       // 更新localStorage中的用户信息
       localStorage.setItem('userInfo', JSON.stringify(user.value))
       
-      console.log('updateProfile - 用户资料更新成功:', user.value)
       return true
-      } catch (error) {
-      console.error('更新用户资料失败:', error)
-        throw error
+    } catch (error) {
+      throw error
     }
   }
 
@@ -343,17 +259,34 @@ export const useUserStore = defineStore('user', () => {
       if (result.code !== 200) throw new Error('密码更新失败')
       return true
     } catch (error) {
-      console.error('更新密码失败:', error)
       throw error
     }
   }
+
+  // 用户角色相关计算属性
+  const userRole = computed(() => {
+    return user.value?.role || ROLES.GUEST
+  })
+  
+  const isLoggedIn = computed(() => {
+    return !!user.value && !!token.value
+  })
+  
+  // 角色检查函数
+  const hasRole = (role) => {
+    return userRole.value === role
+  }
+  
+  const isGuest = computed(() => userRole.value === ROLES.GUEST)
+  const isUser = computed(() => userRole.value === ROLES.USER)
+  const isAdmin = computed(() => userRole.value === ROLES.ADMIN)
+  const isSuperAdmin = computed(() => userRole.value === ROLES.SUPER_ADMIN)
 
   return {
     user,
     token,
     userInfo,
     apiStatus,
-    debug,
     login,
     register,
     logout,
@@ -363,6 +296,14 @@ export const useUserStore = defineStore('user', () => {
     clearToken,
     checkApiHealth,
     getAuthHeader,
-    logDebug
+    
+    // 权限相关
+    userRole,
+    isLoggedIn,
+    hasRole,
+    isGuest,
+    isUser,
+    isAdmin,
+    isSuperAdmin
   }
 })

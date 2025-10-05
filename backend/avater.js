@@ -1,22 +1,64 @@
 import cloud from '@lafjs/cloud'
 
+// 内嵌权限验证函数
+async function verifyToken(ctx) {
+  try {
+    const authHeader = ctx.headers?.authorization || ctx.headers?.Authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return null
+    }
+    
+    const token = authHeader.substring(7)
+    if (!token) return null
+    
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const userId = payload.uid || payload.userId || payload.sub
+      
+      if (!userId) return null
+      
+      const db = cloud.database()
+      const userRes = await db.collection('users').doc(userId).get()
+      
+      if (!userRes.data) return null
+      
+      return {
+        ...userRes.data,
+        role: userRes.data.role || 'user',
+        status: userRes.data.status || 'active'
+      }
+    } catch (e) {
+      return null
+    }
+  } catch (error) {
+    return null
+  }
+}
+
 export default async function (ctx) {
   console.log('收到头像上传请求')
   
   try {
-    // 从请求体中获取数据
-    const { userId, fileName, fileType, fileSize, fileData } = ctx.body
+    // 验证用户登录状态
+    const currentUser = await verifyToken(ctx)
+    if (!currentUser) {
+      return { code: 401, message: '未登录或token无效' }
+    }
+    
+    if (currentUser.status !== 'active') {
+      return { code: 403, message: '账户已被禁用' }
+    }
+    
+    // 从请求体中获取数据，用户只能上传自己的头像
+    const { fileName, fileType, fileSize, fileData } = ctx.request.body || {}
+    const userId = currentUser._id
     
     // 验证必要参数
-    if (!userId || !fileData) {
-      console.log('缺少必要参数:', { 
-        hasUserId: !!userId, 
-        hasFileData: !!fileData 
-      })
-      
+    if (!fileData) {
+      console.log('缺少文件数据')
       return {
         code: 400,
-        message: '没有提供头像文件或用户ID'
+        message: '没有提供头像文件'
       }
     }
     

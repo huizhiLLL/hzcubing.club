@@ -1,5 +1,40 @@
 import cloud from '@lafjs/cloud'
 
+// 内嵌权限验证函数
+async function verifyToken(ctx) {
+  try {
+    const authHeader = ctx.headers?.authorization || ctx.headers?.Authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return null
+    }
+    
+    const token = authHeader.substring(7)
+    if (!token) return null
+    
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const userId = payload.uid || payload.userId || payload.sub
+      
+      if (!userId) return null
+      
+      const db = cloud.database()
+      const userRes = await db.collection('users').doc(userId).get()
+      
+      if (!userRes.data) return null
+      
+      return {
+        ...userRes.data,
+        role: userRes.data.role || 'user',
+        status: userRes.data.status || 'active'
+      }
+    } catch (e) {
+      return null
+    }
+  } catch (error) {
+    return null
+  }
+}
+
 // 主函数，根据请求方法和action参数调用不同的处理函数
 export default async function (ctx) {
   const { method, query } = ctx.request
@@ -61,20 +96,19 @@ async function getMcLocations(ctx) {
 
 // 添加坐标信息
 async function addMcLocation(ctx) {
-  const { body, headers } = ctx.request
-
   try {
-    // 简化验证，不再使用cloud.getTokenInfo
-    const token = headers.authorization?.replace('Bearer ', '')
-    if (!token) {
-      return {
-        code: 401,
-        message: '未授权，请先登录'
-      }
+    // 验证用户登录状态
+    const currentUser = await verifyToken(ctx)
+    if (!currentUser) {
+      return { code: 401, message: '未登录或token无效' }
+    }
+    
+    if (currentUser.status !== 'active') {
+      return { code: 403, message: '账户已被禁用' }
     }
 
     // 验证必填字段
-    const { name, type, x, y, z, authorId, authorName } = body
+    const { name, type, x, y, z } = ctx.request.body || {}
     if (!name || !type || x === undefined || y === undefined || z === undefined) {
       return {
         code: 400,
@@ -85,16 +119,16 @@ async function addMcLocation(ctx) {
     const db = cloud.database()
     const locationsCollection = db.collection('mc_locations')
 
-    // 构建坐标数据
+    // 构建坐标数据，使用当前用户信息
     const locationData = {
       name,
       type,
       x: parseInt(x),
       y: parseInt(y),
       z: parseInt(z),
-      description: body.description || '',
-      authorId,
-      authorName,
+      description: ctx.request.body.description || '',
+      authorId: currentUser._id,
+      authorName: currentUser.nickname,
       createdAt: new Date()
     }
 
@@ -119,21 +153,20 @@ async function addMcLocation(ctx) {
 
 // 修改坐标信息
 async function updateMcLocation(ctx) {
-  const { body, headers, query } = ctx.request
-
   try {
-    // 验证授权
-    const token = headers.authorization?.replace('Bearer ', '')
-    if (!token) {
-      return {
-        code: 401,
-        message: '未授权，请先登录'
-      }
+    // 验证用户登录状态
+    const currentUser = await verifyToken(ctx)
+    if (!currentUser) {
+      return { code: 401, message: '未登录或token无效' }
+    }
+    
+    if (currentUser.status !== 'active') {
+      return { code: 403, message: '账户已被禁用' }
     }
 
     // 验证必填字段
-    const { _id, name, type, x, y, z } = body
-    const locationId = _id || query.id
+    const { _id, name, type, x, y, z } = ctx.request.body || {}
+    const locationId = _id || ctx.query?.id
 
     if (!locationId) {
       return {
@@ -198,20 +231,19 @@ async function updateMcLocation(ctx) {
 
 // 删除坐标信息
 async function deleteMcLocation(ctx) {
-  const { query, headers } = ctx.request
-
   try {
-    // 简化验证，不再使用cloud.getTokenInfo
-    const token = headers.authorization?.replace('Bearer ', '')
-    if (!token) {
-      return {
-        code: 401,
-        message: '未授权，请先登录'
-      }
+    // 验证用户登录状态
+    const currentUser = await verifyToken(ctx)
+    if (!currentUser) {
+      return { code: 401, message: '未登录或token无效' }
+    }
+    
+    if (currentUser.status !== 'active') {
+      return { code: 403, message: '账户已被禁用' }
     }
 
     // 验证必填字段
-    const { id } = query
+    const { id } = ctx.query || {}
     if (!id) {
       return {
         code: 400,

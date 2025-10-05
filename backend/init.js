@@ -64,8 +64,10 @@ export default async function (ctx) {
       user.id = user._id;
     }
 
-    // 返回用户信息
+    // 返回用户信息，确保包含role和status字段
     const { password, ...userInfo } = user;
+    userInfo.role = userInfo.role || 'user';
+    userInfo.status = userInfo.status || 'active';
     console.log('返回用户信息:', userInfo);
     return { code: 200, data: userInfo };
 

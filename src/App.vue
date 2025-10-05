@@ -2,6 +2,7 @@
 import { Icon } from '@iconify/vue'
 import { useUserStore } from '@/stores/user'
 import { useRecordsStore } from '@/stores/records'
+import { usePermissionStore } from '@/stores/permission'
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 import Changelog from '@/components/Changelog.vue'
@@ -16,6 +17,7 @@ const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 const recordsStore = useRecordsStore()
+const permissionStore = usePermissionStore()
 const { user, token } = storeToRefs(userStore)
 const { logout, initUser } = userStore
 
@@ -227,7 +229,7 @@ const handleLoginSuccess = () => {
         <el-menu-item index="/minecraft">
           <el-icon><Icon icon="mdi:minecraft" /></el-icon>
           <span>MC</span>
-        </el-menu-item>
+        </el-menu-item> -->
         <!-- 魔方计时器入口已隐藏 -->
         <!-- <el-menu-item index="/cube-timer">
           <el-icon><Icon icon="mdi:timer" /></el-icon>
@@ -236,6 +238,15 @@ const handleLoginSuccess = () => {
         <el-menu-item v-if="user" index="/submit-record">
           <el-icon><Icon icon="mdi:upload" /></el-icon>
           <span>上传成绩</span>
+        </el-menu-item>
+        <!-- 管理员入口 -->
+        <el-menu-item v-if="permissionStore.isAdmin && !permissionStore.isSuperAdmin && user" index="/admin">
+          <el-icon><Icon icon="mdi:shield-account" /></el-icon>
+          <span>管理面板</span>
+        </el-menu-item>
+        <el-menu-item v-if="permissionStore.isSuperAdmin && user" index="/super-admin">
+          <el-icon><Icon icon="mdi:shield-crown" /></el-icon>
+          <span>超级管理</span>
         </el-menu-item>
         <el-menu-item @click="showChangelog">
           <el-icon><Icon icon="mdi:history" /></el-icon>
@@ -300,11 +311,14 @@ const handleLoginSuccess = () => {
                       <Icon icon="mdi:upload" class="dropdown-icon" />
                       上传成绩
                     </el-dropdown-item>
-                    <!-- 魔方计时器入口已隐藏 -->
-                    <!-- <el-dropdown-item @click="router.push('/cube-timer')">
-                      <Icon icon="mdi:timer" class="dropdown-icon" />
-                      魔方计时器
-                    </el-dropdown-item> -->
+                    <el-dropdown-item v-if="permissionStore.isAdmin && !permissionStore.isSuperAdmin && user" @click="router.push('/admin')">
+                      <Icon icon="mdi:shield-account" class="dropdown-icon admin-icon" />
+                      管理面板
+                    </el-dropdown-item>
+                    <el-dropdown-item v-if="permissionStore.isSuperAdmin && user" @click="router.push('/super-admin')">
+                      <Icon icon="mdi:shield-crown" class="dropdown-icon super-admin-icon" />
+                      超级管理
+                    </el-dropdown-item>
                     <el-dropdown-item @click="showChangelog">
                       <Icon icon="mdi:history" class="dropdown-icon" />
                       更新日志
@@ -366,7 +380,7 @@ const handleLoginSuccess = () => {
 
     <!-- 页脚 - 仅在非独立页面显示 -->
     <el-footer v-if="!isStandalonePage" class="glass-footer">
-      <div class="page-container text-center">
+      <div class="footer-container text-center">
         <div class="footer-content">
           <div class="footer-section">
             <p class="copyright">© {{ new Date().getFullYear() }} 会枝Cubing. All rights reserved.</p>
@@ -374,10 +388,10 @@ const handleLoginSuccess = () => {
             <!-- ICP备案信息区域 -->
             <div class="icp-info">
               <a href="https://beian.miit.gov.cn" target="_blank" class="icp-link">豫ICP备2025116824号</a>
-              <a href="http://www.beian.gov.cn" target="_blank" class="police-link">
+              <!-- <a href="http://www.beian.gov.cn" target="_blank" class="police-link">
                 <img src="/images/icons/police-badge.svg" alt="公安备案" class="police-icon" />
                 公安备案号
-              </a>
+              </a> -->
             </div>
           </div>
           
@@ -399,7 +413,7 @@ const handleLoginSuccess = () => {
             
             <!-- GitHub仓库 -->
             <a href="https://github.com/huizhiLLL/hzcubing.club" target="_blank" class="social-link" title="GitHub">
-              <svg t="1726641706144" class="social-icon icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4396" width="200" height="200"><path d="M512 74.666667A437.333333 437.333333 0 0 0 74.666667 512c0 192 117.333333 354.133333 281.6 416 21.333333 4.266667 21.333333-8.533333 21.333333-21.333333v-74.666667c-117.333333 21.333333-140.8-51.2-140.8-51.2-17.066667-42.666667-42.666667-51.2-42.666667-51.2-36.266667-23.466667 2.133333-23.466667 2.133333-23.466667 40.533333 2.133333 60.8 38.4 60.8 38.4 36.266667 64 93.866667 44.8 117.333333 34.133333 2.133333-27.733333 14.933333-44.8 27.733334-53.333333-89.6-8.533333-185.6-44.8-185.6-200.533333 0-44.8 14.933333-81.066667 40.533333-108.8-4.266667-10.666667-17.066667-51.2 4.266667-106.666667 0 0 34.133333-10.666667 113.066666 40.533333a386.133333 386.133333 0 0 1 102.4-12.8c34.133333 0 68.266667 4.266667 102.4 12.8 78.933333-51.2 113.066667-40.533333 113.066667-40.533333 21.333333 55.466667 8.533333 96 4.266667 106.666667 25.6 27.733333 40.533333 64 40.533333 108.8 0 155.733333-96 192-185.6 200.533333 14.933333 12.8 27.733333 38.4 27.733333 76.8v110.933333c0 12.8 8.533333 25.6 21.333333 21.333333 164.266667-61.866667 281.6-224 281.6-416C949.333333 192 755.2 74.666667 512 74.666667z" p-id="4397" fill="#000000"></path></svg>
+              <svg t="1726641706144" class="social-icon icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4396" width="200" height="200"><path d="M512 74.666667A437.333333 437.333333 0 0 0 74.666667 512c0 192 117.333333 354.133333 281.6 416 21.333333 4.266667 21.333333-8.533333 21.333333-21.333333v-74.666667c-117.333333 21.333333-140.8-51.2-140.8-51.2-17.066667-42.666667-42.666667-51.2-42.666667-51.2-36.266667-23.466667 2.133333-23.466667 2.133333-23.466667 40.533333 2.133333 60.8 38.4 60.8 38.4 36.266667 64 93.866667 44.8 117.333333 34.133333 2.133333-27.733333 14.933333-44.8 27.733334-53.333333-89.6-8.533333-185.6-44.8-185.6-200.533333 0-44.8 14.933333-81.066667 40.533333-108.8-4.266667-10.666667-17.066667-51.2 4.266667-106.666667 0 0 34.133333-10.666667 113.066666 40.533333a386.133333 386.133333 0 0 1 102.4-12.8c34.133333 0 68.266667 4.266667 102.4 12.8 78.933333-51.2 113.066667-40.533333 113.066667-40.533333 21.333333 55.466667 8.533333 96 4.266667 106.666667 25.6 27.733333 40.533333 64 40.533333 108.8 0 155.733333-96 192-185.6 200.533333 14.933333 12.8 27.733333 38.4 27.733333 76.8v110.933333c0 12.8 8.533333 25.6 21.333333 21.333333 164.266667-61.866667 281.6-224 281.6-416C949.333333 192 755.2 74.666667 512 74.666667z" p-id="4397" fill="currentColor"></path></svg>
             </a>
           </div>
         </div>
@@ -654,6 +668,19 @@ const handleLoginSuccess = () => {
   min-height: 100vh;
   position: relative;
   background: linear-gradient(135deg, rgba(64, 158, 255, 0.05), rgba(103, 194, 58, 0.05));
+  display: flex;
+  flex-direction: column;
+}
+
+/* 确保Element Plus容器没有额外的margin或padding */
+:deep(.el-container) {
+  margin: 0;
+  padding: 0;
+}
+
+:deep(.el-footer) {
+  margin: 0;
+  padding: 0;
 }
 
 .app-container::before {
@@ -693,21 +720,33 @@ const handleLoginSuccess = () => {
 .el-main {
   padding-top: var(--space-lg);
   padding-bottom: var(--space-xl);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 非独立页面保持正常的最小高度 */
 .el-main:not(.standalone-main) {
-  min-height: calc(100vh - 120px);
+  min-height: 0;
 }
 
 .glass-footer {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border-light);
-  padding: var(--space-2xl) 0;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+  background: transparent;
+  padding: 0;
   margin-top: auto;
+  flex-shrink: 0;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .navbar-content {
@@ -1020,11 +1059,14 @@ const handleLoginSuccess = () => {
   text-decoration: none;
   display: flex;
   align-items: center;
-  transition: color 0.2s ease;
+  transition: all 0.2s ease;
+  opacity: 0.8;
 }
 
 .icp-link:hover, .police-link:hover {
   color: var(--primary-color);
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .police-icon {
@@ -1045,19 +1087,39 @@ const handleLoginSuccess = () => {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.7);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
   position: relative;
 }
 
 .social-link:hover {
   transform: translateY(-3px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: rgba(255, 255, 255, 0.95);
+  border-color: var(--primary-color);
 }
 
 .social-icon {
   width: 24px;
   height: 24px;
+  color: var(--text-color-secondary);
+  transition: color 0.2s ease;
+}
+
+.social-link:hover .social-icon {
+  color: var(--primary-color);
+}
+
+/* 确保SVG图标使用统一的颜色 */
+.social-icon svg {
+  fill: currentColor;
+}
+
+.social-icon svg path {
+  fill: currentColor;
 }
 
 .qq-group {
@@ -1116,6 +1178,7 @@ const handleLoginSuccess = () => {
   }
 }
 
+
 /* 添加更多菜单下拉样式 */
 .more-menu-dropdown {
   margin-left: 4px;
@@ -1130,6 +1193,18 @@ const handleLoginSuccess = () => {
 :deep(.more-dropdown-menu) {
   min-width: 120px;
   padding: 5px 0;
+}
+
+/* 下拉菜单中的管理入口样式 */
+:deep(.more-dropdown-menu .admin-icon) {
+  color: #E6A23C;
+}
+
+:deep(.more-dropdown-menu .super-admin-icon) {
+  color: #F56C6C;
+}
+
+:deep(.more-dropdown-menu) {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   background-color: rgba(255, 255, 255, 0.95);

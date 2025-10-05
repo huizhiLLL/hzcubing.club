@@ -7,7 +7,7 @@ export default async function (ctx) {
 
     if (!userId) {
       return {
-        code: 1,
+        code: 400,
         message: '缺少用户ID参数'
       }
     }
@@ -20,23 +20,25 @@ export default async function (ctx) {
 
     if (!user.data) {
       return {
-        code: 1,
+        code: 404,
         message: '用户不存在'
       }
     }
 
-    // 排除敏感信息
+    // 排除敏感信息并添加默认角色
     const { password, ...safeUserData } = user.data
+    safeUserData.role = safeUserData.role || 'user'
+    safeUserData.status = safeUserData.status || 'active'
 
     return {
-      code: 0,
+      code: 200,
       message: '获取用户信息成功',
       data: safeUserData
     }
   } catch (error) {
     console.error('获取用户信息失败:', error)
     return {
-      code: 1,
+      code: 500,
       message: '获取用户信息失败: ' + error.message
     }
   }

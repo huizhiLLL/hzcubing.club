@@ -25,6 +25,8 @@ export default async function (ctx) {
       nickname,
       bio,
       avatar: null,
+      role: 'user', // 默认角色为普通用户
+      status: 'active', // 默认状态为活跃
       createTime: new Date()
     });
 
@@ -36,7 +38,9 @@ export default async function (ctx) {
         email,
         nickname,
         bio,
-        avatar: null
+        avatar: null,
+        role: 'user',
+        status: 'active'
       }
     };
 

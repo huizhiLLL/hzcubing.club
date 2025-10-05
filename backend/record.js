@@ -1,5 +1,40 @@
 import cloud from '@lafjs/cloud'
 
+// 内嵌权限验证函数
+async function verifyToken(ctx) {
+  try {
+    const authHeader = ctx.headers?.authorization || ctx.headers?.Authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return null
+    }
+    
+    const token = authHeader.substring(7)
+    if (!token) return null
+    
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const userId = payload.uid || payload.userId || payload.sub
+      
+      if (!userId) return null
+      
+      const db = cloud.database()
+      const userRes = await db.collection('users').doc(userId).get()
+      
+      if (!userRes.data) return null
+      
+      return {
+        ...userRes.data,
+        role: userRes.data.role || 'user',
+        status: userRes.data.status || 'active'
+      }
+    } catch (e) {
+      return null
+    }
+  } catch (error) {
+    return null
+  }
+}
+
 // 工具：鲁棒时间解析（trim、DNF/DNS→null、支持 m:ss / h:mm:ss / 纯秒）
 function convertToSeconds(time) {
   if (time === null || time === undefined) return null
@@ -116,31 +151,86 @@ export default async function (ctx) {
       return { code: 200, message: '获取成功', data, page: p, pageSize: ps, total }
     }
 
-    // 添加记录（只存 seconds、不存排名/旧字段）
+    // 添加记录（需要登录）
     if (pattern === '/add-record') {
+      // 验证用户登录状态
+      const currentUser = await verifyToken(ctx)
+      if (!currentUser) {
+        return { code: 401, message: '未登录或token无效' }
+      }
+      
+      if (currentUser.status !== 'active') {
+        return { code: 403, message: '账户已被禁用' }
+      }
+      
       const body = ctx.body || {}
       if (!body?.event) return { code: 400, message: '记录数据不完整，缺少 event' }
       if (!body.single && !body.average && body.singleSeconds == null && body.averageSeconds == null) {
         return { code: 400, message: '记录必须包含单次或平均（传 seconds 或原始 time 均可）' }
       }
-      const doc = normalizeForWrite(body)
+      
+      // 确保记录关联到当前用户
+      const recordData = { ...body, userId: currentUser._id, nickname: currentUser.nickname }
+      const doc = normalizeForWrite(recordData)
       const res = await db.collection('records').add(doc)
       return { code: 200, message: '添加成功', data: { _id: res.id } }
     }
 
-    // 更新记录（只存 seconds、不存排名/旧字段）
+    // 更新记录（需要登录，只能修改自己的记录）
     if (pattern === '/update-record') {
+      // 验证用户登录状态
+      const currentUser = await verifyToken(ctx)
+      if (!currentUser) {
+        return { code: 401, message: '未登录或token无效' }
+      }
+      
+      if (currentUser.status !== 'active') {
+        return { code: 403, message: '账户已被禁用' }
+      }
+      
       const { recordId, updateData } = ctx.body || {}
       if (!recordId || !updateData) return { code: 400, message: '缺少记录ID或更新数据' }
+      
+      // 检查记录是否属于当前用户
+      const existingRecord = await db.collection('records').doc(recordId).get()
+      if (!existingRecord.data) {
+        return { code: 404, message: '记录不存在' }
+      }
+      
+      if (existingRecord.data.userId !== currentUser._id) {
+        return { code: 403, message: '只能修改自己的记录' }
+      }
+      
       const doc = normalizeForWrite(updateData)
       await db.collection('records').doc(recordId).update(doc)
       return { code: 200, message: '更新成功' }
     }
 
-    // 删除记录
+    // 删除记录（需要登录，只能删除自己的记录）
     if (pattern === '/delete-record') {
+      // 验证用户登录状态
+      const currentUser = await verifyToken(ctx)
+      if (!currentUser) {
+        return { code: 401, message: '未登录或token无效' }
+      }
+      
+      if (currentUser.status !== 'active') {
+        return { code: 403, message: '账户已被禁用' }
+      }
+      
       const { recordId } = ctx.body || {}
       if (!recordId) return { code: 400, message: '缺少记录ID参数' }
+      
+      // 检查记录是否属于当前用户
+      const existingRecord = await db.collection('records').doc(recordId).get()
+      if (!existingRecord.data) {
+        return { code: 404, message: '记录不存在' }
+      }
+      
+      if (existingRecord.data.userId !== currentUser._id) {
+        return { code: 403, message: '只能删除自己的记录' }
+      }
+      
       await db.collection('records').doc(recordId).remove()
       return { code: 200, message: '删除成功' }
     }

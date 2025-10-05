@@ -196,8 +196,10 @@
 import { ref, computed, onMounted, defineProps, defineEmits } from 'vue'
 import { useRecordsStore } from '@/stores/records'
 import { useUserStore } from '@/stores/user'
+import { usePermissionStore } from '@/stores/permission'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getEventName } from '@/config/events'
+import { canEditRecord, canDeleteRecord } from '@/utils/permissions'
 
 const props = defineProps({
   records: {
@@ -222,6 +224,7 @@ const emit = defineEmits(['refresh', 'delete'])
 
 const recordsStore = useRecordsStore()
 const userStore = useUserStore()
+const permissionStore = usePermissionStore()
 const loading = ref(false)
 const deleteLoading = ref(false)
 const detailsDialogVisible = ref(false)
@@ -300,14 +303,19 @@ const refresh = async () => {
 // 检查记录是否属于当前用户
 const isCurrentUserRecord = (record) => {
   if (!userStore.user || !record) return false
-  
-  // 如果记录有userId字段
-  if (record.userId) {
-    return record.userId === userStore.user._id
-  }
-  
-  // 统一顶层用户ID判断
-  return record.userId && record.userId === userStore.user._id
+  return record.userId === userStore.user._id
+}
+
+// 检查是否可以编辑记录
+const canEdit = (record) => {
+  if (!userStore.user) return false
+  return canEditRecord(record, userStore.user._id)
+}
+
+// 检查是否可以删除记录
+const canDelete = (record) => {
+  if (!userStore.user) return false
+  return canDeleteRecord(record, userStore.user._id)
 }
 
 // 确认删除

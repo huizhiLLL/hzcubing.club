@@ -91,7 +91,7 @@ const submitFeedback = async () => {
       try {
         const result = await api.submitFeedback(feedbackForm.value)
         
-        if (result.code === 0) {
+        if (result.code === 200) {
           ElMessage({
             type: 'success',
             message: '感谢您的反馈！'

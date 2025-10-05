@@ -189,6 +189,70 @@ export function submitOnlineMatchResult(resultData) {
   })
 }
 
+// 权限管理API
+export function getUserRole(userId) {
+  return request(`/user-role?userId=${encodeURIComponent(userId)}`, { method: 'GET' })
+}
+
+export function updateUserRole(userId, role) {
+  return request('/user-role', {
+    method: 'PUT',
+    body: JSON.stringify({ userId, role })
+  })
+}
+
+export function getAllUsers(params = {}) {
+  const q = new URLSearchParams()
+  if (params.page) q.set('page', String(params.page))
+  if (params.pageSize) q.set('pageSize', String(params.pageSize))
+  if (params.role) q.set('role', String(params.role))
+  const qs = q.toString()
+  const suffix = qs ? `?${qs}` : ''
+  return request(`/users${suffix}`, { method: 'GET' })
+}
+
+export function updateUserStatus(userId, status) {
+  return request('/user-status', {
+    method: 'PUT',
+    body: JSON.stringify({ userId, status })
+  })
+}
+
+// 统计数据API
+export function getWebsiteStats() {
+  return request('/website-stats', { method: 'GET' })
+}
+
+// 反馈管理API
+export function getFeedbackList(params = {}) {
+  const q = new URLSearchParams()
+  if (params.page) q.set('page', String(params.page))
+  if (params.pageSize) q.set('pageSize', String(params.pageSize))
+  const qs = q.toString()
+  const suffix = qs ? `?${qs}` : ''
+  return request(`/feedback-list${suffix}`, { method: 'GET' })
+}
+
+// 访问统计API
+export function trackVisit(visitData) {
+  return request('/visit-track', {
+    method: 'POST',
+    body: JSON.stringify(visitData)
+  })
+}
+
+// 维护模式API
+export function getMaintenanceMode() {
+  return request('/maintenance-mode', { method: 'GET' })
+}
+
+export function setMaintenanceMode(maintenanceMode, reason = '') {
+  return request('/maintenance-mode', {
+    method: 'PUT',
+    body: JSON.stringify({ maintenanceMode, reason })
+  })
+}
+
 export default {
   // 用户相关
   getUser,
@@ -223,7 +287,22 @@ export default {
   getOnlineMatchResults,
   createOnlineMatch,
   joinOnlineMatch,
-  submitOnlineMatchResult
+  submitOnlineMatchResult,
+  
+  // 权限管理
+  getUserRole,
+  updateUserRole,
+  getAllUsers,
+  updateUserStatus,
+  
+  // 统计和管理
+  getWebsiteStats,
+  getFeedbackList,
+  trackVisit,
+  
+  // 维护模式
+  getMaintenanceMode,
+  setMaintenanceMode
 }
 
 

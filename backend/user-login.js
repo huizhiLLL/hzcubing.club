@@ -25,12 +25,12 @@ export default async function (ctx) {
 
     // ✅ 使用 jsonwebtoken 手动生成 token
     const secret = '3#x!L9@qAaBvTmZ$8KpQwE2^VdF7'; // 推荐在环境变量中配置
-    const expiresIn = '365d'; // token 有效期
+    const expiresIn = 30 * 24 * 60 * 60; // 30天，单位：秒
 
     const token = jwt.sign(
       {
         uid: user[0]._id,
-        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 // 7天后过期
+        exp: Math.floor(Date.now() / 1000) + expiresIn // 30天后过期
       },
       secret,
       { algorithm: 'HS256' }
@@ -43,10 +43,13 @@ export default async function (ctx) {
         token,
         user: {
           id: user[0]._id,
+          _id: user[0]._id,
           email: user[0].email,
           nickname: user[0].nickname,
           bio: user[0].bio,
-          avatar: user[0].avatar
+          avatar: user[0].avatar,
+          role: user[0].role || 'user',
+          status: user[0].status || 'active'
         }
       }
     };

@@ -25,4 +25,17 @@ app.use(ElementPlus, {
   locale: zhCn,
 })
 
-app.mount('#app') 
+
+// 启用访问统计
+import('./utils/visitTracker.js').then(({ visitTracker }) => {
+  // 等待应用挂载后启动访问统计
+  app.mount('#app')
+  
+  // 延迟启动访问统计，确保router已就绪
+  setTimeout(() => {
+    visitTracker.startAutoTracking(router)
+  }, 1000)
+}).catch(() => {
+  // 如果访问统计加载失败，仍然正常挂载应用
+  app.mount('#app')
+}) 
