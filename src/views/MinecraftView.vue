@@ -140,8 +140,9 @@
             </el-descriptions-item>
             <el-descriptions-item label="类型">
               <div class="server-type-tags">
+                <span class="mc-tag">机械动力</span>
                 <span class="mc-tag">永恒枪械</span>
-                <span class="mc-tag">原版优化</span>
+                <span class="mc-tag">车万女仆</span>
                 <span class="mc-tag">YSM</span>
               </div>
             </el-descriptions-item>
