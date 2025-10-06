@@ -1,208 +1,39 @@
-// 更新日志数据
-export const changelogData = [
-  {
-    version: '4.6',
-    date: '2025-9-22 ',
-    changes: [
-      'ui部分优化',
-    ]
-  },
-  {
-    version: '4.5',
-    date: '2025-8-20 ',
-    changes: [
-      '后端重构修复数据显示异常bug',
-    ]
-  },
-  {
-    version: '4.3',
-    date: '2025-7-31 ',
-    changes: [
-      '初版计时器',
-    ]
-  },
-  {
-    version: '4.2',
-    date: '2025-7-10 ',
-    changes: [
-      '新增落幕曲服务器（嘿嘿）',
-      
-    ]
-  },
-  {
-    version: '4.1',
-    date: '2025-6-29 ',
-    changes: [
-      '页面布局美化和细节优化',
-      
-    ]
-  },
-  {
-    version: '4.0',
-    date: '2025-6-28 ',
-    changes: [
-      '部分页面的移动端适配以及布局整改'
-    ]
-  },
-  {
-    version: '3.8',
-    date: '2025-6-21 ',
-    changes: [
-      '个人主页完善',
-      'MC坐标记录功能'
-    ]
-  },
-  {
-    version: '3.7',
-    date: '2025-6-19 ',
-    changes: [
-      '历史打破记录',
-      '统计数据完善',
-      '选手列表及主页优化',
-      '部分ui优化'
-    ]
-  },
-  {
-    version: '3.6',
-    date: '2025-6-18',
-    changes: [
-      '上传头像功能！！！'
-    ]
-  },
-  {
-    version: '3.5',
-    date: '2025-6-17',
-    changes: [
-      '排行榜功能',
-      '上传历史查询修改删除功能',
-      'MC排版优化'
-    ]
-  },
-  {
-    version: '3.4',
-    date: '2025-6-11',
-    changes: [
-      'ui大幅优化！'
-    ]
-  },
-  {
-    version: '3.3',
-    date: '2025-6-9',
-    changes: [
-      '用户详情页的记录展示页面完善'
-    ]
-  },
-  {
-    version: '3.2',
-    date: '2025-6-8',
-    changes: [
-      '选手页面以及个人主页的信息展示功能（待完善）',
-      'MC界面完善'
-    ]
-  },
-  {
-    version: '3.1',
-    date: '2025-6-6',
-    changes: [
-      '成绩系统后端开发完成',
-      '上传成绩功能实装（部分细节未完善）'
-    ]
-  },
-  {
-    version: '2.6',
-    date: '2025-5-29',
-    changes: [
-      '个人主页资料修改功能实装（头像上传开发中）'
-    ]
-  },
-  {
-    version: '2.5',
-    date: '2025.06.10',
-    changes: [
-      '修复了成绩上传表单的一些问题',
-      '改进了UI设计，移除了毛玻璃效果',
-      '优化了移动端显示效果',
-      '修复了一些已知问题'
-    ]
-  },
-  {
-    version: '2.4',
-    date: '2025.06.05',
-    changes: [
-      '添加了Minecraft服务器页面',
-      '完善了用户个人主页',
-      '优化了移动端适配'
-    ]
-  },
-  {
-    version: '2.3',
-    date: '2025.06.01',
-    changes: [
-      '添加了选手列表页面',
-      '添加了用户详情页面',
-      '优化了排行榜显示'
-    ]
-  },
-  {
-    version: '2.2',
-    date: '2025.05.25',
-    changes: [
-      '上传表单丰富内容',
-      '趣味项目与整活项目的完善',
-      '意见箱的增加',
-      '历史记录功能增加'
-    ]
-  },
-  {
-    version: '2.1',
-    date: '2025.05.23',
-    changes: [
-      '网站推翻重做，增加主页、历史记录、用户系统等板块（部分功能未实装）',
-      'logo重新设计'
-    ]
-  },
-  {
-    version: '1.3',
-    date: '2025.05.17',
-    changes: [
-      '煮波作业写不完了，所以更新了一下更新日志也算每日一更了（氵）'
-    ]
-  },
-  {
-    version: '1.3',
-    date: '2025.05.16',
-    changes: [
-      '拥有了网站logo',
-      '新增了个人主页（待完善）'
-    ]
-  },
-  {
-    version: '1.2',
-    date: '2025.05.15',
-    changes: [
-      '新增了一些趣味项目记录'
-    ]
-  },
-  {
-    version: '1.1',
-    date: '2025.05.14',
-    changes: [
-      '新增趣味项目记录页面及上传成绩页面（功能未实装）',
-      '新增了更新日志功能，记录版本变更',
-      '新增粒子背景效果'
-    ]
-  },
-  {
-    version: '1.0',
-    date: '2025.05.13',
-    changes: [
-      '小作坊网站成立',
-      '设置了官方魔方项目记录页面'
-    ]
+import api from '@/api/index.js'
+
+// 更新日志数据（现在从数据库获取）
+let changelogData = []
+
+// 从数据库获取更新日志
+export const loadChangelogData = async () => {
+  try {
+    const result = await api.getChangelogs({ page: 1, pageSize: 100 })
+    if (result.code === 200) {
+      changelogData = result.data || []
+    }
+  } catch (error) {
+    console.error('获取更新日志失败:', error)
+    changelogData = []
   }
-]
+  return changelogData
+}
 
 // 获取最近的更新日志
-export const getRecentChangelogs = (count = 5) => {
+export const getRecentChangelogs = async (count = 5) => {
+  if (changelogData.length === 0) {
+    await loadChangelogData()
+  }
   return changelogData.slice(0, count)
+}
+
+// 获取所有更新日志
+export const getAllChangelogs = async () => {
+  if (changelogData.length === 0) {
+    await loadChangelogData()
+  }
+  return changelogData
+}
+
+// 刷新更新日志数据
+export const refreshChangelogData = async () => {
+  return await loadChangelogData()
 } 

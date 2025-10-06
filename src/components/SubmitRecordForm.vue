@@ -3,8 +3,9 @@
     <div class="header-with-tip">
       <h2 class="text-2xl font-bold mb-6">上传成绩</h2>
       <el-tooltip
-        content="开创新的【整活项目】可以联系群主添加：3169164181（q）
-        或者直接在意见箱中写明"
+        content="想要添加新的【整活项目】？
+        管理员可以在管理面板中直接添加，
+        普通用户可以在意见箱中提出建议"
         placement="top"
         effect="light"
         class="form-popover"
@@ -294,14 +295,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRecordsStore } from '@/stores/records'
 import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
 import { useRouter } from 'vue-router'
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
-import { categories, events } from '@/config/events'
+import { categories, events, getMemeEventsFromAPI } from '@/config/events'
+import api from '@/api/index.js'
 import { canSubmitRecord } from '@/utils/permissions'
 
 const recordsStore = useRecordsStore()
@@ -310,6 +312,7 @@ const permissionStore = usePermissionStore()
 const router = useRouter()
 const loading = ref(false)
 const showMoreOptions = ref(false)
+const dynamicMemeEvents = ref([])
 
 // 时间格式开关状态 - 合并为一个全局状态
 const timeFormatMinutes = ref(false)
@@ -358,6 +361,28 @@ watch([() => form.singleTimeFormat, () => form.averageTimeFormat], ([newSingleFo
 
 const currentEvents = computed(() => {
   if (!form.category) return []
+  
+  // 如果是整活项目，使用动态数据
+  if (form.category === 'meme') {
+    const staticOptions = events.meme.options || []
+    const dynamicOptions = dynamicMemeEvents.value.map(event => ({
+      label: event.eventName,
+      value: event.eventCode
+    }))
+    
+    // 合并静态和动态选项，动态选项优先
+    const allOptions = [...staticOptions]
+    
+    // 添加动态选项（避免重复）
+    dynamicOptions.forEach(dynamicOption => {
+      if (!allOptions.some(option => option.value === dynamicOption.value)) {
+        allOptions.push(dynamicOption)
+      }
+    })
+    
+    return allOptions
+  }
+  
   return events[form.category]?.options || []
 })
 
@@ -388,8 +413,24 @@ watch(() => form.event, (newEvent) => {
   }
 })
 
-const handleCategoryChange = () => {
+const handleCategoryChange = async () => {
   form.event = ''
+  
+  // 如果选择了整活项目，加载动态数据
+  if (form.category === 'meme') {
+    await loadMemeEvents()
+  }
+}
+
+// 加载动态整活项目
+const loadMemeEvents = async () => {
+  try {
+    const memeEvents = await getMemeEventsFromAPI()
+    dynamicMemeEvents.value = memeEvents.filter(event => event.isActive !== false)
+  } catch (error) {
+    console.error('加载整活项目失败:', error)
+    dynamicMemeEvents.value = []
+  }
 }
 
 // 验证时间输入
@@ -556,6 +597,12 @@ const resetForm = (formEl) => {
 }
 
 const emit = defineEmits(['success'])
+
+// 组件挂载时预加载整活项目
+onMounted(async () => {
+  // 预加载整活项目，提升用户体验
+  await loadMemeEvents()
+})
 </script>
 
 <style scoped>

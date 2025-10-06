@@ -1,4 +1,5 @@
 import cloud from '@lafjs/cloud'
+import jwt from 'jsonwebtoken'
 
 // 内嵌权限验证函数
 async function verifyToken(ctx) {
@@ -12,8 +13,10 @@ async function verifyToken(ctx) {
     if (!token) return null
     
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      const userId = payload.uid || payload.userId || payload.sub
+      // 使用JWT库验证token
+      const secret = '3#x!L9@qAaBvTmZ$8KpQwE2^VdF7' // 与登录时使用的相同密钥
+      const payload = jwt.verify(token, secret)
+      const userId = payload.uid
       
       if (!userId) return null
       
@@ -28,9 +31,11 @@ async function verifyToken(ctx) {
         status: userRes.data.status || 'active'
       }
     } catch (e) {
+      console.error('Token验证失败:', e)
       return null
     }
   } catch (error) {
+    console.error('权限验证错误:', error)
     return null
   }
 }

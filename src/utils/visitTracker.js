@@ -19,12 +19,19 @@ class VisitTracker {
   }
   
   /**
-   * 跟踪页面访问
+   * 跟踪页面访问（仅统计主页访问）
    * @param {string} page - 页面路径
    * @param {Object} options - 额外选项
    */
   async trackPageVisit(page, options = {}) {
     try {
+      const currentPage = page || window.location.pathname
+      
+      // 只统计主页访问（/ 或 /home）
+      if (currentPage !== '/' && currentPage !== '/home') {
+        return
+      }
+      
       // 防止频繁统计
       const now = Date.now()
       if (now - this.lastTrackTime < this.trackingInterval) {
@@ -32,7 +39,7 @@ class VisitTracker {
       }
       
       const visitData = {
-        page: page || window.location.pathname,
+        page: currentPage,
         userAgent: navigator.userAgent,
         referrer: document.referrer,
         sessionId: this.sessionId,

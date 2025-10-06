@@ -51,15 +51,98 @@ export default async function (ctx) {
     
     const db = cloud.database()
     
-    // 获取用户统计
-    const usersRes = await db.collection('users').get()
-    const users = usersRes.data || []
+    // 获取所有用户（分批查询避免限制）
+    let allUsers = []
+    let skip = 0
+    const limit = 100
+    
+    while (true) {
+      const usersRes = await db.collection('users')
+        .skip(skip)
+        .limit(limit)
+        .get()
+      
+      if (!usersRes.data || usersRes.data.length === 0) {
+        break
+      }
+      
+      allUsers = allUsers.concat(usersRes.data)
+      skip += limit
+      
+      if (usersRes.data.length < limit) {
+        break
+      }
+    }
+    
+    const users = allUsers
+    
+    // 获取所有成绩记录（分批查询避免限制）
+    let allRecords = []
+    let recordSkip = 0
+    
+    while (true) {
+      const recordsRes = await db.collection('records')
+        .skip(recordSkip)
+        .limit(limit)
+        .get()
+      
+      if (!recordsRes.data || recordsRes.data.length === 0) {
+        break
+      }
+      
+      allRecords = allRecords.concat(recordsRes.data)
+      recordSkip += limit
+      
+      if (recordsRes.data.length < limit) {
+        break
+      }
+    }
+    
+    const records = allRecords
+    
+    // 计算真正的活跃用户（最近30天内有活动的用户）
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    
+    // 最近30天内登录过的用户
+    const recentlyLoggedInUsers = users.filter(u => {
+      if (!u.lastLoginTime) return false
+      const loginDate = new Date(u.lastLoginTime)
+      return loginDate >= thirtyDaysAgo
+    })
+    
+    // 最近30天内提交过成绩的用户ID
+    const recentlyActiveUserIds = new Set(
+      records
+        .filter(r => new Date(r.timestamp) >= thirtyDaysAgo)
+        .map(r => r.userId)
+        .filter(Boolean)
+    )
+    
+    // 综合活跃用户（登录过或提交过成绩）
+    const activeUserIds = new Set([
+      ...recentlyLoggedInUsers.map(u => u._id),
+      ...recentlyActiveUserIds
+    ])
+    
+    // 计算本月注册用户数
+    const currentMonth = new Date()
+    const usersThisMonth = users.filter(u => {
+      if (!u.createTime) return false
+      const createDate = new Date(u.createTime)
+      return createDate.getFullYear() === currentMonth.getFullYear() && 
+             createDate.getMonth() === currentMonth.getMonth()
+    }).length
     
     const userStats = {
       totalUsers: users.length,
-      activeUsers: users.filter(u => u.status === 'active').length,
+      usersThisMonth, // 本月注册用户数
+      activeUsers: activeUserIds.size, // 真正的活跃用户数
+      accountActiveUsers: users.filter(u => u.status === 'active').length, // 账户状态为active的用户
       inactiveUsers: users.filter(u => u.status === 'inactive').length,
       bannedUsers: users.filter(u => u.status === 'banned').length,
+      recentlyLoggedIn: recentlyLoggedInUsers.length, // 最近登录用户数
+      recentlySubmitted: recentlyActiveUserIds.size, // 最近提交成绩用户数
       usersByRole: {
         guest: users.filter(u => (u.role || 'user') === 'guest').length,
         user: users.filter(u => (u.role || 'user') === 'user').length,
@@ -67,10 +150,6 @@ export default async function (ctx) {
         super_admin: users.filter(u => (u.role || 'user') === 'super_admin').length
       }
     }
-    
-    // 获取成绩统计
-    const recordsRes = await db.collection('records').get()
-    const records = recordsRes.data || []
     
     const recordStats = {
       totalRecords: records.length,
@@ -92,10 +171,31 @@ export default async function (ctx) {
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, 10)
     
+    // 批量获取用户昵称
+    const userIds = [...new Set(recentRecords.map(r => r.userId).filter(Boolean))]
+    const userMap = new Map()
+    
+    if (userIds.length > 0) {
+      try {
+        const usersRes = await db.collection('users')
+          .where({
+            _id: db.command.in(userIds)
+          })
+          .field({ _id: true, nickname: true })
+          .get()
+        
+        usersRes.data?.forEach(user => {
+          userMap.set(user._id, user.nickname)
+        })
+      } catch (e) {
+        console.error('批量获取用户信息失败:', e)
+      }
+    }
+    
     const recentActivities = recentRecords.map(record => ({
       id: record._id,
       type: 'record_submit',
-      description: `${record.nickname || '匿名用户'} 提交了 ${record.event} 成绩`,
+      description: `${userMap.get(record.userId) || '匿名用户'} 提交了 ${record.event} 成绩`,
       timestamp: record.timestamp,
       userId: record.userId
     }))
@@ -119,9 +219,29 @@ export default async function (ctx) {
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, 10)
     
-    // 获取真实访问量统计
-    const visitsRes = await db.collection('visits').get()
-    const visits = visitsRes.data || []
+    // 获取所有访问记录（分批查询避免限制）
+    let allVisits = []
+    let visitSkip = 0
+    
+    while (true) {
+      const visitsRes = await db.collection('visits')
+        .skip(visitSkip)
+        .limit(limit)
+        .get()
+      
+      if (!visitsRes.data || visitsRes.data.length === 0) {
+        break
+      }
+      
+      allVisits = allVisits.concat(visitsRes.data)
+      visitSkip += limit
+      
+      if (visitsRes.data.length < limit) {
+        break
+      }
+    }
+    
+    const visits = allVisits
     
     const today = new Date().toISOString().split('T')[0]
     const thisMonth = new Date().toISOString().substring(0, 7) // YYYY-MM
@@ -130,7 +250,8 @@ export default async function (ctx) {
       totalVisits: visits.length,
       visitsToday: visits.filter(v => v.date === today).length,
       visitsThisMonth: visits.filter(v => v.date && v.date.startsWith(thisMonth)).length,
-      uniqueIPs: [...new Set(visits.map(v => v.ip))].length
+      uniqueIPs: [...new Set(visits.map(v => v.ip))].length,
+      description: '主页访问统计' // 说明这是主页访问统计
     }
     
     return {

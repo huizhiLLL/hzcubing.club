@@ -173,7 +173,7 @@ const handleLoginSuccess = () => {
 
 <template>
   <el-container class="app-container">
-    <ParticlesBackground id="tsparticles" />
+    <ParticlesBackground id="tsparticles" style="pointer-events: none;" />
     
     <!-- 移动端导航栏 - 仅在非独立页面显示 -->
     <div v-if="!isStandalonePage" class="mobile-navbar">
@@ -229,12 +229,7 @@ const handleLoginSuccess = () => {
         <el-menu-item index="/minecraft">
           <el-icon><Icon icon="mdi:minecraft" /></el-icon>
           <span>MC</span>
-        </el-menu-item> -->
-        <!-- 魔方计时器入口已隐藏 -->
-        <!-- <el-menu-item index="/cube-timer">
-          <el-icon><Icon icon="mdi:timer" /></el-icon>
-          <span>魔方计时器</span>
-        </el-menu-item> -->
+        </el-menu-item>
         <el-menu-item v-if="user" index="/submit-record">
           <el-icon><Icon icon="mdi:upload" /></el-icon>
           <span>上传成绩</span>
@@ -254,7 +249,7 @@ const handleLoginSuccess = () => {
         </el-menu-item>
         <el-menu-item @click="showFeedback">
           <el-icon><Icon icon="mdi:message-text" /></el-icon>
-          <span>反馈</span>
+          <span>想对群主说</span>
         </el-menu-item>
         <el-menu-item index="/online-competition">
           <el-icon><Icon icon="mdi:trophy-award" /></el-icon>
@@ -325,7 +320,7 @@ const handleLoginSuccess = () => {
                     </el-dropdown-item>
                     <el-dropdown-item @click="showFeedback">
                       <Icon icon="mdi:message-text" class="dropdown-icon" />
-                      反馈
+                      想对群主说
                     </el-dropdown-item>
                     <el-dropdown-item @click="router.push('/online-competition')">
                       <Icon icon="mdi:trophy-award" class="dropdown-icon" />
@@ -460,6 +455,9 @@ const handleLoginSuccess = () => {
     margin-left: auto !important;
     margin-right: auto !important;
     box-sizing: border-box !important;
+    /* 确保触摸事件正常 */
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
   }
 }
 
@@ -473,9 +471,6 @@ const handleLoginSuccess = () => {
     max-width: 100% !important;
     padding-left: 10px !important;
     padding-right: 10px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
   }
 }
 
@@ -617,11 +612,16 @@ const handleLoginSuccess = () => {
 .sidebar-menu :deep(.el-menu-item) {
   height: 50px;
   line-height: 50px;
+  /* 确保移动端触摸事件正常 */
+  pointer-events: auto;
+  touch-action: manipulation;
+  cursor: pointer;
 }
 
 .sidebar-menu :deep(.el-icon) {
   margin-right: 12px;
   font-size: 18px;
+  pointer-events: none; /* 防止图标阻挡点击 */
 }
 
 .sidebar-footer {

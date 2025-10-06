@@ -61,6 +61,10 @@
               <el-icon><Setting /></el-icon>
               <span>系统设置</span>
             </el-menu-item>
+            <el-menu-item index="changelog-management">
+              <el-icon><Edit /></el-icon>
+              <span>更新日志</span>
+            </el-menu-item>
           </el-sub-menu>
         </el-menu>
         
@@ -84,10 +88,9 @@
         <!-- 成绩管理（继承自管理员） -->
         <div v-if="activeMenu === 'records'" class="admin-section">
           <h3 class="section-title">成绩记录管理</h3>
-          <RecordsTable 
+          <AdminRecordsTable 
             :records="allRecords" 
-            :show-actions="false"
-            :auto-refresh="false"
+            :loading="recordsLoading"
             @refresh="fetchAllRecords"
           />
         </div>
@@ -294,6 +297,52 @@
             </div>
           </el-card>
         </div>
+        
+        <!-- 更新日志管理 -->
+        <div v-if="activeMenu === 'changelog-management'" class="admin-section">
+          <div class="section-header">
+            <h3 class="section-title">更新日志管理</h3>
+            <div class="section-actions">
+              <el-button type="primary" @click="showAddChangelogDialog">
+                <el-icon><Plus /></el-icon>
+                添加日志
+              </el-button>
+              <el-button @click="fetchChangelogs" :loading="loading">
+                <el-icon><Refresh /></el-icon>
+                刷新
+              </el-button>
+            </div>
+          </div>
+          
+          <el-table :data="changelogs" v-loading="loading" class="changelog-table">
+            <el-table-column prop="version" label="版本" width="80" />
+            <el-table-column prop="date" label="日期" width="120" />
+            <el-table-column prop="changes" label="更新内容" min-width="200">
+              <template #default="{ row }">
+                <div class="changes-list">
+                  <div v-for="(change, index) in row.changes" :key="index" class="change-item">
+                    • {{ change }}
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="createdByName" label="创建者" width="100" />
+            <el-table-column label="操作" width="150">
+              <template #default="{ row }">
+                <el-button-group>
+                  <el-button size="small" @click="editChangelog(row)">
+                    <el-icon><Edit /></el-icon>
+                    编辑
+                  </el-button>
+                  <el-button size="small" type="danger" @click="deleteChangelog(row)">
+                    <el-icon><Delete /></el-icon>
+                    删除
+                  </el-button>
+                </el-button-group>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
       </main>
     </div>
     
@@ -345,6 +394,110 @@
         </el-button>
       </template>
     </el-dialog>
+    
+    <!-- 添加更新日志对话框 -->
+    <el-dialog
+      v-model="addChangelogDialogVisible"
+      title="添加更新日志"
+      width="500px"
+    >
+      <el-form :model="changelogForm" label-width="80px">
+        <el-form-item label="版本号" required>
+          <el-input v-model="changelogForm.version" placeholder="如: 5.0" />
+        </el-form-item>
+        <el-form-item label="日期" required>
+          <el-date-picker
+            v-model="changelogForm.date"
+            type="date"
+            placeholder="选择日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%;"
+          />
+        </el-form-item>
+        <el-form-item label="更新内容" required>
+          <div class="changes-editor">
+            <div v-for="(change, index) in changelogForm.changes" :key="index" class="change-input-group">
+              <el-input
+                v-model="changelogForm.changes[index]"
+                placeholder="输入更新内容..."
+                style="flex: 1;"
+              />
+              <el-button 
+                v-if="changelogForm.changes.length > 1"
+                type="danger" 
+                size="small" 
+                @click="removeChangeItem(index)"
+                style="margin-left: 8px;"
+              >
+                <el-icon><Delete /></el-icon>
+              </el-button>
+            </div>
+            <el-button type="primary" size="small" @click="addChangeItem" style="margin-top: 8px;">
+              <el-icon><Plus /></el-icon>
+              添加更新内容
+            </el-button>
+          </div>
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <el-button @click="addChangelogDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitChangelog">确认添加</el-button>
+      </template>
+    </el-dialog>
+    
+    <!-- 编辑更新日志对话框 -->
+    <el-dialog
+      v-model="editChangelogDialogVisible"
+      title="编辑更新日志"
+      width="500px"
+    >
+      <el-form :model="changelogForm" label-width="80px">
+        <el-form-item label="版本号" required>
+          <el-input v-model="changelogForm.version" placeholder="如: 5.0" />
+        </el-form-item>
+        <el-form-item label="日期" required>
+          <el-date-picker
+            v-model="changelogForm.date"
+            type="date"
+            placeholder="选择日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%;"
+          />
+        </el-form-item>
+        <el-form-item label="更新内容" required>
+          <div class="changes-editor">
+            <div v-for="(change, index) in changelogForm.changes" :key="index" class="change-input-group">
+              <el-input
+                v-model="changelogForm.changes[index]"
+                placeholder="输入更新内容..."
+                style="flex: 1;"
+              />
+              <el-button 
+                v-if="changelogForm.changes.length > 1"
+                type="danger" 
+                size="small" 
+                @click="removeChangeItem(index)"
+                style="margin-left: 8px;"
+              >
+                <el-icon><Delete /></el-icon>
+              </el-button>
+            </div>
+            <el-button type="primary" size="small" @click="addChangeItem" style="margin-top: 8px;">
+              <el-icon><Plus /></el-icon>
+              添加更新内容
+            </el-button>
+          </div>
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <el-button @click="editChangelogDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitChangelog">确认修改</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -358,10 +511,11 @@ import { getRoleDisplayName, getRoleColor } from '@/utils/permissions'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   DataBoard, Trophy, ChatDotRound, User, UserFilled, 
-  Key, Setting, Back, Search, Refresh, Edit, View, Clock
+  Key, Setting, Back, Search, Refresh, Edit, View, Clock, Plus, Delete
 } from '@element-plus/icons-vue'
 import AdminDashboard from '@/components/AdminDashboard.vue'
 import RecordsTable from '@/components/RecordsTable.vue'
+import AdminRecordsTable from '@/components/AdminRecordsTable.vue'
 import api from '@/api/index.js'
 
 const router = useRouter()
@@ -370,6 +524,7 @@ const permissionStore = usePermissionStore()
 
 const activeMenu = ref('dashboard')
 const loading = ref(false)
+const recordsLoading = ref(false)
 
 // 用户管理相关
 const users = ref([])
@@ -390,6 +545,17 @@ const adminUserStats = ref({
   inactiveCount: 0,
   bannedCount: 0
 })
+
+// 更新日志管理相关
+const changelogs = ref([])
+const addChangelogDialogVisible = ref(false)
+const editChangelogDialogVisible = ref(false)
+const changelogForm = ref({
+  version: '',
+  date: '',
+  changes: ['']
+})
+const selectedChangelog = ref(null)
 
 // 对话框相关
 const editRoleDialogVisible = ref(false)
@@ -474,6 +640,9 @@ const loadSectionData = async (section) => {
       case 'system-settings':
         await fetchSystemSettings()
         break
+      case 'changelog-management':
+        await fetchChangelogs()
+        break
     }
   } catch (error) {
     ElMessage.error('加载数据失败: ' + error.message)
@@ -484,13 +653,36 @@ const loadSectionData = async (section) => {
 
 // 获取所有成绩记录（继承自管理员）
 const fetchAllRecords = async () => {
+  recordsLoading.value = true
   try {
-    const recordsStore = useRecordsStore()
-    await recordsStore.fetchRecords()
-    allRecords.value = recordsStore.records
+    // 分批获取所有records，避免数量限制
+    let allRecordsData = []
+    let page = 1
+    const pageSize = 100
+    
+    while (true) {
+      const result = await api.getRecords({ page, pageSize })
+      if (result.code === 200 && result.data && result.data.length > 0) {
+        allRecordsData = allRecordsData.concat(result.data)
+        
+        // 如果返回的数据少于pageSize，说明已经是最后一页
+        if (result.data.length < pageSize) {
+          break
+        }
+        page++
+      } else {
+        break
+      }
+    }
+    
+    allRecords.value = allRecordsData
+    console.log(`超级管理员页面：获取到${allRecordsData.length}条成绩记录`)
   } catch (error) {
     console.error('获取成绩记录失败:', error)
     ElMessage.error('获取成绩记录失败: ' + error.message)
+    allRecords.value = []
+  } finally {
+    recordsLoading.value = false
   }
 }
 
@@ -730,6 +922,127 @@ const getPermissionName = (permission) => {
     'system_config': '系统配置'
   }
   return permissionNames[permission] || permission
+}
+
+// 获取更新日志列表
+const fetchChangelogs = async () => {
+  try {
+    const result = await api.getChangelogs({ page: 1, pageSize: 50 })
+    if (result.code === 200) {
+      changelogs.value = result.data || []
+    } else {
+      throw new Error(result.message || '获取更新日志失败')
+    }
+  } catch (error) {
+    ElMessage.error('获取更新日志失败: ' + error.message)
+    changelogs.value = []
+  }
+}
+
+// 显示添加日志对话框
+const showAddChangelogDialog = () => {
+  changelogForm.value = {
+    version: '',
+    date: new Date().toISOString().split('T')[0],
+    changes: ['']
+  }
+  selectedChangelog.value = null
+  addChangelogDialogVisible.value = true
+}
+
+// 编辑更新日志
+const editChangelog = (changelog) => {
+  selectedChangelog.value = changelog
+  changelogForm.value = {
+    version: changelog.version,
+    date: changelog.date,
+    changes: [...changelog.changes]
+  }
+  editChangelogDialogVisible.value = true
+}
+
+// 删除更新日志
+const deleteChangelog = async (changelog) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除版本 "${changelog.version}" 的更新日志吗？`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    const result = await api.deleteChangelog(changelog._id)
+    
+    if (result.code === 200) {
+      ElMessage.success('更新日志删除成功')
+      await fetchChangelogs()
+    } else {
+      throw new Error(result.message || '删除失败')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败: ' + error.message)
+    }
+  }
+}
+
+// 添加更新内容项
+const addChangeItem = () => {
+  changelogForm.value.changes.push('')
+}
+
+// 删除更新内容项
+const removeChangeItem = (index) => {
+  if (changelogForm.value.changes.length > 1) {
+    changelogForm.value.changes.splice(index, 1)
+  }
+}
+
+// 提交更新日志
+const submitChangelog = async () => {
+  try {
+    // 验证表单
+    if (!changelogForm.value.version || !changelogForm.value.date) {
+      ElMessage.error('版本号和日期不能为空')
+      return
+    }
+    
+    // 过滤空的更新内容
+    const filteredChanges = changelogForm.value.changes.filter(change => change.trim())
+    if (filteredChanges.length === 0) {
+      ElMessage.error('至少需要一条更新内容')
+      return
+    }
+    
+    const data = {
+      version: changelogForm.value.version,
+      date: changelogForm.value.date,
+      changes: filteredChanges
+    }
+    
+    let result
+    if (selectedChangelog.value) {
+      // 编辑模式
+      result = await api.updateChangelog(selectedChangelog.value._id, data)
+    } else {
+      // 添加模式
+      result = await api.addChangelog(data)
+    }
+    
+    if (result.code === 200) {
+      ElMessage.success(selectedChangelog.value ? '更新日志修改成功' : '更新日志添加成功')
+      addChangelogDialogVisible.value = false
+      editChangelogDialogVisible.value = false
+      await fetchChangelogs()
+    } else {
+      throw new Error(result.message || '操作失败')
+    }
+  } catch (error) {
+    ElMessage.error('操作失败: ' + error.message)
+  }
 }
 
 // 获取角色标签类型（用于Element Plus的type属性）
@@ -1017,6 +1330,34 @@ onMounted(() => {
   font-weight: bold;
   color: var(--primary-color);
   font-size: 16px;
+}
+
+/* 更新日志管理样式 */
+.changelog-table {
+  margin-bottom: 20px;
+}
+
+.changes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.change-item {
+  font-size: 14px;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+.changes-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.change-input-group {
+  display: flex;
+  align-items: center;
 }
 
 /* 响应式设计 */

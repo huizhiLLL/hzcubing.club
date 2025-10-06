@@ -1,4 +1,5 @@
 import cloud from '@lafjs/cloud'
+import jwt from 'jsonwebtoken'
 
 // 内嵌权限验证函数
 async function verifyToken(ctx) {
@@ -12,8 +13,10 @@ async function verifyToken(ctx) {
     if (!token) return null
     
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      const userId = payload.uid || payload.userId || payload.sub
+      // 使用JWT库验证token
+      const secret = '3#x!L9@qAaBvTmZ$8KpQwE2^VdF7' // 与登录时使用的相同密钥
+      const payload = jwt.verify(token, secret)
+      const userId = payload.uid
       
       if (!userId) return null
       
@@ -28,9 +31,11 @@ async function verifyToken(ctx) {
         status: userRes.data.status || 'active'
       }
     } catch (e) {
+      console.error('Token验证失败:', e)
       return null
     }
   } catch (error) {
+    console.error('权限验证错误:', error)
     return null
   }
 }
@@ -122,7 +127,36 @@ export default async function (ctx) {
         .limit(ps)
         .get()
 
-      const data = (res.data || []).map(normalizeForRead)
+      // 批量获取用户昵称（性能优化）
+      const records = res.data || []
+      const userIds = [...new Set(records.map(r => r.userId).filter(Boolean))]
+      
+      // 批量查询用户信息
+      const userMap = new Map()
+      if (userIds.length > 0) {
+        try {
+          const usersRes = await db.collection('users')
+            .where({
+              _id: db.command.in(userIds)
+            })
+            .field({ _id: true, nickname: true })
+            .get()
+          
+          usersRes.data?.forEach(user => {
+            userMap.set(user._id, user.nickname)
+          })
+        } catch (e) {
+          console.error('批量获取用户信息失败:', e)
+        }
+      }
+      
+      // 处理记录数据
+      const data = records.map(record => {
+        const normalizedRecord = normalizeForRead(record)
+        normalizedRecord.nickname = userMap.get(record.userId) || '匿名用户'
+        return normalizedRecord
+      })
+      
       return { code: 200, message: '获取成功', data, page: p, pageSize: ps, total }
     }
 
@@ -147,7 +181,24 @@ export default async function (ctx) {
         .limit(ps)
         .get()
 
-      const data = (res.data || []).map(normalizeForRead)
+      // 由于是查询特定用户的记录，直接获取该用户的昵称即可
+      let nickname = '匿名用户'
+      try {
+        const userRes = await db.collection('users').doc(userId).get()
+        if (userRes.data && userRes.data.nickname) {
+          nickname = userRes.data.nickname
+        }
+      } catch (e) {
+        // 如果获取用户失败，使用默认昵称
+      }
+      
+      // 处理记录数据
+      const data = (res.data || []).map(record => {
+        const normalizedRecord = normalizeForRead(record)
+        normalizedRecord.nickname = nickname
+        return normalizedRecord
+      })
+      
       return { code: 200, message: '获取成功', data, page: p, pageSize: ps, total }
     }
 

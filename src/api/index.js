@@ -253,6 +253,64 @@ export function setMaintenanceMode(maintenanceMode, reason = '') {
   })
 }
 
+// 更新日志API
+export function getChangelogs(params = {}) {
+  const q = new URLSearchParams()
+  if (params.page) q.set('page', String(params.page))
+  if (params.pageSize) q.set('pageSize', String(params.pageSize))
+  const qs = q.toString()
+  const suffix = qs ? `?${qs}` : ''
+  return request(`/changelog${suffix}`, { method: 'GET' })
+}
+
+export function addChangelog(changelogData) {
+  return request('/changelog', {
+    method: 'POST',
+    body: JSON.stringify(changelogData)
+  })
+}
+
+export function updateChangelog(id, changelogData) {
+  return request('/changelog', {
+    method: 'PUT',
+    body: JSON.stringify({ id, ...changelogData })
+  })
+}
+
+export function deleteChangelog(id) {
+  return request(`/changelog?id=${id}`, { method: 'DELETE' })
+}
+
+// 整活项目管理相关
+export function getMemeEvents(params = {}) {
+  const q = new URLSearchParams()
+  if (params.page) q.set('page', String(params.page))
+  if (params.pageSize) q.set('pageSize', String(params.pageSize))
+  const qs = q.toString()
+  return request(`/meme-events${qs ? `?${qs}` : ''}`, { method: 'GET' })
+}
+
+export function addMemeEvent(eventData) {
+  return request('/meme-events', {
+    method: 'POST',
+    body: JSON.stringify(eventData)
+  })
+}
+
+export function updateMemeEvent(eventData) {
+  return request('/meme-events', {
+    method: 'PUT',
+    body: JSON.stringify(eventData)
+  })
+}
+
+export function deleteMemeEvent(id) {
+  return request('/meme-events', {
+    method: 'DELETE',
+    body: JSON.stringify({ id })
+  })
+}
+
 export default {
   // 用户相关
   getUser,
@@ -302,7 +360,19 @@ export default {
   
   // 维护模式
   getMaintenanceMode,
-  setMaintenanceMode
+  setMaintenanceMode,
+  
+  // 更新日志管理
+  getChangelogs,
+  addChangelog,
+  updateChangelog,
+  deleteChangelog,
+  
+  // 整活项目管理
+  getMemeEvents,
+  addMemeEvent,
+  updateMemeEvent,
+  deleteMemeEvent
 }
 
 

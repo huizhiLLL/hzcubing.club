@@ -60,7 +60,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue'
-import { changelogData } from '@/services/changelog.js'
+import { getAllChangelogs } from '@/services/changelog.js'
 
 const visible = ref(false)
 const changelogRef = ref(null)
@@ -68,6 +68,7 @@ const selectedIndex = ref(-1)
 const topGradientOpacity = ref(0)
 const bottomGradientOpacity = ref(1)
 const inView = ref({})
+const changelogData = ref([])
 
 // 添加移动端检测
 const windowWidth = ref(window.innerWidth)
@@ -78,8 +79,20 @@ const handleResize = () => {
   windowWidth.value = window.innerWidth
 }
 
-onMounted(() => {
+// 加载更新日志数据
+const loadChangelogs = async () => {
+  try {
+    const logs = await getAllChangelogs()
+    changelogData.value = logs
+  } catch (error) {
+    console.error('加载更新日志失败:', error)
+    changelogData.value = []
+  }
+}
+
+onMounted(async () => {
   window.addEventListener('resize', handleResize)
+  await loadChangelogs()
 })
 
 onUnmounted(() => {

@@ -64,7 +64,24 @@ export default async function (ctx) {
       .limit(ps)
       .get()
 
-    const data = (listRes.data || []).map(normalizeForRead)
+    // 由于是查询特定用户的历史记录，直接获取该用户的昵称即可
+    let nickname = '匿名用户'
+    try {
+      const userRes = await db.collection('users').doc(userId).get()
+      if (userRes.data && userRes.data.nickname) {
+        nickname = userRes.data.nickname
+      }
+    } catch (e) {
+      // 如果获取用户失败，使用默认昵称
+    }
+    
+    // 处理记录数据
+    const data = (listRes.data || []).map(record => {
+      const normalizedRecord = normalizeForRead(record)
+      normalizedRecord.nickname = nickname
+      return normalizedRecord
+    })
+    
     return { code: 200, message: '获取成功', data, page: p, pageSize: ps, total }
   } catch (err) {
     console.error('users-history-record 异常:', err)

@@ -95,7 +95,7 @@
               <ShinyText :speed="4" className="enhanced-shiny">最近更新</ShinyText>
             </h2>
             <div class="changelog-list">
-              <div v-for="(log, index) in recentChangelogs" :key="log.version" class="changelog-item">
+              <div v-for="log in recentChangelogs" :key="log.version" class="changelog-item">
                 <div class="changelog-header">
                   <span class="changelog-version">v{{ log.version }}</span>
                   <span class="changelog-date">{{ log.date }}</span>
@@ -297,19 +297,19 @@ const fetchRecentRecords = async () => {
 }
 
 // 获取最近更新日志
-const fetchRecentChangelogs = () => {
+const fetchRecentChangelogs = async () => {
   try {
-    // 使用共享的更新日志数据服务
-    recentChangelogs.value = getRecentChangelogs(5)
+    // 使用共享的更新日志数据服务（现在是异步的）
+    recentChangelogs.value = await getRecentChangelogs(5)
   } catch (error) {
     console.error('获取更新日志失败:', error)
     recentChangelogs.value = []
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   fetchRecentRecords()
-  fetchRecentChangelogs()
+  await fetchRecentChangelogs()
 })
 </script>
 

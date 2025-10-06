@@ -5,31 +5,38 @@
       <el-card class="stat-card">
         <div class="stat-content">
           <div class="stat-value">{{ websiteStats.totalVisits || '-' }}</div>
-          <div class="stat-label">总访问量</div>
+          <div class="stat-label">主页访问量</div>
+          <el-icon class="stat-icon"><View /></el-icon>
           <div class="stat-extra">今日: {{ websiteStats.visitsToday || 0 }}</div>
         </div>
-        <el-icon class="stat-icon"><View /></el-icon>
+        
       </el-card>
       <el-card class="stat-card">
         <div class="stat-content">
           <div class="stat-value">{{ websiteStats.totalRecords || '-' }}</div>
           <div class="stat-label">成绩提交数</div>
+          <el-icon class="stat-icon"><Trophy /></el-icon>
+          <div class="stat-extra">本月: {{ websiteStats.recordsThisMonth || 0 }}</div>
         </div>
-        <el-icon class="stat-icon"><Trophy /></el-icon>
+        
       </el-card>
       <el-card class="stat-card">
         <div class="stat-content">
           <div class="stat-value">{{ websiteStats.totalUsers || '-' }}</div>
           <div class="stat-label">注册用户数</div>
+          <el-icon class="stat-icon"><User /></el-icon>
+          <div class="stat-extra">本月: {{ websiteStats.usersThisMonth || 0 }}</div>
         </div>
-        <el-icon class="stat-icon"><User /></el-icon>
+        
       </el-card>
       <el-card class="stat-card">
         <div class="stat-content">
           <div class="stat-value">{{ websiteStats.activeUsers || '-' }}</div>
           <div class="stat-label">活跃用户数</div>
+          <el-icon class="stat-icon"><UserFilled /></el-icon>
+          <div class="stat-extra">30天内有活动</div>
         </div>
-        <el-icon class="stat-icon"><UserFilled /></el-icon>
+        
       </el-card>
     </div>
     
@@ -63,7 +70,9 @@ const websiteStats = ref({
   visitsToday: 0,
   visitsThisMonth: 0,
   totalRecords: 0,
+  recordsThisMonth: 0,
   totalUsers: 0,
+  usersThisMonth: 0,
   activeUsers: 0
 })
 
@@ -84,7 +93,9 @@ const loadData = async () => {
         visitsToday: visitStats.visitsToday,
         visitsThisMonth: visitStats.visitsThisMonth,
         totalRecords: recordStats.totalRecords,
+        recordsThisMonth: recordStats.recordsThisMonth,
         totalUsers: userStats.totalUsers,
+        usersThisMonth: userStats.usersThisMonth,
         activeUsers: userStats.activeUsers
       }
       

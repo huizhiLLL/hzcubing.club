@@ -120,7 +120,38 @@ export const getEventName = (eventCode) => {
   return eventNames[eventCode] || eventCode
 }
 
-// 获取项目类型
+// 动态整活项目缓存
+let memeEventsCache = []
+let memeEventsCacheTime = 0
+const CACHE_DURATION = 5 * 60 * 1000 // 5分钟缓存
+
+// 获取整活项目（从API）
+export const getMemeEventsFromAPI = async () => {
+  try {
+    // 检查缓存
+    const now = Date.now()
+    if (memeEventsCache.length > 0 && (now - memeEventsCacheTime) < CACHE_DURATION) {
+      return memeEventsCache
+    }
+    
+    // 动态导入API（避免循环依赖）
+    const { getMemeEvents } = await import('@/api/index.js')
+    const result = await getMemeEvents({ page: 1, pageSize: 100 })
+    
+    if (result.code === 200) {
+      memeEventsCache = result.data || []
+      memeEventsCacheTime = now
+      return memeEventsCache
+    }
+  } catch (error) {
+    console.error('获取整活项目失败:', error)
+  }
+  
+  // 如果API失败，返回静态数据作为备用
+  return events.meme.options.slice(1) // 移除"全部"选项
+}
+
+// 获取项目类型（同步版本，用于显示已有数据）
 export const getEventType = (eventCode) => {
   if (events.official.options.some(opt => opt.value === eventCode)) {
     return 'official'
@@ -128,9 +159,40 @@ export const getEventType = (eventCode) => {
   if (events.fun.options.some(opt => opt.value === eventCode)) {
     return 'fun'
   }
+  
+  // 检查静态整活项目
   if (events.meme.options.some(opt => opt.value === eventCode)) {
     return 'meme'
   }
+  
+  // 检查缓存的动态整活项目
+  if (memeEventsCache.some(event => event.eventCode === eventCode)) {
+    return 'meme'
+  }
+  
+  return 'unknown'
+}
+
+// 获取项目类型（异步版本，用于实时检查）
+export const getEventTypeAsync = async (eventCode) => {
+  if (events.official.options.some(opt => opt.value === eventCode)) {
+    return 'official'
+  }
+  if (events.fun.options.some(opt => opt.value === eventCode)) {
+    return 'fun'
+  }
+  
+  // 检查动态整活项目
+  const memeEvents = await getMemeEventsFromAPI()
+  if (memeEvents.some(event => event.eventCode === eventCode)) {
+    return 'meme'
+  }
+  
+  // 检查静态整活项目（备用）
+  if (events.meme.options.some(opt => opt.value === eventCode)) {
+    return 'meme'
+  }
+  
   return 'unknown'
 }
 

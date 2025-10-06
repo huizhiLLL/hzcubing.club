@@ -35,6 +35,10 @@
             <el-icon><User /></el-icon>
             <span>用户统计</span>
           </el-menu-item>
+          <el-menu-item index="meme-events">
+            <el-icon><Trophy /></el-icon>
+            <span>整活项目</span>
+          </el-menu-item>
         </el-menu>
         
         <div class="sidebar-footer">
@@ -57,10 +61,9 @@
         <!-- 成绩管理 -->
         <div v-if="activeMenu === 'records'" class="admin-section">
           <h3 class="section-title">成绩记录管理</h3>
-          <RecordsTable 
+          <AdminRecordsTable 
             :records="allRecords" 
-            :show-actions="false"
-            :auto-refresh="false"
+            :loading="recordsLoading"
             @refresh="fetchAllRecords"
           />
         </div>
@@ -125,8 +128,129 @@
             </el-card>
           </div>
         </div>
+        
+        <!-- 整活项目管理 -->
+        <div v-if="activeMenu === 'meme-events'" class="admin-section">
+          <div class="section-header">
+            <h3 class="section-title">整活项目管理</h3>
+            <div class="section-actions">
+              <el-button type="primary" @click="showAddMemeEventDialog">
+                <el-icon><Plus /></el-icon>
+                添加项目
+              </el-button>
+              <el-button @click="fetchMemeEvents" :loading="memeEventsLoading">
+                <el-icon><Refresh /></el-icon>
+                刷新
+              </el-button>
+            </div>
+          </div>
+          
+          <el-table :data="memeEvents" v-loading="memeEventsLoading" class="meme-events-table">
+            <el-table-column prop="eventCode" label="项目代码" width="120" />
+            <el-table-column prop="eventName" label="项目名称" width="200" />
+            <el-table-column prop="description" label="描述" :show-overflow-tooltip="true" />
+            <el-table-column prop="isActive" label="状态" width="80">
+              <template #default="{ row }">
+                <el-tag :type="row.isActive ? 'success' : 'warning'" size="small">
+                  {{ row.isActive ? '启用' : '禁用' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="createdAt" label="创建时间" width="120">
+              <template #default="{ row }">
+                {{ formatDate(row.createdAt) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="createdByName" label="创建者" width="100" />
+            <el-table-column label="操作" width="200">
+              <template #default="{ row }">
+                <el-button-group>
+                  <el-button size="small" @click="editMemeEvent(row)">
+                    <el-icon><Edit /></el-icon>
+                    编辑
+                  </el-button>
+                  <el-button 
+                    size="small" 
+                    type="danger" 
+                    @click="deleteMemeEvent(row)"
+                  >
+                    <el-icon><Delete /></el-icon>
+                    删除
+                  </el-button>
+                </el-button-group>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
       </main>
     </div>
+    
+    <!-- 添加整活项目对话框 -->
+    <el-dialog
+      v-model="addMemeEventDialogVisible"
+      title="添加整活项目"
+      width="500px"
+    >
+      <el-form :model="memeEventForm" label-width="80px">
+        <el-form-item label="项目代码" required>
+          <el-input v-model="memeEventForm.eventCode" placeholder="如: 250ml牛奶" />
+          <div class="form-tip">项目代码用于系统识别，添加后不可修改</div>
+        </el-form-item>
+        <el-form-item label="项目名称" required>
+          <el-input v-model="memeEventForm.eventName" placeholder="如: 250ml牛奶" />
+        </el-form-item>
+        <el-form-item label="项目描述">
+          <el-input 
+            v-model="memeEventForm.description" 
+            type="textarea" 
+            :rows="3"
+            placeholder="项目的详细描述（可选）"
+          />
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <el-button @click="addMemeEventDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitMemeEvent">确认添加</el-button>
+      </template>
+    </el-dialog>
+    
+    <!-- 编辑整活项目对话框 -->
+    <el-dialog
+      v-model="editMemeEventDialogVisible"
+      title="编辑整活项目"
+      width="500px"
+    >
+      <el-form :model="memeEventForm" label-width="80px">
+        <el-form-item label="项目代码" required>
+          <el-input v-model="memeEventForm.eventCode" disabled />
+          <div class="form-tip">项目代码不可修改</div>
+        </el-form-item>
+        <el-form-item label="项目名称" required>
+          <el-input v-model="memeEventForm.eventName" placeholder="如: 250ml牛奶" />
+        </el-form-item>
+        <el-form-item label="项目描述">
+          <el-input 
+            v-model="memeEventForm.description" 
+            type="textarea" 
+            :rows="3"
+            placeholder="项目的详细描述（可选）"
+          />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-switch
+            v-model="memeEventForm.isActive"
+            active-text="启用"
+            inactive-text="禁用"
+          />
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <el-button @click="editMemeEventDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitMemeEvent">确认修改</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -139,9 +263,10 @@ import { useRecordsStore } from '@/stores/records'
 import { getRoleDisplayName, getRoleColor } from '@/utils/permissions'
 import RecordsTable from '@/components/RecordsTable.vue'
 import AdminDashboard from '@/components/AdminDashboard.vue'
-import { ElMessage } from 'element-plus'
+import AdminRecordsTable from '@/components/AdminRecordsTable.vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
-  DataBoard, Trophy, ChatDotRound, User, Back, View, UserFilled, Clock 
+  DataBoard, Trophy, ChatDotRound, User, Back, View, UserFilled, Clock, Plus, Edit, Delete, Refresh
 } from '@element-plus/icons-vue'
 import api from '@/api/index.js'
 
@@ -152,6 +277,7 @@ const recordsStore = useRecordsStore()
 
 const activeMenu = ref('dashboard')
 const loading = ref(false)
+const recordsLoading = ref(false)
 
 // 数据状态
 const userStats = ref({
@@ -165,6 +291,19 @@ const userStats = ref({
 
 const allRecords = ref([])
 const userFeedbacks = ref([])
+
+// 整活项目管理相关
+const memeEvents = ref([])
+const memeEventsLoading = ref(false)
+const addMemeEventDialogVisible = ref(false)
+const editMemeEventDialogVisible = ref(false)
+const memeEventForm = ref({
+  eventCode: '',
+  eventName: '',
+  description: '',
+  isActive: true
+})
+const selectedMemeEvent = ref(null)
 
 // 菜单选择处理
 const handleMenuSelect = (key) => {
@@ -189,6 +328,9 @@ const loadSectionData = async (section) => {
       case 'users-stats':
         await fetchUserStats()
         break
+      case 'meme-events':
+        await fetchMemeEvents()
+        break
     }
   } catch (error) {
     ElMessage.error('加载数据失败: ' + error.message)
@@ -199,11 +341,36 @@ const loadSectionData = async (section) => {
 
 // 获取所有成绩记录
 const fetchAllRecords = async () => {
+  recordsLoading.value = true
   try {
-    await recordsStore.fetchRecords()
-    allRecords.value = recordsStore.records
+    // 分批获取所有records，避免数量限制
+    let allRecordsData = []
+    let page = 1
+    const pageSize = 100
+    
+    while (true) {
+      const result = await api.getRecords({ page, pageSize })
+      if (result.code === 200 && result.data && result.data.length > 0) {
+        allRecordsData = allRecordsData.concat(result.data)
+        
+        // 如果返回的数据少于pageSize，说明已经是最后一页
+        if (result.data.length < pageSize) {
+          break
+        }
+        page++
+      } else {
+        break
+      }
+    }
+    
+    allRecords.value = allRecordsData
+    console.log(`管理员页面：获取到${allRecordsData.length}条成绩记录`)
   } catch (error) {
     console.error('获取成绩记录失败:', error)
+    ElMessage.error('获取成绩记录失败: ' + error.message)
+    allRecords.value = []
+  } finally {
+    recordsLoading.value = false
   }
 }
 
@@ -265,6 +432,130 @@ const formatTime = (timestamp) => {
   } else {
     return date.toLocaleDateString('zh-CN')
   }
+}
+
+// 获取整活项目列表
+const fetchMemeEvents = async () => {
+  memeEventsLoading.value = true
+  try {
+    const result = await api.getMemeEvents({ page: 1, pageSize: 50 })
+    if (result.code === 200) {
+      memeEvents.value = result.data || []
+    } else {
+      throw new Error(result.message || '获取整活项目失败')
+    }
+  } catch (error) {
+    ElMessage.error('获取整活项目失败: ' + error.message)
+    memeEvents.value = []
+  } finally {
+    memeEventsLoading.value = false
+  }
+}
+
+// 显示添加项目对话框
+const showAddMemeEventDialog = () => {
+  memeEventForm.value = {
+    eventCode: '',
+    eventName: '',
+    description: '',
+    isActive: true
+  }
+  selectedMemeEvent.value = null
+  addMemeEventDialogVisible.value = true
+}
+
+// 编辑整活项目
+const editMemeEvent = (event) => {
+  selectedMemeEvent.value = event
+  memeEventForm.value = {
+    eventCode: event.eventCode,
+    eventName: event.eventName,
+    description: event.description || '',
+    isActive: event.isActive !== undefined ? event.isActive : true
+  }
+  editMemeEventDialogVisible.value = true
+}
+
+// 删除整活项目
+const deleteMemeEvent = async (event) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除整活项目 "${event.eventName}" 吗？如果该项目已有成绩记录，将无法删除。`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    const result = await api.deleteMemeEvent(event._id)
+    
+    if (result.code === 200) {
+      ElMessage.success('整活项目删除成功')
+      await fetchMemeEvents()
+    } else {
+      throw new Error(result.message || '删除失败')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败: ' + error.message)
+    }
+  }
+}
+
+// 提交整活项目（添加或编辑）
+const submitMemeEvent = async () => {
+  try {
+    // 验证表单
+    if (!memeEventForm.value.eventCode || !memeEventForm.value.eventName) {
+      ElMessage.error('项目代码和名称不能为空')
+      return
+    }
+    
+    const data = {
+      eventCode: memeEventForm.value.eventCode,
+      eventName: memeEventForm.value.eventName,
+      description: memeEventForm.value.description,
+      isActive: memeEventForm.value.isActive
+    }
+    
+    let result
+    if (selectedMemeEvent.value) {
+      // 编辑模式
+      result = await api.updateMemeEvent({
+        id: selectedMemeEvent.value._id,
+        ...data
+      })
+    } else {
+      // 添加模式
+      result = await api.addMemeEvent(data)
+    }
+    
+    if (result.code === 200) {
+      ElMessage.success(selectedMemeEvent.value ? '整活项目修改成功' : '整活项目添加成功')
+      addMemeEventDialogVisible.value = false
+      editMemeEventDialogVisible.value = false
+      await fetchMemeEvents()
+    } else {
+      throw new Error(result.message || '操作失败')
+    }
+  } catch (error) {
+    ElMessage.error('操作失败: ' + error.message)
+  }
+}
+
+// 格式化日期
+const formatDate = (dateString) => {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  if (isNaN(date)) return '-'
+  
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  
+  return `${year}.${month}.${day}`
 }
 
 // 获取角色标签类型
@@ -388,6 +679,32 @@ onMounted(() => {
 .feedback-time {
   color: var(--text-color-secondary);
   font-size: 12px;
+}
+
+/* 整活项目管理样式 */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.meme-events-table {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
 }
 
 .feedback-content {

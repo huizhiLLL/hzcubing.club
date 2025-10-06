@@ -212,7 +212,7 @@ import { useUserStore } from '@/stores/user'
 import ElementTransition from '@/components/ElementTransition.vue'
 import { ElMessage } from 'element-plus'
 import { Icon } from '@iconify/vue'
-import { categories, events, getEventName, getCurrentEvents } from '@/config/events'
+import { categories, events, getEventName, getCurrentEvents, getMemeEventsFromAPI } from '@/config/events'
 
 const recordsStore = useRecordsStore()
 const userStore = useUserStore()
@@ -224,6 +224,7 @@ const loading = ref(false)
 const error = ref('')
 const recordDetailVisible = ref(false)
 const selectedRecord = ref(null)
+const dynamicMemeEvents = ref([])
 
 // 刷新排行榜数据
 const refreshLeaderboard = async () => {
@@ -248,6 +249,8 @@ onMounted(async () => {
   
   try {
     await recordsStore.fetchRecords()
+    // 预加载整活项目
+    await loadMemeEvents()
   } catch (err) {
     console.error('获取排行榜数据失败:', err)
     error.value = err.message || '获取数据失败，请稍后再试'
@@ -260,12 +263,53 @@ const currentEvents = computed(() => {
   if (selectedCategory.value === 'all') {
     return [events.all]
   }
+  
+  // 如果是整活项目，使用动态数据
+  if (selectedCategory.value === 'meme') {
+    const staticOptions = events.meme.options || []
+    const dynamicOptions = dynamicMemeEvents.value.map(event => ({
+      label: event.eventName,
+      value: event.eventCode
+    }))
+    
+    // 合并静态和动态选项
+    const allOptions = [...staticOptions]
+    
+    // 添加动态选项（避免重复）
+    dynamicOptions.forEach(dynamicOption => {
+      if (!allOptions.some(option => option.value === dynamicOption.value)) {
+        allOptions.push(dynamicOption)
+      }
+    })
+    
+    return [{
+      label: events.meme.label,
+      options: allOptions
+    }]
+  }
+  
   return selectedCategory.value ? [events[selectedCategory.value]] : []
 })
 
-watch(selectedCategory, (newCategory) => {
+watch(selectedCategory, async (newCategory) => {
   selectedEvent.value = newCategory ? `${newCategory}_all` : ''
+  
+  // 如果选择了整活项目，加载动态数据
+  if (newCategory === 'meme') {
+    await loadMemeEvents()
+  }
 })
+
+// 加载动态整活项目
+const loadMemeEvents = async () => {
+  try {
+    const memeEvents = await getMemeEventsFromAPI()
+    dynamicMemeEvents.value = memeEvents.filter(event => event.isActive !== false)
+  } catch (error) {
+    console.error('加载整活项目失败:', error)
+    dynamicMemeEvents.value = []
+  }
+}
 
 // 生成排行榜数据
 const leaderboardData = computed(() => {

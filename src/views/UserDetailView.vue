@@ -533,7 +533,7 @@ const fetchUserData = async () => {
   loading.value = true
   try {
     const result = await api.getUser(userId.value)
-    if (result.code === 0 && result.data) {
+    if (result.code === 200 && result.data) {
       user.value = result.data
     } else {
       ElMessage.error(result.message || '获取用户信息失败')
