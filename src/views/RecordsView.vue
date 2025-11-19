@@ -262,7 +262,7 @@ import RecordsTable from '@/components/RecordsTable.vue'
 import ElementTransition from '@/components/ElementTransition.vue'
 import { ElMessage } from 'element-plus'
 import { InfoFilled } from '@element-plus/icons-vue'
-import { categories, events, getEventName, getCurrentEvents, getAllEvents } from '@/config/events'
+import { categories, events, getEventName, getAllEvents, getMemeEventsFromAPI } from '@/config/events'
 
 const userStore = useUserStore()
 const recordsStore = useRecordsStore()
@@ -276,6 +276,17 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const loading = ref(false)
 const error = ref('')
+const dynamicMemeEvents = ref([])
+
+const loadMemeEvents = async () => {
+  try {
+    const memeEvents = await getMemeEventsFromAPI()
+    dynamicMemeEvents.value = memeEvents.filter(event => event.isActive !== false)
+  } catch (err) {
+    console.error('加载整活项目失败:', err)
+    dynamicMemeEvents.value = []
+  }
+}
 
 // 刷新记录数据
 const refreshRecords = async () => {
@@ -301,6 +312,7 @@ onMounted(async () => {
   try {
     // 从后端获取所有记录
     await recordsStore.fetchRecords()
+    await loadMemeEvents()
     // 补齐当前历史项目下的昵称
     const currentList = recordsStore.getRecordsByEvent(selectedHistoryEvent.value)
     await recordsStore.ensureNicknamesForRecords(currentList)
@@ -312,15 +324,41 @@ onMounted(async () => {
   }
 })
 
+const mergedMemeOptions = computed(() => {
+  const staticOptions = events.meme?.options || []
+  const merged = [...staticOptions]
+  
+  dynamicMemeEvents.value.forEach(event => {
+    if (!merged.some(option => option.value === event.eventCode)) {
+      merged.push({
+        label: event.eventName,
+        value: event.eventCode
+      })
+    }
+  })
+  
+  return merged
+})
+
 const currentEvents = computed(() => {
   if (selectedCategory.value === 'all') {
     return [events.all]
+  }
+  
+  if (selectedCategory.value === 'meme') {
+    return [{
+      label: events.meme.label,
+      options: mergedMemeOptions.value
+    }]
   }
   return selectedCategory.value ? [events[selectedCategory.value]] : []
 })
 
 watch(selectedCategory, (newCategory) => {
   selectedEvent.value = newCategory ? `${newCategory}_all` : ''
+  if (newCategory === 'meme') {
+    loadMemeEvents()
+  }
 })
 
 // 获取当前选择项目的所有记录
@@ -341,8 +379,8 @@ const filteredRecords = computed(() => {
   
   if (selectedEvent.value.endsWith('_all')) {
     const category = selectedEvent.value.split('_')[0]
-    const eventOptions = events[category]?.options || []
-    const validEvents = eventOptions.slice(1).map(opt => opt.value)
+    const eventOptions = category === 'meme' ? mergedMemeOptions.value : (events[category]?.options || [])
+    const validEvents = eventOptions.filter(opt => !opt.value.endsWith('_all')).map(opt => opt.value)
     return Object.values(bestRecords).filter(record => validEvents.includes(record.event))
   }
   
@@ -490,7 +528,12 @@ const formatDate = (timestamp) => {
 
 // 所有项目的列表
 const allEvents = computed(() => {
-  return getAllEvents()
+  const all = getAllEvents()
+  const memeSection = all.find(section => section.label === events.meme.label)
+  if (memeSection) {
+    memeSection.options = mergedMemeOptions.value.filter(opt => !opt.value.endsWith('_all'))
+  }
+  return all
 })
 </script>
 
