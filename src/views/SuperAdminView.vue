@@ -57,10 +57,6 @@
               <el-icon><Key /></el-icon>
               <span>权限管理</span>
             </el-menu-item>
-            <el-menu-item index="system-settings">
-              <el-icon><Setting /></el-icon>
-              <span>系统设置</span>
-            </el-menu-item>
             <el-menu-item index="changelog-management">
               <el-icon><Edit /></el-icon>
               <span>更新日志</span>
@@ -279,25 +275,6 @@
           </el-card>
         </div>
         
-        <!-- 系统设置 -->
-        <div v-if="activeMenu === 'system-settings'" class="admin-section">
-          <h3 class="section-title">系统设置</h3>
-          <el-card class="system-settings-card">
-            <div class="setting-item">
-              <div class="setting-info">
-                <h4>维护模式</h4>
-                <p>开启后，网站将显示维护页面，仅管理员可访问</p>
-              </div>
-              <el-switch
-                v-model="maintenanceMode"
-                @change="toggleMaintenanceMode"
-                :loading="maintenanceLoading"
-                size="large"
-              />
-            </div>
-          </el-card>
-        </div>
-        
         <!-- 更新日志管理 -->
         <div v-if="activeMenu === 'changelog-management'" class="admin-section">
           <div class="section-header">
@@ -511,7 +488,7 @@ import { getRoleDisplayName, getRoleColor } from '@/utils/permissions'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   DataBoard, Trophy, ChatDotRound, User, UserFilled, 
-  Key, Setting, Back, Search, Refresh, Edit, View, Clock, Plus, Delete
+  Key, Back, Search, Refresh, Edit, View, Clock, Plus, Delete
 } from '@element-plus/icons-vue'
 import AdminDashboard from '@/components/AdminDashboard.vue'
 import RecordsTable from '@/components/RecordsTable.vue'
@@ -562,10 +539,6 @@ const editRoleDialogVisible = ref(false)
 const selectedUser = ref(null)
 const newRole = ref('')
 const roleChangeLoading = ref(false)
-
-// 系统设置相关
-const maintenanceMode = ref(false)
-const maintenanceLoading = ref(false)
 
 // 角色权限概览
 const roleOverview = ref([
@@ -636,9 +609,6 @@ const loadSectionData = async (section) => {
         break
       case 'role-management':
         await fetchRoleStats()
-        break
-      case 'system-settings':
-        await fetchSystemSettings()
         break
       case 'changelog-management':
         await fetchChangelogs()
@@ -768,19 +738,6 @@ const fetchRoleStats = async () => {
   }
 }
 
-// 获取系统设置
-const fetchSystemSettings = async () => {
-  try {
-    const result = await api.getMaintenanceMode()
-    if (result.code === 200) {
-      maintenanceMode.value = result.data.maintenanceMode || false
-    }
-  } catch (error) {
-    console.error('获取系统设置失败:', error)
-    maintenanceMode.value = false
-  }
-}
-
 // 编辑用户角色
 const editUserRole = (user) => {
   selectedUser.value = user
@@ -853,26 +810,6 @@ const toggleUserStatus = async (user) => {
     if (error !== 'cancel') {
       ElMessage.error(`用户${actionText}失败: ` + error.message)
     }
-  }
-}
-
-// 切换维护模式
-const toggleMaintenanceMode = async (value) => {
-  maintenanceLoading.value = true
-  try {
-    const reason = value ? '系统维护升级中，请稍后访问' : ''
-    const result = await api.setMaintenanceMode(value, reason)
-    
-    if (result.code === 200) {
-      ElMessage.success(value ? '维护模式已开启' : '维护模式已关闭')
-    } else {
-      throw new Error(result.message || '设置维护模式失败')
-    }
-  } catch (error) {
-    ElMessage.error('设置维护模式失败: ' + error.message)
-    maintenanceMode.value = !value // 回滚状态
-  } finally {
-    maintenanceLoading.value = false
   }
 }
 
@@ -1190,33 +1127,6 @@ onMounted(() => {
 
 .permission-tag {
   font-size: 12px;
-}
-
-.system-settings-card {
-  margin-top: 20px;
-}
-
-.setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 0;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.setting-item:last-child {
-  border-bottom: none;
-}
-
-.setting-info h4 {
-  margin: 0 0 5px 0;
-  color: var(--text-color);
-}
-
-.setting-info p {
-  margin: 0;
-  color: var(--text-color-secondary);
-  font-size: 14px;
 }
 
 .edit-role-content {

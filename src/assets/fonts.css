@@ -1,7 +1,7 @@
 /* 中文字体 */
 @font-face {
   font-family: 'CustomChinese';
-  src: url('/fonts/chinese/your-chinese-font.otf') format('opentype');
+  src: url('/fonts/chinese/font.woff2') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -9,7 +9,7 @@
 
 @font-face {
   font-family: 'CustomChinese';
-  src: url('/fonts/chinese/your-chinese-font.otf') format('opentype');
+  src: url('/fonts/chinese/font.woff2') format('opentype');
   font-weight: bold;
   font-style: normal;
   font-display: swap;
@@ -18,7 +18,7 @@
 /* 英文字体 */
 @font-face {
   font-family: 'CustomEnglish';
-  src: url('/fonts/english/your-chinese-font.otf') format('opentype');
+  src: url('/fonts/english/font.woff2') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -26,7 +26,7 @@
 
 @font-face {
   font-family: 'CustomEnglish';
-  src: url('/fonts/english/your-chinese-font.otf') format('opentype');
+  src: url('/fonts/english/font.woff2') format('opentype');
   font-weight: bold;
   font-style: normal;
   font-display: swap;
@@ -38,6 +38,4 @@
   font-weight: normal;
   font-style: italic;
   font-display: swap;
-}
-
-/* 注意：请将上面的字体文件名替换为您实际的字体文件名 */ 
+} 

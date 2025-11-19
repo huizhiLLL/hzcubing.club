@@ -308,6 +308,111 @@ export default async function (ctx) {
       return { code: 200, message: '获取成功', data }
     }
 
+    // 获取最近打破的记录（GR 历史）
+    if (pattern === '/recent-record-breaks') {
+      const { limit = 5 } = ctx.query || {}
+      const limitNum = Math.min(Math.max(1, parseInt(limit)), 100)
+      
+      // 获取所有记录，按时间排序
+      const res = await db.collection('records')
+        .orderBy('timestamp', 'desc')
+        .get()
+      
+      const allRecords = res.data || []
+      
+      // 计算每个项目的打破记录历史
+      const eventRecordsMap = new Map()
+      
+      // 按事件分组
+      for (const record of allRecords) {
+        const event = record.event
+        if (!event) continue
+        
+        if (!eventRecordsMap.has(event)) {
+          eventRecordsMap.set(event, [])
+        }
+        eventRecordsMap.get(event).push(record)
+      }
+      
+      // 计算每个事件的打破记录
+      const recordBreaks = []
+      
+      for (const [event, records] of eventRecordsMap.entries()) {
+        // 按时间从早到晚排序
+        const sortedRecords = [...records].sort((a, b) => {
+          const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0
+          const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0
+          return timeA - timeB
+        })
+        
+        let bestSingleTime = Infinity
+        let bestAverageTime = Infinity
+        
+        // 遍历找出打破记录的
+        for (const record of sortedRecords) {
+          const singleTime = record.singleSeconds
+          const averageTime = record.averageSeconds
+          let isBreakingRecord = false
+          
+          if (singleTime !== null && singleTime !== undefined && singleTime < bestSingleTime) {
+            bestSingleTime = singleTime
+            isBreakingRecord = true
+          }
+          
+          if (averageTime !== null && averageTime !== undefined && averageTime < bestAverageTime) {
+            bestAverageTime = averageTime
+            isBreakingRecord = true
+          }
+          
+          if (isBreakingRecord) {
+            recordBreaks.push({
+              ...normalizeForRead(record),
+              isSingleRecord: singleTime !== null && singleTime !== undefined && singleTime === bestSingleTime,
+              isAverageRecord: averageTime !== null && averageTime !== undefined && averageTime === bestAverageTime
+            })
+          }
+        }
+      }
+      
+      // 按时间从新到旧排序，取前 limit 条
+      recordBreaks.sort((a, b) => {
+        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0
+        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0
+        return timeB - timeA
+      })
+      
+      const data = recordBreaks.slice(0, limitNum)
+      
+      // 批量获取用户昵称
+      const userIds = [...new Set(data.map(r => r.userId).filter(Boolean))]
+      const userMap = new Map()
+      
+      if (userIds.length > 0) {
+        try {
+          const usersRes = await db.collection('users')
+            .where({
+              _id: db.command.in(userIds)
+            })
+            .field({ _id: true, nickname: true })
+            .get()
+          
+          usersRes.data?.forEach(user => {
+            userMap.set(user._id, user.nickname)
+          })
+        } catch (e) {
+          console.error('批量获取用户信息失败:', e)
+        }
+      }
+      
+      // 填充昵称
+      const result = data.map(record => ({
+        ...record,
+        nickname: userMap.get(record.userId) || record.nickname || '匿名用户'
+      }))
+      
+      return { code: 200, message: '获取成功', data: result }
+    }
+
     return { code: 404, message: '未找到请求的API' }
   } catch (err) {
     console.error('record 接口异常:', err)

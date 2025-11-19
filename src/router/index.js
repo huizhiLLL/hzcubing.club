@@ -70,13 +70,6 @@ const router = createRouter({
       component: () => import('../views/OnlineCompetition.vue'),
       meta: { requiresAuth: false }
     },
-    {
-      path: '/maintenance',
-      name: 'maintenance',
-      component: () => import('../views/MaintenanceView.vue'),
-      meta: { requiresAuth: false, allowInMaintenance: true }
-    },
-    
     // 管理员路由
     {
       path: '/admin',

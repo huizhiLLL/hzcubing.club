@@ -226,10 +226,10 @@ const handleLoginSuccess = () => {
           <el-icon><Icon icon="mdi:account-group" /></el-icon>
           <span>选手</span>
         </el-menu-item>
-        <el-menu-item index="/minecraft">
+        <!-- <el-menu-item index="/minecraft">
           <el-icon><Icon icon="mdi:minecraft" /></el-icon>
           <span>MC</span>
-        </el-menu-item>
+        </el-menu-item> -->
         <el-menu-item v-if="user" index="/submit-record">
           <el-icon><Icon icon="mdi:upload" /></el-icon>
           <span>上传成绩</span>
@@ -251,10 +251,10 @@ const handleLoginSuccess = () => {
           <el-icon><Icon icon="mdi:message-text" /></el-icon>
           <span>想对群主说</span>
         </el-menu-item>
-        <el-menu-item index="/online-competition">
+        <!-- <el-menu-item index="/online-competition">
           <el-icon><Icon icon="mdi:trophy-award" /></el-icon>
           <span>线上赛（临时）</span>
-        </el-menu-item>
+        </el-menu-item> -->
       </el-menu>
       <div class="sidebar-footer">
         <template v-if="user">
@@ -290,7 +290,7 @@ const handleLoginSuccess = () => {
               <el-button text @click="router.push('/records')" class="btn-animated">记录</el-button>
               <el-button text @click="router.push('/leaderboard')" class="btn-animated">排行榜</el-button>
               <el-button text @click="router.push('/users')" class="btn-animated">选手</el-button>
-              <el-button text @click="router.push('/minecraft')" class="btn-animated">MC</el-button>
+              <!-- <el-button text @click="router.push('/minecraft')" class="btn-animated">MC</el-button> -->
               
               <!-- 更多菜单下拉按钮 -->
               <el-dropdown trigger="click" @visible-change="moreMenuVisible = $event" class="more-menu-dropdown">
@@ -322,10 +322,10 @@ const handleLoginSuccess = () => {
                       <Icon icon="mdi:message-text" class="dropdown-icon" />
                       想对群主说
                     </el-dropdown-item>
-                    <el-dropdown-item @click="router.push('/online-competition')">
+                    <!-- <el-dropdown-item @click="router.push('/online-competition')">
                       <Icon icon="mdi:trophy-award" class="dropdown-icon" />
                       线上赛
-                    </el-dropdown-item>
+                    </el-dropdown-item> -->
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>

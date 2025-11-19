@@ -92,7 +92,6 @@ const loadChangelogs = async () => {
 
 onMounted(async () => {
   window.addEventListener('resize', handleResize)
-  await loadChangelogs()
 })
 
 onUnmounted(() => {
@@ -186,7 +185,12 @@ const handleItemClick = (item, index) => {
 }
 
 // 打开对话框的方法
-const open = () => {
+const open = async () => {
+  // 如果数据为空，则加载数据
+  if (changelogData.value.length === 0) {
+    await loadChangelogs()
+  }
+  
   visible.value = true
   selectedIndex.value = 0
   

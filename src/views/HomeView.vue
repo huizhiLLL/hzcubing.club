@@ -124,6 +124,8 @@ import { getEventName, getEventType } from '@/config/events'
 import ShinyText from '@/components/ShinyText.vue'
 // 导入更新日志数据
 import { getRecentChangelogs } from '@/services/changelog.js'
+// 导入 API
+import { getRecentRecordBreaks } from '@/api/index.js'
 
 const userStore = useUserStore()
 const recordsStore = useRecordsStore()
@@ -216,81 +218,17 @@ const formatDate = (dateString) => {
 const fetchRecentRecords = async () => {
   recordsLoading.value = true
   try {
-    await recordsStore.fetchRecords()
-    
-    // 获取所有记录
-    const allRecords = []
-    const events = Object.keys(recordsStore.getBestRecords())
-    
-    events.forEach(event => {
-      // 跳过整活项目
-      const eventType = getEventType(event)
-      if (eventType === 'meme') {
-        return
-      }
-      
-      const eventRecords = recordsStore.getRecordsByEvent(event)
-      
-      // 记录打破历史的逻辑
-      const recordBreakHistory = []
-      let bestSingleTime = Infinity
-      let bestAverageTime = Infinity
-      
-      // 按时间从早到晚排序
-      const sortedRecords = [...eventRecords].sort((a, b) => {
-        // 安全地解析日期，确保有效比较
-        const dateA = a.timestamp ? new Date(a.timestamp).getTime() : 0
-        const dateB = b.timestamp ? new Date(b.timestamp).getTime() : 0
-        return dateA - dateB
-      })
-      
-      sortedRecords.forEach(record => {
-        let isBreakingRecord = false
-        
-        // 直接使用秒字段
-        const singleTime = typeof record.singleSeconds === 'number' ? record.singleSeconds : null
-        const averageTime = typeof record.averageSeconds === 'number' ? record.averageSeconds : null
-        
-        // 检查单次是否打破记录
-        if (singleTime !== null && singleTime < bestSingleTime) {
-          bestSingleTime = singleTime
-          isBreakingRecord = true
-        }
-        
-        // 检查平均是否打破记录
-        if (averageTime !== null && averageTime < bestAverageTime) {
-          bestAverageTime = averageTime
-          isBreakingRecord = true
-        }
-        
-        // 如果打破了记录，添加到历史中
-        if (isBreakingRecord) {
-          recordBreakHistory.push({
-            ...record,
-            isSingleRecord: singleTime !== null && singleTime === bestSingleTime,
-            isAverageRecord: averageTime !== null && averageTime === bestAverageTime,
-            singleSeconds: singleTime,
-            averageSeconds: averageTime,
-            nickname: record.nickname || recordsStore.getNicknameForUser(record.userId) || ''
-          })
-        }
-      })
-      
-      allRecords.push(...recordBreakHistory)
-    })
-    
-    // 按时间从新到旧排序
-    allRecords.sort((a, b) => {
-      // 安全地解析日期，确保有效比较
-      const dateA = a.timestamp ? new Date(a.timestamp).getTime() : 0
-      const dateB = b.timestamp ? new Date(b.timestamp).getTime() : 0
-      return dateB - dateA
-    })
-    
-    // 取前5条记录
-    recentRecords.value = allRecords.slice(0, 5)
+    // 使用新的后端 API 直接获取最近打破的记录
+    const result = await getRecentRecordBreaks({ limit: 5 })
+    if (result.code === 200) {
+      recentRecords.value = result.data || []
+    } else {
+      console.error('获取最近记录失败:', result.message)
+      recentRecords.value = []
+    }
   } catch (error) {
     console.error('获取最近记录失败:', error)
+    recentRecords.value = []
   } finally {
     recordsLoading.value = false
   }
@@ -356,7 +294,6 @@ onMounted(async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('/hero-bg.jpg') center/cover no-repeat;
   opacity: 0.15;
   z-index: -1;
 }

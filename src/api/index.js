@@ -45,6 +45,14 @@ export function getUserRecords(userId, params = {}) {
   return request(`/record?pattern=/user-records&userId=${encodeURIComponent(userId)}${suffix}`, { method: 'GET' })
 }
 
+export function getRecentRecordBreaks(params = {}) {
+  const q = new URLSearchParams()
+  if (params.limit) q.set('limit', String(params.limit))
+  const qs = q.toString()
+  const suffix = qs ? `&${qs}` : ''
+  return request(`/record?pattern=/recent-record-breaks${suffix}`, { method: 'GET' })
+}
+
 export function addRecord(data) {
   return request('/record?pattern=/add-record', {
     method: 'POST',
@@ -241,18 +249,6 @@ export function trackVisit(visitData) {
   })
 }
 
-// 维护模式API
-export function getMaintenanceMode() {
-  return request('/maintenance-mode', { method: 'GET' })
-}
-
-export function setMaintenanceMode(maintenanceMode, reason = '') {
-  return request('/maintenance-mode', {
-    method: 'PUT',
-    body: JSON.stringify({ maintenanceMode, reason })
-  })
-}
-
 // 更新日志API
 export function getChangelogs(params = {}) {
   const q = new URLSearchParams()
@@ -325,6 +321,7 @@ export default {
   // 记录相关
   getRecords,
   getUserRecords,
+  getRecentRecordBreaks,
   addRecord,
   updateRecord,
   deleteRecord,
@@ -357,10 +354,6 @@ export default {
   getWebsiteStats,
   getFeedbackList,
   trackVisit,
-  
-  // 维护模式
-  getMaintenanceMode,
-  setMaintenanceMode,
   
   // 更新日志管理
   getChangelogs,
