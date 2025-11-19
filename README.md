@@ -1,6 +1,6 @@
 # 会枝Cubing
 
-魔方社区网站 [hzcubing.club](https://hzcubing.club)
+魔方群网站 [hzcubing.club](https://hzcubing.club)
 
 ## 特性
 
