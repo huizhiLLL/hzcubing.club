@@ -13,9 +13,9 @@
 ## 技术栈
 
 - **前端**: Vue 3 + Element Plus + Pinia
-- **后端**: Sealos 云函数 + JWT
+- **后端**: Serverless 函数接口
 - **数据库**: MongoDB
-- **部署**: GitHub Pages
+- **部署**: Vercel + Sealos
 
 ## 功能
 
@@ -33,7 +33,6 @@
 - 网站数据统计
 - 用户和权限管理
 - 动态内容管理
-- 维护模式控制
 
 ## 快速开始
 
@@ -58,4 +57,4 @@ npm run deploy
 ---
 
 © 2025 会枝Cubing. All rights reserved.
-更新时间：2025-10-06
+更新时间：2025-11-19
