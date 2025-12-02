@@ -212,21 +212,7 @@
           </div>
         </div>
         
-        <div v-if="selectedRecord.remark" class="detail-section">
-          <h4>备注</h4>
-          <div class="remark-content">
-            {{ selectedRecord.remark }}
-          </div>
-        </div>
-        
-        <div v-if="selectedRecord.videoLink" class="detail-section">
-          <h4>视频链接</h4>
-          <div class="video-link">
-            <a :href="selectedRecord.videoLink" target="_blank" class="link">
-              {{ selectedRecord.videoLink }}
-            </a>
-          </div>
-        </div>
+        <!-- 已移除感想与视频链接字段展示 -->
       </div>
     </el-dialog>
   </div>
@@ -473,25 +459,6 @@ const handleCurrentChange = (page) => {
   flex: 1;
   color: #303133;
   font-size: 14px;
-}
-
-.remark-content {
-  background-color: #F5F7FA;
-  padding: 12px;
-  border-radius: 6px;
-  color: #606266;
-  line-height: 1.5;
-  font-size: 14px;
-}
-
-.video-link .link {
-  color: #409EFF;
-  text-decoration: none;
-  word-break: break-all;
-}
-
-.video-link .link:hover {
-  text-decoration: underline;
 }
 
 /* 响应式设计 */

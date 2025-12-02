@@ -1,14 +1,5 @@
 <template>
   <div class="submit-container">
-    <ElementTransition name="fade" :duration="600" appear>
-      <div class="page-header">
-        <h1 class="page-title">上传成绩</h1>
-        <router-link to="/records" class="view-records-link">
-          <el-button>查看记录</el-button>
-        </router-link>
-      </div>
-    </ElementTransition>
-
     <el-row :gutter="24">
       <el-col :xs="24" :sm="24" :md="14">
         <ElementTransition name="slide-up" :duration="600" :delay="200" appear>
@@ -98,12 +89,6 @@
                       </div>
                       <div v-if="record.method" class="record-method">
                         解法: {{ record.method }}
-                      </div>
-                      <div v-if="record.videoLink" class="record-video-link">
-                        <a :href="record.videoLink" target="_blank" class="video-link">观看视频</a>
-                      </div>
-                      <div v-if="record.remark" class="record-remark">
-                        感想: {{ record.remark }}
                       </div>
                     </div>
                   </div>
@@ -248,12 +233,6 @@
           <el-form-item label="解法">
             <el-input v-model="editForm.method" class="medium-input" />
           </el-form-item>
-          <el-form-item label="视频链接">
-            <el-input v-model="editForm.videoLink" />
-          </el-form-item>
-          <el-form-item label="感想">
-            <el-input v-model="editForm.remark" type="textarea" />
-          </el-form-item>
         </el-form>
       </div>
       <template #footer>
@@ -279,10 +258,6 @@ import { getEventName, getAllEvents } from '@/config/events'
 
 const recordsStore = useRecordsStore()
 const userStore = useUserStore()
-
-// 调试输出
-console.log('RecordsStore:', recordsStore)
-console.log('updateRecord函数存在:', typeof recordsStore.updateRecord === 'function')
 
 // 用户历史记录
 const userRecords = ref([])
@@ -415,9 +390,7 @@ const handleEdit = (record) => {
       averageSeconds,
       averageMilliseconds,
       cube: record.cube || '',
-      method: record.method || '',
-      videoLink: record.videoLink || '',
-      remark: record.remark || ''
+      method: record.method || ''
     }
   } else {
     // 使用普通秒格式
@@ -431,9 +404,7 @@ const handleEdit = (record) => {
       averageSeconds: null,
       averageMilliseconds: null,
       cube: record.cube || '',
-      method: record.method || '',
-      videoLink: record.videoLink || '',
-      remark: record.remark || ''
+      method: record.method || ''
     }
   }
   
@@ -459,9 +430,7 @@ const confirmEdit = async () => {
       nickname: userStore.user.nickname,
       userId: userStore.user._id,
       cube: editForm.value.cube,
-      method: editForm.value.method,
-      videoLink: editForm.value.videoLink,
-      remark: editForm.value.remark
+      method: editForm.value.method
     }
     
     // 将需要更新的记录ID和更新数据提供给store方法
@@ -562,25 +531,6 @@ onMounted(() => {
   to {
     opacity: 1;
   }
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-  background-color: #ffffff;
-  padding: 16px 20px;
-  border-radius: 8px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.page-title {
-  font-size: 28px;
-  font-weight: bold;
-  color: var(--text-color);
-  margin: 0;
 }
 
 .card {
@@ -716,9 +666,7 @@ onMounted(() => {
 }
 
 .record-cube,
-.record-method,
-.record-video-link,
-.record-remark {
+.record-method {
   font-size: 14px;
   color: var(--text-color-secondary);
   margin-top: 2px;
@@ -760,14 +708,6 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .submit-container {
-    padding: 16px;
-  }
-
-  .page-title {
-    font-size: 24px;
-  }
-
   .record-main {
     flex-direction: column;
     align-items: flex-start;
@@ -794,12 +734,8 @@ onMounted(() => {
     max-height: 380px;
   }
 
-  .card, .page-header {
+  .card {
     padding: 12px;
-  }
-  
-  .page-header {
-    margin-bottom: 20px;
   }
 
   .record-item {

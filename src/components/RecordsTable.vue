@@ -153,15 +153,7 @@
           </span>
         </div>
         
-        <div class="detail-item" v-if="isValidField(selectedRecord.remark)">
-          <span class="label">备注:</span>
-          <span class="value">{{ selectedRecord.remark }}</span>
-        </div>
-        
-        <div v-if="selectedRecord.videoLink" class="detail-item">
-          <span class="label">视频链接:</span>
-          <a :href="selectedRecord.videoLink" target="_blank" class="video-link">{{ selectedRecord.videoLink }}</a>
-        </div>
+        <!-- 已移除感想与视频链接字段展示 -->
         
         <div class="detail-item" v-if="selectedRecord.timestamp">
           <span class="label">提交时间:</span>

@@ -236,44 +236,6 @@
           />
         </el-form-item>
 
-        <div class="more-options-toggle" v-if="!showMoreOptions">
-          <el-button type="primary" link @click="showMoreOptions = true">
-            展开更多选项
-            <el-icon class="ml-1">
-              <component :is="'ArrowDown'"></component>
-            </el-icon>
-          </el-button>
-        </div>
-
-        <div v-show="showMoreOptions" class="more-options">
-          <el-form-item label="感想" prop="remark">
-            <el-input 
-              v-model="form.remark" 
-              type="textarea" 
-              :rows="3"
-              placeholder="选填，记录你的感想"
-              class="short-input"
-            />
-          </el-form-item>
-
-          <el-form-item label="视频链接" prop="videoLink">
-            <el-input 
-              v-model="form.videoLink" 
-              placeholder="选填，可附上你的视频链接地址"
-              class="short-input"
-            />
-          </el-form-item>
-          
-          <div class="collapse-options-toggle">
-            <el-button type="primary" link @click="showMoreOptions = false">
-              收起更多选项
-              <el-icon class="ml-1">
-                <component :is="'ArrowUp'"></component>
-              </el-icon>
-            </el-button>
-          </div>
-        </div>
-
         <!-- 常规按钮区域，不再使用固定容器 -->
         <el-form-item class="form-actions">
           <div class="action-buttons">
@@ -301,7 +263,6 @@ import { useRecordsStore } from '@/stores/records'
 import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
 import { useRouter } from 'vue-router'
-import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 import { categories, events, getMemeEventsFromAPI } from '@/config/events'
 import api from '@/api/index.js'
 import { canSubmitRecord } from '@/utils/permissions'
@@ -311,7 +272,6 @@ const userStore = useUserStore()
 const permissionStore = usePermissionStore()
 const router = useRouter()
 const loading = ref(false)
-const showMoreOptions = ref(false)
 const dynamicMemeEvents = ref([])
 
 // 时间格式开关状态 - 合并为一个全局状态
@@ -345,9 +305,7 @@ const form = reactive({
   averageSeconds: null,
   averageMilliseconds: null,
   cube: '',
-  method: '',
-  remark: '',
-  videoLink: ''
+  method: ''
 })
 
 // 当任一格式改变时，同步开关状态
@@ -550,8 +508,6 @@ const submitForm = async (formEl) => {
             userId: userStore.user._id,
             cube: form.cube || '',
             method: form.method || '',
-            remark: form.remark || '',
-            videoLink: form.videoLink || '',
             timestamp: new Date().toISOString()
           };
           
@@ -593,7 +549,6 @@ const resetForm = (formEl) => {
   form.averageMinutes = null
   form.averageSeconds = null
   form.averageMilliseconds = null
-  showMoreOptions.value = false
 }
 
 const emit = defineEmits(['success'])
@@ -808,19 +763,7 @@ onMounted(async () => {
 .form-actions {
   margin-top: 24px;
   padding-top: 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
   position: relative;
-}
-
-.form-actions::before {
-  content: '';
-  position: absolute;
-  top: -1px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.2), transparent);
 }
 
 .form-actions :deep(.el-form-item__content) {

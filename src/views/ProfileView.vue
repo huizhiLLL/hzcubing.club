@@ -324,19 +324,7 @@
           <span class="detail-value">{{ selectedRecord.method }}</span>
         </div>
         
-        <!-- 感想 -->
-        <div class="detail-item" v-if="isValidField(selectedRecord.remark)">
-          <span class="detail-label">感想:</span>
-          <span class="detail-value">{{ selectedRecord.remark }}</span>
-        </div>
-        
-        <!-- 视频链接 -->
-        <div class="detail-item" v-if="isValidField(selectedRecord.videoLink)">
-          <span class="detail-label">视频链接:</span>
-          <a :href="selectedRecord.videoLink" target="_blank" class="video-link">
-            {{ selectedRecord.videoLink }}
-          </a>
-        </div>
+        <!-- 已移除感想与视频链接字段展示 -->
         
         <div class="detail-item">
           <span class="detail-label">提交时间:</span>
@@ -561,16 +549,12 @@ const formatDate = (dateString, includeTime = false) => {
 
 // 显示记录详情
 const showRecordDetails = (record) => {
-  console.log('Record details:', JSON.stringify(record, null, 2))
-  
   // 处理记录对象，但保留null或undefined值
   const processedRecord = {
     ...record,
-    // 尝试从不同位置获取字段，但不设置默认值
+    // 尝试从不同位置获取字段
     cube: record.cube || record.single?.cube || record.average?.cube,
-    method: record.method || record.single?.method || record.average?.method,
-    remark: record.remark,
-    videoLink: record.videoLink
+    method: record.method || record.single?.method || record.average?.method
   }
   
   selectedRecord.value = processedRecord
@@ -592,7 +576,6 @@ const fetchUserRecords = async (userId) => {
   try {
     // 获取当前登录用户的ID
     let currentUserId = userId || user.value?._id || user.value?.id
-    console.log('获取个人最佳记录 - 原始用户ID:', currentUserId)
     
     // 确保ID格式正确
     if (!userId && typeof user.value === 'object' && user.value !== null) {
@@ -600,19 +583,12 @@ const fetchUserRecords = async (userId) => {
       else if (user.value.id) currentUserId = user.value.id
     }
     
-    console.log('获取个人最佳记录 - 最终使用的用户ID:', currentUserId)
-    console.log('获取个人最佳记录 - 用户对象:', user.value ? JSON.stringify(user.value) : '未登录')
-    
     if (!currentUserId) {
       console.error('无法获取用户ID，用户可能未登录或数据未加载完成')
       return
     }
 
-    console.log('开始请求个人最佳记录API, userId:', currentUserId)
     const result = await api.getUsersBestRecord(currentUserId)
-    console.log('个人最佳记录API响应数据:', JSON.stringify(result))
-    // 详细调试API返回结构
-    debugApiResponse(result, '个人最佳记录')
     
     if (result.code === 200 && result.data) {
       const map = {}
@@ -623,12 +599,6 @@ const fetchUserRecords = async (userId) => {
         }
       })
       personalBests.value = map
-      console.log('个人最佳记录数据已加载, 条目数:', Object.keys(map).length)
-      
-      if (Object.keys(map).length > 0) {
-        const firstEvent = Object.keys(map)[0]
-        console.log('第一个项目的数据结构:', JSON.stringify(map[firstEvent]))
-      }
     } else {
       console.error('获取用户成绩失败:', result.message, '响应码:', result.code)
     }
@@ -643,7 +613,6 @@ const fetchUserHistoryRecords = async (userId) => {
   try {
     // 获取当前登录用户的ID
     let currentUserId = userId || user.value?._id || user.value?.id
-    console.log('获取历史记录 - 原始用户ID:', currentUserId)
     
     // 确保ID格式正确
     if (!userId && typeof user.value === 'object' && user.value !== null) {
@@ -651,19 +620,13 @@ const fetchUserHistoryRecords = async (userId) => {
       else if (user.value.id) currentUserId = user.value.id
     }
     
-    console.log('获取历史记录 - 最终使用的用户ID:', currentUserId)
-    console.log('获取历史记录 - 用户对象:', user.value ? JSON.stringify(user.value) : '未登录')
-    
     if (!currentUserId) {
       console.error('无法获取用户ID，用户可能未登录或数据未加载完成')
       historyLoading.value = false
       return
     }
 
-    console.log('开始请求历史记录API, userId:', currentUserId)
     const result = await api.getUsersHistoryRecord(currentUserId)
-    console.log('历史记录API响应数据:', JSON.stringify(result))
-    debugApiResponse(result, '历史记录')
     
     if (result.code === 200 && result.data) {
       const rows = (result.data || []).map(r => ({
@@ -672,11 +635,6 @@ const fetchUserHistoryRecords = async (userId) => {
         averageSeconds: typeof r.averageSeconds === 'number' ? r.averageSeconds : (r.average && typeof r.average.time === 'number' ? r.average.time : null)
       }))
       historyRecords.value = rows
-      console.log('历史记录数据已加载, 条目数:', rows.length)
-      
-      if (rows.length > 0) {
-        console.log('第一条历史记录的数据结构:', JSON.stringify(rows[0]))
-      }
       
       await ensureRecordsLoaded(currentUserId)
     } else {
@@ -693,78 +651,21 @@ const fetchUserHistoryRecords = async (userId) => {
 const ensureRecordsLoaded = async (hardcodedId) => {
   try {
     // 检查recordsStore是否有数据
-    console.log('检查排行榜数据是否已加载, 当前记录数:', recordsStore.records.length)
     if (recordsStore.records.length === 0) {
-      console.log('排行榜数据未加载，开始获取...')
       await recordsStore.fetchRecords()
-      console.log('排行榜数据加载完成, 记录数:', recordsStore.records.length)
     }
     
     // 计算排名
-    console.log('开始计算排名...')
     calculateRankings(hardcodedId)
     
     // 强制重新计算统计数据
-    console.log('手动计算统计数据...')
     topThreeCount.value = calculateTopThreeCount()
     firstPlaceCount.value = calculateFirstPlaceCount()
-    
-    // 检查计算结果
-    console.log('排名计算完成，统计结果:', {
-      topThreeCount: topThreeCount.value,
-      firstPlaceCount: firstPlaceCount.value,
-      topThreeRecordsCount: Object.keys(topThreeRecords.value).length,
-      sortedTopThreeRecordsCount: sortedTopThreeRecords.value.length
-    })
   } catch (error) {
     console.error('加载排行榜数据出错:', error)
     // 仍然计算统计数据，使用现有信息
     topThreeCount.value = calculateTopThreeCount()
     firstPlaceCount.value = calculateFirstPlaceCount()
-  }
-}
-
-// 调试API返回的数据结构
-const debugApiResponse = (data, source) => {
-  try {
-    console.log(`调试${source}API返回数据:`)
-    if (!data) {
-      console.log('数据为空')
-      return
-    }
-    
-    // 检查基本结构
-    console.log('数据类型:', typeof data)
-    if (typeof data === 'object') {
-      console.log('是否为数组:', Array.isArray(data))
-      console.log('顶层键:', Object.keys(data))
-      
-      // 如果是对象，检查一些常见字段
-      if (!Array.isArray(data)) {
-        if ('code' in data) console.log('code:', data.code)
-        if ('message' in data) console.log('message:', data.message)
-        if ('data' in data) {
-          console.log('data字段类型:', typeof data.data)
-          if (Array.isArray(data.data)) {
-            console.log('data数组长度:', data.data.length)
-            if (data.data.length > 0) {
-              console.log('第一条数据示例:', JSON.stringify(data.data[0]).substring(0, 200) + '...')
-            }
-          } else if (typeof data.data === 'object' && data.data) {
-            console.log('data对象键:', Object.keys(data.data))
-          }
-        }
-      }
-      // 如果是数组，检查长度和示例
-      else {
-        console.log('数组长度:', data.length)
-        if (data.length > 0) {
-          console.log('第一条数据示例:', JSON.stringify(data[0]).substring(0, 200) + '...')
-        }
-      }
-    }
-  } catch (error) {
-    console.error('调试数据时出错:', error)
   }
 }
 
@@ -780,9 +681,6 @@ const calculateRankings = (hardcodedId) => {
       return
     }
     
-    console.log('开始计算排名, 用户ID:', userId)
-    console.log('当前recordsStore中记录数:', recordsStore.records.length)
-    
     // 先重置排名计数
     topThreeCount.value = 0
     firstPlaceCount.value = 0
@@ -792,13 +690,11 @@ const calculateRankings = (hardcodedId) => {
       // 获取项目类型，如果是整活项目则跳过排名计算
       const eventType = getEventType(eventCode)
       if (eventType === 'meme') {
-        console.log(`项目 ${eventCode} 是整活项目，跳过排名计算`)
         continue
       }
       
       // 获取该项目的所有记录
       const eventRecords = recordsStore.getRecordsByEvent(eventCode)
-      console.log(`项目 ${eventCode} 的记录数:`, eventRecords.length)
       
       // 计算单次排名
       if (!isNaN(record.singleSeconds)) {
@@ -819,26 +715,18 @@ const calculateRankings = (hardcodedId) => {
         const sortedSingles = Array.from(userBestSingles.values())
           .sort((a, b) => a.time - b.time)
         
-        console.log(`项目 ${eventCode} 单次排序后的记录:`, sortedSingles.map(s => ({ userId: s.userId, time: s.time })))
-        
         // 查找当前用户的排名
         const userRank = sortedSingles.findIndex(r => r.userId === userId) + 1
         if (userRank > 0) {
           record.singleRank = userRank
-          console.log(`项目 ${eventCode} 单次排名:`, userRank)
           
           // 更新统计数据
           if (userRank === 1) {
             firstPlaceCount.value++
-            console.log(`第一名计数增加，当前:`, firstPlaceCount.value)
           }
           if (userRank <= 3) {
             topThreeCount.value++
-            console.log(`前三名计数增加，当前:`, topThreeCount.value)
           }
-        } else {
-          console.log(`项目 ${eventCode} 单次排名未找到，用户ID:`, userId)
-          console.log('排序后的记录中的用户ID:', sortedSingles.map(s => s.userId))
         }
       }
       
@@ -861,43 +749,20 @@ const calculateRankings = (hardcodedId) => {
         const sortedAverages = Array.from(userBestAverages.values())
           .sort((a, b) => a.time - b.time)
         
-        console.log(`项目 ${eventCode} 平均排序后的记录:`, sortedAverages.map(s => ({ userId: s.userId, time: s.time })))
-        
         // 查找当前用户的排名
         const userRank = sortedAverages.findIndex(r => r.userId === userId) + 1
         if (userRank > 0) {
           record.averageRank = userRank
-          console.log(`项目 ${eventCode} 平均排名:`, userRank)
           
           // 更新统计数据
           if (userRank === 1) {
             firstPlaceCount.value++
-            console.log(`第一名计数增加，当前:`, firstPlaceCount.value)
           }
           if (userRank <= 3) {
             topThreeCount.value++
-            console.log(`前三名计数增加，当前:`, topThreeCount.value)
           }
-        } else {
-          console.log(`项目 ${eventCode} 平均排名未找到，用户ID:`, userId)
-          console.log('排序后的记录中的用户ID:', sortedAverages.map(s => s.userId))
         }
       }
-    }
-    
-    console.log('排名计算完成, 前三名数量:', topThreeCount.value, '第一名数量:', firstPlaceCount.value)
-    
-    // 检查topThreeRecords是否有内容
-    const topThreeRecordsCount = Object.keys(topThreeRecords.value).length
-    console.log('topThreeRecords条目数:', topThreeRecordsCount)
-    if (topThreeRecordsCount > 0) {
-      console.log('topThreeRecords内容示例:', JSON.stringify(Object.entries(topThreeRecords.value)[0]))
-    }
-    
-    // 检查sortedTopThreeRecords是否有内容
-    console.log('sortedTopThreeRecords条目数:', sortedTopThreeRecords.value.length)
-    if (sortedTopThreeRecords.value.length > 0) {
-      console.log('sortedTopThreeRecords内容示例:', JSON.stringify(sortedTopThreeRecords.value[0]))
     }
   } catch (error) {
     console.error('计算排名信息出错:', error)
@@ -909,7 +774,6 @@ const calculateRankings = (hardcodedId) => {
 
 // 计算排名前三的数量
 const calculateTopThreeCount = () => {
-  console.log('计算排名前三的数量')
   let count = 0
   let eventCounts = 0
   
@@ -926,19 +790,14 @@ const calculateTopThreeCount = () => {
     
     if (hasSingleRank || hasAverageRank) {
       count++
-      console.log(`项目 ${eventCode} 有前三名排名:`, 
-        hasSingleRank ? `单次 #${record.singleRank}` : '', 
-        hasAverageRank ? `平均 #${record.averageRank}` : '')
     }
   }
   
-  console.log(`共检查了 ${eventCounts} 个项目，有 ${count} 个项目排名前三`)
   return count
 }
 
 // 计算第一名的数量
 const calculateFirstPlaceCount = () => {
-  console.log('计算第一名的数量')
   let count = 0
   let eventCounts = 0
   
@@ -955,13 +814,9 @@ const calculateFirstPlaceCount = () => {
     
     if (hasSingleRank1 || hasAverageRank1) {
       count++
-      console.log(`项目 ${eventCode} 有第一名排名:`, 
-        hasSingleRank1 ? '单次 #1' : '', 
-        hasAverageRank1 ? '平均 #1' : '')
     }
   }
   
-  console.log(`共检查了 ${eventCounts} 个项目，有 ${count} 个项目排名第一`)
   return count
 }
 
@@ -978,8 +833,6 @@ const isDefaultAvatar = (avatar) => {
 
 // 获取排名前三的记录
 const topThreeRecords = computed(() => {
-  console.log('计算topThreeRecords，personalBests条目数:', Object.keys(personalBests.value).length)
-  
   const result = {}
   for (const [eventCode, record] of Object.entries(personalBests.value)) {
     // 排除整活项目
@@ -1000,14 +853,11 @@ const topThreeRecords = computed(() => {
     }
   }
   
-  console.log('topThreeRecords结果条目数:', Object.keys(result).length)
   return result
 })
 
 // 按排名排序的前三名记录
 const sortedTopThreeRecords = computed(() => {
-  console.log('计算sortedTopThreeRecords，topThreeRecords条目数:', Object.keys(topThreeRecords.value).length)
-  
   const records = []
   
   for (const [eventCode, record] of Object.entries(topThreeRecords.value)) {
@@ -1032,16 +882,6 @@ const sortedTopThreeRecords = computed(() => {
   
   // 按排名从小到大排序（第一名在前）
   const sortedRecords = records.sort((a, b) => a.rankWeight - b.rankWeight)
-  console.log('sortedTopThreeRecords结果条目数:', sortedRecords.length)
-  
-  if (sortedRecords.length > 0) {
-    console.log('排序后第一条记录:', JSON.stringify({
-      eventCode: sortedRecords[0].eventCode,
-      singleRank: sortedRecords[0].singleRank,
-      averageRank: sortedRecords[0].averageRank,
-      rankWeight: sortedRecords[0].rankWeight
-    }))
-  }
   
   return sortedRecords
 })
@@ -1085,8 +925,6 @@ const editRules = {
 }
 
 const refreshUserInfo = async () => {
-  console.log('刷新用户信息')
-  
   // 重新获取用户信息
   await userStore.initUser()
   
@@ -1132,7 +970,6 @@ const refreshUserInfo = async () => {
           wcaIdElement.style.display = 'none'
         }
         
-        console.log('页面更新完成')
       } catch (error) {
         console.error('更新页面时出错:', error)
       }
@@ -1142,7 +979,6 @@ const refreshUserInfo = async () => {
 
 // 取消编辑
 const cancelEdit = () => {
-  console.log('取消编辑')
   showEditDialog.value = false
 }
 
@@ -1176,14 +1012,8 @@ const handleEditSubmit = async () => {
           return
         }
 
-        // 打印将要提交的数据
-        console.log('提交数据:', JSON.stringify(editForm))
-        console.log('当前用户状态:', JSON.stringify(userStore.user))
-        console.log('当前token:', token)
-
         // 调用store的更新方法
         const result = await userStore.updateProfile(editForm)
-        console.log('更新结果:', result)
         
         // 关闭加载提示
         loadingInstance.close()
@@ -1217,16 +1047,11 @@ const handleEditSubmit = async () => {
 
 // 监听用户数据变化
 watch(() => userStore.user, (newUser, oldUser) => {
-  console.log('用户数据发生变化:', 
-    newUser ? `ID: ${newUser._id || newUser.id}` : '无用户数据', 
-    oldUser ? `旧ID: ${oldUser._id || oldUser.id}` : '之前无用户数据')
-  
   if (newUser && showEditDialog.value) {
     // 如果对话框打开且用户数据更新，重新设置表单数据
     editForm.nickname = newUser.nickname || ''
     editForm.bio = newUser.bio || ''
     editForm.wcaId = newUser.wcaId || ''
-    console.log('用户数据更新，重新设置表单数据:', editForm)
   }
   
   // 如果新获取到用户信息，且之前没有用户信息或用户ID发生变化，则获取成绩记录
@@ -1246,7 +1071,6 @@ watch(() => userStore.user, (newUser, oldUser) => {
     
     const userId = newUser._id || newUser.id
     if (userId) {
-      console.log('监听到用户ID变化，开始获取成绩记录:', userId)
       fetchUserRecords(userId)
       fetchUserHistoryRecords(userId)
     } else {
@@ -1256,85 +1080,6 @@ watch(() => userStore.user, (newUser, oldUser) => {
 }, { deep: true })
 
 // 测试API是否可用
-const testApi = async () => {
-  try {
-    console.log('开始测试API连接...')
-    
-    // 测试用户API
-    console.log('测试用户API')
-    try {
-      const userResponse = await api.getUser('test-user-id')
-      console.log('用户API响应:', userResponse)
-    } catch (error) {
-      console.log('用户API错误:', error)
-    }
-    
-    // 测试个人最佳记录API
-    console.log('测试个人最佳记录API')
-    try {
-      const bestRecordResponse = await api.getUsersBestRecord('test-user-id')
-      console.log('个人最佳记录API响应:', bestRecordResponse)
-    } catch (error) {
-      console.log('个人最佳记录API错误:', error)
-    }
-    
-    // 测试历史记录API
-    console.log('测试历史记录API')
-    try {
-      const historyResponse = await api.getUsersHistoryRecord('test-user-id')
-      console.log('历史记录API响应:', historyResponse)
-    } catch (error) {
-      console.log('历史记录API错误:', error)
-    }
-    
-    console.log('API测试完成')
-  } catch (error) {
-    console.error('API测试失败:', error)
-  }
-}
-
-// 使用硬编码ID测试API
-const testApiWithHardcodedId = async () => {
-  try {
-    const currentUserId = user.value?._id || user.value?.id
-    console.log('使用当前用户ID测试API:', currentUserId)
-    
-    if (!currentUserId) {
-      console.error('无法获取用户ID，用户可能未登录')
-      return
-    }
-    
-    // 测试个人最佳记录API
-    console.log('测试个人最佳记录API')
-    try {
-      const bestRecordResult = await api.getUsersBestRecord(currentUserId)
-      console.log('硬编码ID测试 - 个人最佳记录响应:', JSON.stringify(bestRecordResult))
-      debugApiResponse(bestRecordResult, '硬编码ID测试 - 个人最佳记录')
-      
-      // 直接使用测试结果更新数据
-      if (bestRecordResult.code === 0 && bestRecordResult.data) {
-        personalBests.value = bestRecordResult.data
-        console.log('已直接使用测试数据更新个人最佳记录')
-      }
-    } catch (error) {
-      console.error('个人最佳记录API错误:', error)
-    }
-    
-    // 测试历史记录API
-    console.log('测试历史记录API')
-    try {
-      const historyResult = await api.getUsersHistoryRecord(currentUserId)
-      console.log('历史记录API响应:', historyResult)
-    } catch (error) {
-      console.error('历史记录API错误:', error)
-    }
-    
-    console.log('硬编码ID API测试完成')
-  } catch (error) {
-    console.error('API测试失败:', error)
-  }
-}
-
 // 初始化函数，确保正确加载所有数据
 const initializeData = async () => {
   console.log('开始初始化数据...')

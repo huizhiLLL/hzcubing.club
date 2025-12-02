@@ -1,29 +1,5 @@
 <template>
   <div class="records-container">
-    <ElementTransition name="fade" :duration="600" appear>
-      <div class="page-header glass-header">
-        <div class="title-with-refresh">
-        <h1 class="page-title">记录统计</h1>
-          <el-button 
-            circle
-            plain
-            size="small"
-            type="info" 
-            @click="refreshRecords" 
-            :loading="loading"
-            class="refresh-icon-button"
-          >
-            <img v-if="!loading" src="../assets/refresh.svg" alt="刷新" class="refresh-icon" />
-            <i v-else class="el-icon-loading"></i>
-          </el-button>
-        </div>
-        <div class="header-actions">
-        <router-link v-if="user" to="/submit-record">
-          <el-button type="primary">上传成绩</el-button>
-        </router-link>
-        </div>
-      </div>
-    </ElementTransition>
 
     <div v-if="error" class="error-alert">
       <el-alert
@@ -36,10 +12,10 @@
       />
     </div>
 
-    <ElementTransition name="slide-up" :duration="600" :delay="200" appear>
+    <ElementTransition name="slide-up" :duration="600" :delay="0" appear>
       <div class="card glass-card" v-loading="loading">
         <div class="filter-header">
-          <h2 class="section-title">最佳记录</h2>
+          <h2 class="section-title">GR</h2>
           <div class="filter-controls">
             <el-select v-model="selectedCategory" placeholder="选择项目类型" class="category-select glass-select">
               <el-option
@@ -545,38 +521,6 @@ const allEvents = computed(() => {
   padding: 16px;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.title-with-refresh {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.page-title {
-  font-size: 28px;
-  font-weight: bold;
-  color: var(--text-color);
-  margin: 0;
-}
-
-.refresh-icon-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.refresh-icon {
-  width: 16px;
-  height: 16px;
-}
-
 .header-actions {
   display: flex;
   gap: 12px;
@@ -733,10 +677,6 @@ const allEvents = computed(() => {
     gap: 24px;
   }
 
-  .page-title {
-    font-size: 24px;
-  }
-
   .section-title {
     font-size: 20px;
   }
@@ -843,10 +783,6 @@ const allEvents = computed(() => {
   .records-container {
     padding: 8px;
     gap: 16px;
-  }
-
-  .page-title {
-    font-size: 20px;
   }
 
   .section-title {

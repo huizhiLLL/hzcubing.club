@@ -1,25 +1,5 @@
 <template>
   <div class="leaderboard-container">
-    <ElementTransition name="fade" :duration="600" appear>
-      <div class="page-header glass-header">
-        <div class="title-with-refresh">
-          <h1 class="page-title">排行榜</h1>
-          <el-button 
-            circle
-            plain
-            size="small"
-            type="info" 
-            @click="refreshLeaderboard" 
-            :loading="loading"
-            class="refresh-icon-button"
-          >
-            <img v-if="!loading" src="../assets/refresh.svg" alt="刷新" class="refresh-icon" />
-            <i v-else class="el-icon-loading"></i>
-          </el-button>
-        </div>
-      </div>
-    </ElementTransition>
-
     <div v-if="error" class="error-alert">
       <el-alert
         title="获取数据失败"
@@ -34,7 +14,7 @@
     <ElementTransition name="slide-up" :duration="600" :delay="200" appear>
       <div class="card glass-card" v-loading="loading">
         <div class="filter-header">
-          <h2 class="section-title">项目排行榜</h2>
+          <h2 class="section-title">排行榜</h2>
           <div class="filter-controls">
             <div class="filter-row">
               <el-select v-model="selectedCategory" placeholder="选择项目类型" class="category-select glass-select">
@@ -186,15 +166,7 @@
           <span class="value">{{ getMethodValue(selectedRecord) }}</span>
         </div>
         
-        <div class="detail-item" v-if="isValidField(selectedRecord.remark)">
-          <span class="label">备注:</span>
-          <span class="value">{{ selectedRecord.remark }}</span>
-        </div>
-        
-        <div v-if="selectedRecord.videoLink" class="detail-item">
-          <span class="label">视频链接:</span>
-          <a :href="selectedRecord.videoLink" target="_blank" class="video-link">{{ selectedRecord.videoLink }}</a>
-        </div>
+        <!-- 已移除感想与视频链接字段展示 -->
         
         <div class="detail-item" v-if="selectedRecord.timestamp">
           <span class="label">提交时间:</span>
@@ -447,38 +419,6 @@ const viewRecord = async (recordId) => {
   padding: 16px;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.title-with-refresh {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.page-title {
-  font-size: 28px;
-  font-weight: bold;
-  color: var(--text-color);
-  margin: 0;
-}
-
-.refresh-icon-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.refresh-icon {
-  width: 16px;
-  height: 16px;
-}
-
 .error-alert {
   margin-bottom: 16px;
 }
@@ -687,10 +627,6 @@ const viewRecord = async (recordId) => {
     gap: 24px;
   }
 
-  .page-title {
-    font-size: 24px;
-  }
-
   .section-title {
     font-size: 18px;
   }
@@ -747,10 +683,6 @@ const viewRecord = async (recordId) => {
   .leaderboard-container {
     padding: 8px;
     gap: 16px;
-  }
-
-  .page-title {
-    font-size: 20px;
   }
 
   .section-title {

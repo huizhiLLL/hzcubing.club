@@ -1,9 +1,5 @@
 <template>
   <div class="players-container">
-    <ElementTransition name="fade" :duration="600" appear>
-      <h1 class="page-title glass-header">选手列表</h1>
-    </ElementTransition>
-    
     <ElementTransition name="slide-up" :duration="600" :delay="200" appear>
       <el-card class="players-card glass-card">
         <template #header>
@@ -201,14 +197,6 @@ onMounted(() => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-}
-
-.page-title {
-  font-size: 28px;
-  font-weight: bold;
-  margin-bottom: 24px;
-  text-align: center;
-  color: var(--el-text-color-primary);
 }
 
 .players-card {

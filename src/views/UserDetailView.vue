@@ -262,19 +262,7 @@
           <span class="detail-value">{{ selectedRecord.method }}</span>
         </div>
         
-        <!-- 感想 -->
-        <div class="detail-item" v-if="isValidField(selectedRecord.remark)">
-          <span class="detail-label">感想:</span>
-          <span class="detail-value">{{ selectedRecord.remark }}</span>
-        </div>
-        
-        <!-- 视频链接 -->
-        <div class="detail-item" v-if="isValidField(selectedRecord.videoLink)">
-          <span class="detail-label">视频链接:</span>
-          <a :href="selectedRecord.videoLink" target="_blank" class="video-link">
-            {{ selectedRecord.videoLink }}
-          </a>
-        </div>
+        <!-- 已移除感想与视频链接字段展示 -->
         
         <div class="detail-item">
           <span class="detail-label">提交时间:</span>
@@ -503,15 +491,11 @@ const formatDate = (dateString, includeTime = false) => {
 
 // 显示记录详情
 const showRecordDetails = (record) => {
-  console.log('Record details:', JSON.stringify(record, null, 2))
-  
   // 处理记录对象，但保留null或undefined值
   const processedRecord = {
     ...record,
     cube: record.cube,
-    method: record.method,
-    remark: record.remark,
-    videoLink: record.videoLink
+    method: record.method
   }
   
   selectedRecord.value = processedRecord
