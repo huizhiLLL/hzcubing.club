@@ -307,6 +307,16 @@ export function deleteMemeEvent(id) {
   })
 }
 
+// Astrobot 插件相关 - 排行榜等数据
+export function getAstroLeaderboard(params = {}) {
+  const q = new URLSearchParams()
+  if (params.event) q.set('event', String(params.event))
+  if (params.rankType) q.set('rankType', String(params.rankType))
+  if (params.limit) q.set('limit', String(params.limit))
+  const qs = q.toString()
+  return request(`/astrobot-hzcubing?action=leaderboard${qs ? `&${qs}` : ''}`, { method: 'GET' })
+}
+
 export default {
   // 用户相关
   getUser,
@@ -365,7 +375,10 @@ export default {
   getMemeEvents,
   addMemeEvent,
   updateMemeEvent,
-  deleteMemeEvent
+  deleteMemeEvent,
+
+  // Astrobot 插件
+  getAstroLeaderboard
 }
 
 

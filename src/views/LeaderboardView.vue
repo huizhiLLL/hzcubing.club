@@ -213,6 +213,7 @@ import ElementTransition from '@/components/ElementTransition.vue'
 import { ElMessage } from 'element-plus'
 import { Icon } from '@iconify/vue'
 import { categories, events, getEventName, getCurrentEvents, getMemeEventsFromAPI } from '@/config/events'
+import api from '@/api'
 
 const recordsStore = useRecordsStore()
 const userStore = useUserStore()
@@ -225,14 +226,59 @@ const error = ref('')
 const recordDetailVisible = ref(false)
 const selectedRecord = ref(null)
 const dynamicMemeEvents = ref([])
+// 来自后端 Astrobot 接口的排行榜数据
+const leaderboardData = ref([])
 
-// 刷新排行榜数据
+// 从后端获取排行榜数据
+const fetchLeaderboard = async () => {
+  // 只有在选择了具体项目时才请求
+  if (!selectedEvent.value || selectedEvent.value.endsWith('_all')) {
+    leaderboardData.value = []
+    return
+  }
+
+  loading.value = true
+  error.value = ''
+
+  try {
+    const resp = await api.getAstroLeaderboard({
+      event: selectedEvent.value,
+      rankType: rankType.value
+    })
+
+    if (resp && resp.code === 200) {
+      const list = resp.data?.leaderboard || []
+      // 后端已计算好 rank/time/nickname，这里直接使用
+      leaderboardData.value = list.map(item => ({
+        rank: item.rank,
+        userId: item.userId,
+        nickname: item.nickname || '未知用户',
+        time: item.time,
+        recordId: item.recordId,
+        timestamp: item.timestamp
+      }))
+    } else {
+      throw new Error(resp?.message || '获取排行榜失败')
+    }
+  } catch (err) {
+    console.error('获取排行榜失败:', err)
+    error.value = err.message || '获取排行榜失败，请稍后再试'
+    leaderboardData.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+// 刷新按钮：同步刷新排行榜和本地记录（用于查看记录详情等）
 const refreshLeaderboard = async () => {
   loading.value = true
   error.value = ''
   
   try {
-    await recordsStore.fetchRecords()
+    await Promise.all([
+      recordsStore.fetchRecords(),
+      fetchLeaderboard()
+    ])
     ElMessage.success('数据刷新成功')
   } catch (err) {
     console.error('刷新排行榜失败:', err)
@@ -248,7 +294,11 @@ onMounted(async () => {
   error.value = ''
   
   try {
-    await recordsStore.fetchRecords()
+    // 加载记录（用于详情弹窗等）和排行榜
+    await Promise.all([
+      recordsStore.fetchRecords(),
+      fetchLeaderboard()
+    ])
     // 预加载整活项目
     await loadMemeEvents()
   } catch (err) {
@@ -300,6 +350,19 @@ watch(selectedCategory, async (newCategory) => {
   }
 })
 
+// 选择具体项目或排行榜类型变化时，重新获取排行榜
+watch(selectedEvent, async (newEvent) => {
+  if (!newEvent || newEvent.endsWith('_all')) {
+    leaderboardData.value = []
+    return
+  }
+  await fetchLeaderboard()
+})
+
+watch(rankType, async () => {
+  await fetchLeaderboard()
+})
+
 // 加载动态整活项目
 const loadMemeEvents = async () => {
   try {
@@ -310,62 +373,6 @@ const loadMemeEvents = async () => {
     dynamicMemeEvents.value = []
   }
 }
-
-// 生成排行榜数据
-const leaderboardData = computed(() => {
-  if (!selectedEvent.value || selectedEvent.value.endsWith('_all')) {
-    return []
-  }
-
-  const eventRecords = recordsStore.getRecordsByEvent(selectedEvent.value)
-  const leaderboard = []
-
-  // 为每个用户找到最佳成绩
-  const userBestRecords = new Map()
-
-  eventRecords.forEach(record => {
-    const userId = record.userId
-    if (!userId) return
-
-    const currentTime = rankType.value === 'single' ? record.singleSeconds : record.averageSeconds
-    if (currentTime === undefined || currentTime === null) return
-
-    // 确保获取正确的用户昵称（优先顶层，其次缓存/其他记录）
-    const nickname = record.nickname || recordsStore.getNicknameForUser(userId) || '未知用户'
-
-    if (!userBestRecords.has(userId)) {
-      userBestRecords.set(userId, {
-        userId,
-        nickname,
-        time: currentTime,
-        recordId: record._id,
-        timestamp: record.timestamp
-      })
-    } else {
-      const existing = userBestRecords.get(userId)
-      // 如果是单次成绩，取最快；如果是平均成绩，取最快
-      if (currentTime < existing.time) {
-        userBestRecords.set(userId, {
-          userId,
-          nickname,
-          time: currentTime,
-          recordId: record._id,
-          timestamp: record.timestamp
-        })
-      }
-    }
-  })
-
-  // 转换为数组并排序
-  const sortedRecords = Array.from(userBestRecords.values())
-    .sort((a, b) => a.time - b.time)
-    .map((record, index) => ({
-      ...record,
-      rank: index + 1
-    }))
-
-  return sortedRecords
-})
 
 // 格式化时间
 const formatTime = (time) => {
