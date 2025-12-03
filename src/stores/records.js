@@ -54,16 +54,19 @@ export const useRecordsStore = defineStore('records', () => {
     return seconds
   }
 
-  // 格式化时间显示
+  // 格式化时间显示（向下取整到两位小数）
   function formatTime(seconds) {
     if (seconds === null || seconds === undefined) return '-'
     
-    if (seconds < 60) {
-      return seconds.toFixed(2)
+    // 向下取整到两位小数：先乘以100，向下取整，再除以100
+    const truncated = Math.floor(seconds * 100) / 100
+    
+    if (truncated < 60) {
+      return truncated.toFixed(2)
     }
     
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = (seconds % 60).toFixed(2).padStart(5, '0')
+    const minutes = Math.floor(truncated / 60)
+    const remainingSeconds = (truncated % 60).toFixed(2).padStart(5, '0')
     
     return `${minutes}:${remainingSeconds}`
   }

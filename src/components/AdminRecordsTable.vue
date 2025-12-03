@@ -263,16 +263,18 @@ const formatTime = (time, isTimestamp = false) => {
     return `${hours}:${minutes}`
   }
   
-  // 格式化成绩时间
+  // 格式化成绩时间（向下取整到两位小数）
   if (time === null || time === undefined || isNaN(time)) return '-'
   
   const totalSeconds = parseFloat(time)
-  if (totalSeconds >= 60) {
-    const minutes = Math.floor(totalSeconds / 60)
-    const seconds = (totalSeconds % 60).toFixed(2)
+  // 向下取整到两位小数：先乘以100，向下取整，再除以100
+  const truncated = Math.floor(totalSeconds * 100) / 100
+  if (truncated >= 60) {
+    const minutes = Math.floor(truncated / 60)
+    const seconds = (truncated % 60).toFixed(2)
     return `${minutes}:${seconds.padStart(5, '0')}`
   } else {
-    return totalSeconds.toFixed(2)
+    return truncated.toFixed(2)
   }
 }
 

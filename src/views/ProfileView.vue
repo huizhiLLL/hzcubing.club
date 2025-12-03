@@ -511,14 +511,16 @@ const maxEventCount = computed(() => {
   return counts.length > 0 ? Math.max(...counts) : 0
 })
 
-// 格式化时间
+// 格式化时间（向下取整到两位小数）
 const formatTime = (time) => {
   if (!time || isNaN(time)) return '-'
-  if (time < 60) {
-    return time.toFixed(2)
+  // 向下取整到两位小数：先乘以100，向下取整，再除以100
+  const truncated = Math.floor(time * 100) / 100
+  if (truncated < 60) {
+    return truncated.toFixed(2)
   }
-  const minutes = Math.floor(time / 60)
-  const seconds = (time % 60).toFixed(2).padStart(5, '0')
+  const minutes = Math.floor(truncated / 60)
+  const seconds = (truncated % 60).toFixed(2).padStart(5, '0')
   return `${minutes}:${seconds}`
 }
 
