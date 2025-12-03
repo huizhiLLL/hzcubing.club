@@ -114,12 +114,12 @@
               <el-table-column label="项目" prop="eventName" min-width="100" />
               <el-table-column label="单次" min-width="100">
                 <template #default="scope">
-                  <span>{{ formatTime(scope.row.singleSeconds) }}</span>
+                  <span class="time-value">{{ formatTime(scope.row.singleSeconds) }}</span>
                 </template>
               </el-table-column>
               <el-table-column label="平均" min-width="100">
                 <template #default="scope">
-                  <span>{{ formatTime(scope.row.averageSeconds) }}</span>
+                  <span class="time-value">{{ formatTime(scope.row.averageSeconds) }}</span>
                 </template>
               </el-table-column>
               <el-table-column label="提交时间" min-width="160">
@@ -1479,6 +1479,13 @@ const eventGroups = computed(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+/* 历史成绩表格中的成绩数据字体 */
+.time-value {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-weight: 500;
 }
 
 .stats-container {
@@ -1668,6 +1675,7 @@ const eventGroups = computed(() => {
   justify-content: space-between;
   gap: 8px;
   width: 100%;
+  font-family: 'Consolas', 'Monaco', monospace;
 }
 
 .detail-text {

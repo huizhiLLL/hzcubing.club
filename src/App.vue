@@ -249,7 +249,7 @@ const handleLoginSuccess = () => {
         </el-menu-item>
         <el-menu-item @click="showFeedback">
           <el-icon><Icon icon="mdi:message-text" /></el-icon>
-          <span>想对群主说</span>
+          <span>反馈</span>
         </el-menu-item>
         <!-- <el-menu-item index="/online-competition">
           <el-icon><Icon icon="mdi:trophy-award" /></el-icon>
@@ -320,7 +320,7 @@ const handleLoginSuccess = () => {
                     </el-dropdown-item>
                     <el-dropdown-item @click="showFeedback">
                       <Icon icon="mdi:message-text" class="dropdown-icon" />
-                      想对群主说
+                      反馈
                     </el-dropdown-item>
                     <!-- <el-dropdown-item @click="router.push('/online-competition')">
                       <Icon icon="mdi:trophy-award" class="dropdown-icon" />
