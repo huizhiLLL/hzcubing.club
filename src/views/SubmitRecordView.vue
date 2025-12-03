@@ -518,9 +518,10 @@ onMounted(() => {
 
 <style scoped>
 .submit-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 16px;
   animation: fadeIn 0.5s ease-out;
 }
 
@@ -538,36 +539,41 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   max-height: 600px;
-  margin-bottom: 24px;
-  border-radius: 8px;
+  margin-bottom: 0;
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s, box-shadow 0.3s;
-  background-color: #ffffff;
-  padding: 20px;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--duration-normal) var(--ease-in-out);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 24px;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-2xl);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .history-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  gap: 16px;
 }
 
 .section-title {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: bold;
   margin: 0;
   color: var(--text-color);
 }
 
 .filter-container {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 .filter-row {
@@ -583,7 +589,7 @@ onMounted(() => {
 .records-list-container {
   overflow-y: auto;
   max-height: 460px;
-  border-radius: 4px;
+  border-radius: var(--radius-lg);
   position: relative;
   flex: 1;
   scrollbar-width: thin;
@@ -599,9 +605,11 @@ onMounted(() => {
 
 .record-item {
   padding: 16px;
-  background-color: #f5f7fa;
-  border-radius: 8px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  background-color: rgba(245, 247, 250, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--radius-lg);
+  transition: all var(--duration-normal) var(--ease-in-out);
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
@@ -708,6 +716,11 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .submit-container {
+    padding: 12px;
+    gap: 24px;
+  }
+
   .record-main {
     flex-direction: column;
     align-items: flex-start;
@@ -735,7 +748,7 @@ onMounted(() => {
   }
 
   .card {
-    padding: 12px;
+    padding: 16px;
   }
 
   .record-item {
@@ -785,11 +798,13 @@ onMounted(() => {
 }
 
 .edit-dialog :deep(.el-dialog) {
-  background: #ffffff;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .edit-dialog :deep(.el-dialog__header) {

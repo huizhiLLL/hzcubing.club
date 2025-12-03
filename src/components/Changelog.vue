@@ -309,7 +309,7 @@ defineExpose({
 .version-block {
   margin-bottom: 24px;
   padding: 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   transition: all 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
   background-color: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(12px);
@@ -407,7 +407,7 @@ defineExpose({
 }
 
 .changelog-dialog {
-  border-radius: 16px;
+  border-radius: var(--radius-2xl);
   overflow: hidden;
 }
 
@@ -416,6 +416,7 @@ defineExpose({
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-2xl);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
@@ -444,7 +445,7 @@ defineExpose({
   .version-block {
     padding: 12px;
     margin-bottom: 16px;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
   }
 
   .version-header {
@@ -473,7 +474,7 @@ defineExpose({
   
   :deep(.el-dialog) {
     margin: 10vh auto !important;
-    border-radius: 12px;
+    border-radius: var(--radius-2xl);
   }
   
   :deep(.el-dialog__header) {

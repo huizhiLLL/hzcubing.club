@@ -584,12 +584,431 @@ export default async function (ctx) {
           }
         }
       
+      case 'bind-user':
+        // 用户绑定：通过昵称将 QQ号 与 userId 进行绑定
+        try {
+          const db = cloud.database()
+          const qqId = query.qqId || body.qqId
+          const nickname = query.nickname || body.nickname
+          
+          if (!qqId) {
+            return {
+              code: 400,
+              message: '缺少必要参数',
+              data: {
+                requiredParams: ['qqId'],
+                receivedParams: {
+                  qqId: qqId || null,
+                  nickname: nickname || null
+                }
+              }
+            }
+          }
+          
+          if (!nickname) {
+            return {
+              code: 400,
+              message: '缺少必要参数',
+              data: {
+                requiredParams: ['nickname'],
+                receivedParams: {
+                  qqId: qqId || null,
+                  nickname: nickname || null
+                }
+              }
+            }
+          }
+          
+          // 通过昵称查找用户
+          const usersRes = await db.collection('users')
+            .where({
+              nickname: nickname
+            })
+            .get()
+          
+          if (!usersRes.data || usersRes.data.length === 0) {
+            return {
+              code: 404,
+              message: '未找到该昵称对应的用户',
+              data: {
+                nickname,
+                qqId
+              }
+            }
+          }
+          
+          if (usersRes.data.length > 1) {
+            return {
+              code: 400,
+              message: '存在多个相同昵称的用户，请使用更具体的标识',
+              data: {
+                nickname,
+                foundUsers: usersRes.data.length
+              }
+            }
+          }
+          
+          const user = usersRes.data[0]
+          const userId = user._id
+          
+          // 检查该 QQ号 是否已绑定其他用户
+          const existingBinding = await db.collection('users')
+            .where({
+              qqId: qqId
+            })
+            .get()
+          
+          if (existingBinding.data && existingBinding.data.length > 0) {
+            const existingUser = existingBinding.data[0]
+            if (existingUser._id !== userId) {
+              return {
+                code: 409,
+                message: '该 QQ号 已绑定到其他用户',
+                data: {
+                  qqId,
+                  existingUserId: existingUser._id,
+                  existingNickname: existingUser.nickname,
+                  targetUserId: userId,
+                  targetNickname: nickname
+                }
+              }
+            }
+            // 如果已绑定到同一用户，直接返回成功
+            return {
+              code: 200,
+              message: '绑定成功（已存在绑定关系）',
+              data: {
+                qqId,
+                userId,
+                nickname: user.nickname
+              }
+            }
+          }
+          
+          // 更新用户信息，添加 qqId 绑定
+          await db.collection('users').doc(userId).update({
+            qqId: qqId
+          })
+          
+          return {
+            code: 200,
+            message: '绑定成功',
+            data: {
+              qqId,
+              userId,
+              nickname: user.nickname
+            }
+          }
+        } catch (error) {
+          console.error('用户绑定失败:', error)
+          return {
+            code: 500,
+            message: '用户绑定失败',
+            error: error.message
+          }
+        }
+      
+      case 'submit-record':
+        // 提交成绩：通过绑定的 QQ号 提交成绩
+        try {
+          const db = cloud.database()
+          const qqId = query.qqId || body.qqId
+          const event = query.event || body.event
+          const singleTime = query.singleTime || body.singleTime // 支持 "1:23.45" 或 "83.45" 格式
+          const averageTime = query.averageTime || body.averageTime
+          const cube = query.cube || body.cube || null
+          const method = query.method || body.method || null
+          
+          if (!qqId) {
+            return {
+              code: 400,
+              message: '缺少必要参数',
+              data: {
+                requiredParams: ['qqId'],
+                receivedParams: {
+                  qqId: qqId || null,
+                  event: event || null
+                }
+              }
+            }
+          }
+          
+          if (!event) {
+            return {
+              code: 400,
+              message: '缺少必要参数',
+              data: {
+                requiredParams: ['event'],
+                receivedParams: {
+                  qqId,
+                  event: event || null
+                }
+              }
+            }
+          }
+          
+          if (!singleTime && !averageTime) {
+            return {
+              code: 400,
+              message: '必须提供单次或平均成绩',
+              data: {
+                receivedParams: {
+                  qqId,
+                  event,
+                  singleTime: singleTime || null,
+                  averageTime: averageTime || null
+                }
+              }
+            }
+          }
+          
+          // 通过 QQ号 查找绑定的用户
+          const usersRes = await db.collection('users')
+            .where({
+              qqId: qqId
+            })
+            .get()
+          
+          if (!usersRes.data || usersRes.data.length === 0) {
+            return {
+              code: 404,
+              message: '该 QQ号 未绑定用户，请先进行绑定',
+              data: {
+                qqId,
+                hint: '请先使用 bind-user 接口进行用户绑定'
+              }
+            }
+          }
+          
+          const user = usersRes.data[0]
+          const userId = user._id
+          const nickname = user.nickname
+          
+          // 解析时间格式（支持 "1:23.45" 或 "83.45" 格式）
+          function parseTime(timeStr) {
+            if (!timeStr) return null
+            const str = timeStr.toString().trim()
+            if (!str) return null
+            const upper = str.toUpperCase()
+            if (upper === 'DNF' || upper === 'DNS') return null
+            
+            const parts = str.split(':')
+            let seconds = null
+            try {
+              if (parts.length === 2) {
+                // 格式：m:ss.xx
+                const m = parseInt(parts[0], 10)
+                const sec = parseFloat(parts[1])
+                seconds = m * 60 + sec
+              } else if (parts.length === 1) {
+                // 格式：ss.xx（纯秒数）
+                seconds = parseFloat(str)
+              } else {
+                return null
+              }
+            } catch {
+              return null
+            }
+            return (seconds === null || Number.isNaN(seconds)) ? null : seconds
+          }
+          
+          const singleSeconds = singleTime ? parseTime(singleTime) : null
+          const averageSeconds = averageTime ? parseTime(averageTime) : null
+          
+          if (singleTime && singleSeconds === null) {
+            return {
+              code: 400,
+              message: '单次成绩格式错误',
+              data: {
+                receivedSingleTime: singleTime,
+                hint: '支持格式：纯秒数（如 83.45）或 分:秒.毫秒（如 1:23.45）'
+              }
+            }
+          }
+          
+          if (averageTime && averageSeconds === null) {
+            return {
+              code: 400,
+              message: '平均成绩格式错误',
+              data: {
+                receivedAverageTime: averageTime,
+                hint: '支持格式：纯秒数（如 83.45）或 分:秒.毫秒（如 1:23.45）'
+              }
+            }
+          }
+          
+          // 构造记录数据
+          const recordData = {
+            event,
+            userId,
+            nickname,
+            singleSeconds,
+            averageSeconds,
+            cube: cube || null,
+            method: method || null,
+            timestamp: new Date().toISOString()
+          }
+          
+          // 使用 record.js 的 normalizeForWrite 函数（需要导入或复制逻辑）
+          // 这里直接构造符合数据库格式的数据
+          const doc = {
+            event: recordData.event,
+            timestamp: recordData.timestamp,
+            nickname: recordData.nickname,
+            userId: recordData.userId,
+            singleSeconds: recordData.singleSeconds,
+            averageSeconds: recordData.averageSeconds,
+            cube: recordData.cube,
+            method: recordData.method
+          }
+          
+          // 添加到数据库
+          const res = await db.collection('records').add(doc)
+          
+          return {
+            code: 200,
+            message: '成绩提交成功',
+            data: {
+              recordId: res.id,
+              event,
+              singleSeconds,
+              averageSeconds,
+              cube,
+              method,
+              userId,
+              nickname
+            }
+          }
+        } catch (error) {
+          console.error('提交成绩失败:', error)
+          return {
+            code: 500,
+            message: '提交成绩失败',
+            error: error.message
+          }
+        }
+      
+      case 'get-user-bests':
+        // 获取用户个人最佳成绩：通过绑定的 QQ号 获取该选手的个人最佳成绩
+        try {
+          const db = cloud.database()
+          const qqId = query.qqId || body.qqId
+          const event = query.event || body.event // 可选：指定项目，不传则返回所有项目
+          
+          if (!qqId) {
+            return {
+              code: 400,
+              message: '缺少必要参数',
+              data: {
+                requiredParams: ['qqId'],
+                receivedParams: {
+                  qqId: qqId || null,
+                  event: event || null
+                }
+              }
+            }
+          }
+          
+          // 通过 QQ号 查找绑定的用户
+          const usersRes = await db.collection('users')
+            .where({
+              qqId: qqId
+            })
+            .get()
+          
+          if (!usersRes.data || usersRes.data.length === 0) {
+            return {
+              code: 404,
+              message: '该 QQ号 未绑定用户，请先进行绑定',
+              data: {
+                qqId,
+                hint: '请先使用 bind-user 接口进行用户绑定'
+              }
+            }
+          }
+          
+          const user = usersRes.data[0]
+          const userId = user._id
+          const nickname = user.nickname
+          
+          // 时间转换函数（与 users-best-record.js 保持一致）
+          function convertToSeconds(time) {
+            if (time === null || time === undefined) return null
+            if (typeof time === 'number') return Number.isNaN(time) ? null : time
+            const raw = time.toString().trim()
+            if (!raw) return null
+            const s = raw.toUpperCase()
+            if (s === 'DNF' || s === 'DNS') return null
+            const parts = s.split(':')
+            let seconds = null
+            try {
+              if (parts.length === 3) {
+                const h = parseInt(parts[0], 10)
+                const m = parseInt(parts[1], 10)
+                const sec = parseFloat(parts[2])
+                seconds = h * 3600 + m * 60 + sec
+              } else if (parts.length === 2) {
+                const m = parseInt(parts[0], 10)
+                const sec = parseFloat(parts[1])
+                seconds = m * 60 + sec
+              } else {
+                seconds = parseFloat(s)
+              }
+            } catch { seconds = null }
+            return (seconds === null || Number.isNaN(seconds)) ? null : seconds
+          }
+          
+          // 查询该用户的所有记录
+          const cond = event ? { userId, event } : { userId }
+          const recordsRes = await db.collection('records').where(cond).get()
+          const items = recordsRes.data || []
+          
+          // 按项目分组，找出每个项目的最佳成绩
+          const bestMap = new Map() // event -> { event, bestSingleSeconds, bestAverageSeconds }
+          for (const r of items) {
+            const e = r.event || 'unknown'
+            const s = r.singleSeconds ?? convertToSeconds(r?.single?.time)
+            const a = r.averageSeconds ?? convertToSeconds(r?.average?.time)
+            const prev = bestMap.get(e) || { event: e, bestSingleSeconds: null, bestAverageSeconds: null }
+            if (s !== null && (prev.bestSingleSeconds === null || s < prev.bestSingleSeconds)) {
+              prev.bestSingleSeconds = s
+            }
+            if (a !== null && (prev.bestAverageSeconds === null || a < prev.bestAverageSeconds)) {
+              prev.bestAverageSeconds = a
+            }
+            bestMap.set(e, prev)
+          }
+          
+          // 转换为数组格式
+          const bestRecords = Array.from(bestMap.values())
+          
+          return {
+            code: 200,
+            message: '获取个人最佳成绩成功',
+            data: {
+              userId,
+              nickname,
+              qqId,
+              bestRecords,
+              count: bestRecords.length,
+              event: event || 'all' // 如果指定了项目，返回项目代码；否则返回 'all'
+            }
+          }
+        } catch (error) {
+          console.error('获取个人最佳成绩失败:', error)
+          return {
+            code: 500,
+            message: '获取个人最佳成绩失败',
+            error: error.message
+          }
+        }
+      
       default:
         return {
           code: 400,
           message: '不支持的操作',
           data: {
-            supportedActions: ['leaderboard', 'record-history', 'best-records'],
+            supportedActions: ['leaderboard', 'record-history', 'best-records', 'bind-user', 'submit-record', 'get-user-bests'],
             receivedAction: action
           }
         }

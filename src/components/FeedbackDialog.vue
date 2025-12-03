@@ -145,7 +145,7 @@ defineExpose({
 
 <style scoped>
 .feedback-dialog {
-  border-radius: 16px;
+  border-radius: var(--radius-2xl);
   overflow: hidden;
 }
 
@@ -180,7 +180,7 @@ defineExpose({
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-2xl);
   overflow: hidden;
   transition: all var(--duration-normal) var(--ease-in-out);
@@ -298,7 +298,7 @@ defineExpose({
 @media (max-width: 768px) {
   :deep(.el-dialog) {
     margin: 10vh auto !important;
-    border-radius: 12px;
+    border-radius: var(--radius-2xl);
   }
   
   :deep(.el-dialog__header) {

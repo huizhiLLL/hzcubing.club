@@ -423,15 +423,6 @@ const viewRecord = async (recordId) => {
   margin-bottom: 16px;
 }
 
-.card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
 .filter-header {
   display: flex;
   justify-content: space-between;
@@ -442,8 +433,8 @@ const viewRecord = async (recordId) => {
 }
 
 .section-title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: bold;
   color: var(--text-color);
   margin: 0;
 }
@@ -480,8 +471,6 @@ const viewRecord = async (recordId) => {
 
 .leaderboard-table {
   width: 100%;
-  border-radius: 8px;
-  overflow: hidden;
 }
 
 .rank-cell {

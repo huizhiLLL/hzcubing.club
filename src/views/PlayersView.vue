@@ -194,27 +194,40 @@ onMounted(() => {
 
 <style scoped>
 .players-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 16px;
 }
 
 .players-card {
-  margin-bottom: 24px;
+  margin-bottom: 0;
+}
+
+/* 确保 el-card 的圆角与 glass-card 统一 */
+:deep(.el-card) {
+  border-radius: var(--radius-xl);
+}
+
+:deep(.el-card__header) {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 20px 24px;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 24px;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
 }
 
 .card-header h2 {
   margin: 0;
-  font-size: 1.5rem;
-  color: var(--el-text-color-primary);
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--text-color);
 }
 
 .search-input {
@@ -239,9 +252,11 @@ onMounted(() => {
 }
 
 .pagination-container {
-  margin-top: 20px;
+  margin-top: 24px;
   display: flex;
   justify-content: center;
+  width: 100%;
+  overflow-x: auto;
 }
 
 @media (max-width: 768px) {

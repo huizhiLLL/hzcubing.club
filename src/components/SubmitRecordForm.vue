@@ -223,7 +223,7 @@
         <el-form-item label="使用魔方" prop="cube">
           <el-input 
             v-model="form.cube" 
-            placeholder="选填，请输入使用的魔方型号" 
+            placeholder="选填" 
             class="medium-input"
           />
         </el-form-item>
@@ -231,7 +231,7 @@
         <el-form-item label="使用方法" prop="method">
           <el-input 
             v-model="form.method" 
-            placeholder="选填，请输入使用的方法" 
+            placeholder="选填" 
             class="medium-input"
           />
         </el-form-item>

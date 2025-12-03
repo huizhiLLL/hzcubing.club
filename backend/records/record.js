@@ -80,7 +80,10 @@ function normalizeForWrite(record) {
     userId: record.userId ?? null,
     // 仅 seconds 缓存
     singleSeconds,
-    averageSeconds
+    averageSeconds,
+    // 魔方和解法信息
+    cube: record.cube || null,
+    method: record.method || null
   }
   // 其他允许传入的安全字段可在此白名单追加
   return doc
@@ -98,7 +101,10 @@ function normalizeForRead(record) {
     nickname: record.nickname ?? null,
     userId: record.userId ?? null,
     singleSeconds,
-    averageSeconds
+    averageSeconds,
+    // 魔方和解法信息
+    cube: record.cube || null,
+    method: record.method || null
   }
 }
 
