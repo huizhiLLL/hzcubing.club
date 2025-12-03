@@ -38,7 +38,7 @@
                   >
                     <template v-if="feature.localIcon">
                       <!-- 完全移除logo容器 -->
-                      <Icon icon="mdi:minecraft" class="feature-icon icon-bounce" />
+                      <Icon icon="mdi:robot" class="feature-icon icon-bounce" />
                     </template>
                     <Icon v-else :icon="feature.icon" class="feature-icon icon-bounce" />
                     <h3 class="feature-title">{{ feature.title }}</h3>
@@ -179,14 +179,14 @@ const features = [
   {
     icon: 'material-symbols:leaderboard-outline',
     title: '记录与排行',
-    description: '网站最佳记录（WER&GR）表（含历史记录），以及各项目的排行榜。',
+    description: '个人记录，网站最佳记录（GR），以及各项目的排行榜。',
     link: '/records'
   },
   {
     icon: null,
-    title: 'Minecraft',
-    description: '会枝的Minecraft服务器，一起游玩！',
-    link: '/minecraft',
+    title: '群聊麦麦bot',
+    description: '功能丰富并且网站联动的Bot！',
+    link: '#',
     localIcon: true
   }
 ]

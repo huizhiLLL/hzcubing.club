@@ -1023,6 +1023,7 @@ onMounted(() => {
   border-right: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
+  border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
 }
 
 .sidebar-header {
@@ -1083,6 +1084,28 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
+/* 统一卡片圆角 */
+:deep(.el-card) {
+  border-radius: var(--radius-xl) !important;
+  overflow: hidden;
+}
+
+/* 统一表格圆角 */
+:deep(.el-table) {
+  border-radius: var(--radius-lg) !important;
+  overflow: hidden;
+}
+
+/* 统一对话框圆角 */
+:deep(.el-dialog) {
+  border-radius: var(--radius-2xl) !important;
+}
+
+.changelog-table {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
 .pagination-container {
   display: flex;
   justify-content: center;
@@ -1103,7 +1126,7 @@ onMounted(() => {
 .role-overview-item {
   padding: 20px;
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--surface-color);
 }
 
@@ -1159,7 +1182,7 @@ onMounted(() => {
 .feedback-item {
   padding: 15px;
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--surface-color);
 }
 

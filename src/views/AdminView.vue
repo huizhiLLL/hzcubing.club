@@ -598,6 +598,7 @@ onMounted(() => {
   border-right: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
+  border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
 }
 
 .sidebar-header {
@@ -660,7 +661,7 @@ onMounted(() => {
 .feedback-item {
   padding: 15px;
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--surface-color);
 }
 
@@ -681,6 +682,23 @@ onMounted(() => {
   font-size: 12px;
 }
 
+/* 统一卡片圆角 */
+:deep(.el-card) {
+  border-radius: var(--radius-xl) !important;
+  overflow: hidden;
+}
+
+/* 统一表格圆角 */
+:deep(.el-table) {
+  border-radius: var(--radius-lg) !important;
+  overflow: hidden;
+}
+
+/* 统一对话框圆角 */
+:deep(.el-dialog) {
+  border-radius: var(--radius-2xl) !important;
+}
+
 /* 整活项目管理样式 */
 .section-header {
   display: flex;
@@ -696,7 +714,7 @@ onMounted(() => {
 
 .meme-events-table {
   width: 100%;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
