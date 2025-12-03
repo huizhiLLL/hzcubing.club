@@ -712,6 +712,7 @@ export default async function (ctx) {
         // 提交成绩：通过绑定的 QQ号 提交成绩
         try {
           const db = cloud.database()
+          const dbCmd = db.command
           const qqId = query.qqId || body.qqId
           const event = query.event || body.event
           const singleTime = query.singleTime || body.singleTime // 支持 "1:23.45" 或 "83.45" 格式
@@ -837,6 +838,72 @@ export default async function (ctx) {
             }
           }
           
+          // 在写入前判断是否刷新该项目 GR
+          // 默认都不是 GR
+          let isSingleGR = false
+          let isAverageGR = false
+          let prevSingleBest = null
+          let prevAverageBest = null
+          
+          try {
+            // 只有当本次提交包含对应成绩时，才去查询之前的最佳记录
+            const [singleBestRes, averageBestRes] = await Promise.all([
+              singleSeconds !== null
+                ? db.collection('records')
+                    .where({
+                      event,
+                      singleSeconds: dbCmd.neq(null)
+                    })
+                    .orderBy('singleSeconds', 'asc')
+                    .limit(1)
+                    .get()
+                : Promise.resolve({ data: [] }),
+              averageSeconds !== null
+                ? db.collection('records')
+                    .where({
+                      event,
+                      averageSeconds: dbCmd.neq(null)
+                    })
+                    .orderBy('averageSeconds', 'asc')
+                    .limit(1)
+                    .get()
+                : Promise.resolve({ data: [] })
+            ])
+            
+            prevSingleBest = singleBestRes.data && singleBestRes.data.length > 0
+              ? singleBestRes.data[0]
+              : null
+            prevAverageBest = averageBestRes.data && averageBestRes.data.length > 0
+              ? averageBestRes.data[0]
+              : null
+            
+            // 判断单次是否刷新 GR
+            if (singleSeconds !== null) {
+              if (!prevSingleBest || prevSingleBest.singleSeconds === null || Number.isNaN(prevSingleBest.singleSeconds)) {
+                // 没有历史记录 / 历史记录无效，本次视为 GR
+                isSingleGR = true
+              } else if (singleSeconds < prevSingleBest.singleSeconds) {
+                isSingleGR = true
+              }
+            }
+            
+            // 判断平均是否刷新 GR
+            if (averageSeconds !== null) {
+              if (!prevAverageBest || prevAverageBest.averageSeconds === null || Number.isNaN(prevAverageBest.averageSeconds)) {
+                isAverageGR = true
+              } else if (averageSeconds < prevAverageBest.averageSeconds) {
+                isAverageGR = true
+              }
+            }
+          } catch (bestError) {
+            console.error('查询项目最佳记录失败（不影响成绩提交）:', bestError)
+            // 查询 GR 失败时，只是不做 GR 判定，不阻断正常提交
+            isSingleGR = false
+            isAverageGR = false
+            prevSingleBest = null
+            prevAverageBest = null
+          }
+          
           // 构造记录数据
           const recordData = {
             event,
@@ -876,7 +943,25 @@ export default async function (ctx) {
               cube,
               method,
               userId,
-              nickname
+              nickname,
+              // GR 相关标记，供 Astrobot 判定是否需要播报
+              isSingleGR,
+              isAverageGR,
+              // 方便 Astrbot 生成更加详细的播报文案（例如原纪录是多少、是谁保持的）
+              previousSingleBest: prevSingleBest
+                ? {
+                    seconds: prevSingleBest.singleSeconds,
+                    userId: prevSingleBest.userId || null,
+                    nickname: prevSingleBest.nickname || '未知用户'
+                  }
+                : null,
+              previousAverageBest: prevAverageBest
+                ? {
+                    seconds: prevAverageBest.averageSeconds,
+                    userId: prevAverageBest.userId || null,
+                    nickname: prevAverageBest.nickname || '未知用户'
+                  }
+                : null
             }
           }
         } catch (error) {

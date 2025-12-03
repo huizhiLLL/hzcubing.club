@@ -236,17 +236,17 @@
           />
         </el-form-item>
 
-        <!-- 常规按钮区域，不再使用固定容器 -->
+        <!-- 按钮区域：仅保留上传按钮，居中显示 -->
         <el-form-item class="form-actions">
           <div class="action-buttons">
-            <el-button type="primary" class="submit-button" @click="submitForm(formRef)" :loading="loading">
+            <el-button
+              type="primary"
+              class="submit-button"
+              @click="submitForm(formRef)"
+              :loading="loading"
+            >
               <div class="button-content" v-if="!loading">
                 <span class="button-text">上传</span>
-              </div>
-            </el-button>
-            <el-button class="reset-button" @click="resetForm(formRef)">
-              <div class="button-content">
-                <span class="button-text">重置</span>
               </div>
             </el-button>
           </div>
