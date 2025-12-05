@@ -27,10 +27,6 @@
             <el-icon><Trophy /></el-icon>
             <span>成绩管理</span>
           </el-menu-item>
-          <el-menu-item index="feedback">
-            <el-icon><ChatDotRound /></el-icon>
-            <span>用户反馈</span>
-          </el-menu-item>
           <el-menu-item index="users-stats">
             <el-icon><User /></el-icon>
             <span>用户统计</span>
@@ -66,25 +62,6 @@
             :loading="recordsLoading"
             @refresh="fetchAllRecords"
           />
-        </div>
-        
-        <!-- 用户反馈 -->
-        <div v-if="activeMenu === 'feedback'" class="admin-section">
-          <h3 class="section-title">用户反馈</h3>
-          <el-card class="feedback-card">
-            <div class="feedback-list">
-              <div v-for="feedback in userFeedbacks" :key="feedback.id" class="feedback-item">
-                <div class="feedback-header">
-                  <span class="feedback-user">{{ feedback.nickname || '匿名用户' }}</span>
-                  <span class="feedback-time">{{ formatTime(feedback.timestamp) }}</span>
-                </div>
-                <div class="feedback-content">{{ feedback.content }}</div>
-              </div>
-            </div>
-            <div v-if="userFeedbacks.length === 0" class="empty-feedback">
-              <el-empty description="暂无用户反馈" />
-            </div>
-          </el-card>
         </div>
         
         <!-- 用户统计 -->
@@ -266,7 +243,7 @@ import AdminDashboard from '@/components/AdminDashboard.vue'
 import AdminRecordsTable from '@/components/AdminRecordsTable.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
-  DataBoard, Trophy, ChatDotRound, User, Back, View, UserFilled, Clock, Plus, Edit, Delete, Refresh
+  DataBoard, Trophy, User, Back, View, UserFilled, Clock, Plus, Edit, Delete, Refresh
 } from '@element-plus/icons-vue'
 import api from '@/api/index.js'
 
@@ -290,7 +267,6 @@ const userStats = ref({
 })
 
 const allRecords = ref([])
-const userFeedbacks = ref([])
 
 // 整活项目管理相关
 const memeEvents = ref([])
@@ -321,9 +297,6 @@ const loadSectionData = async (section) => {
         break
       case 'records':
         await fetchAllRecords()
-        break
-      case 'feedback':
-        await fetchUserFeedbacks()
         break
       case 'users-stats':
         await fetchUserStats()
@@ -374,22 +347,6 @@ const fetchAllRecords = async () => {
   }
 }
 
-// 获取用户反馈
-const fetchUserFeedbacks = async () => {
-  try {
-    const result = await api.getFeedbackList({ page: 1, pageSize: 50 })
-    
-    if (result.code === 200) {
-      userFeedbacks.value = result.data || []
-    } else {
-      throw new Error(result.message || '获取用户反馈失败')
-    }
-  } catch (error) {
-    ElMessage.error('获取用户反馈失败: ' + error.message)
-    userFeedbacks.value = []
-  }
-}
-
 // 获取用户统计
 const fetchUserStats = async () => {
   try {
@@ -414,23 +371,6 @@ const fetchUserStats = async () => {
   } catch (error) {
     console.error('获取用户统计失败:', error)
     ElMessage.error('获取用户统计失败: ' + error.message)
-  }
-}
-
-// 格式化时间（用于反馈显示）
-const formatTime = (timestamp) => {
-  const date = new Date(timestamp)
-  const now = new Date()
-  const diff = now - date
-  
-  if (diff < 1000 * 60) {
-    return '刚刚'
-  } else if (diff < 1000 * 60 * 60) {
-    return `${Math.floor(diff / (1000 * 60))}分钟前`
-  } else if (diff < 1000 * 60 * 60 * 24) {
-    return `${Math.floor(diff / (1000 * 60 * 60))}小时前`
-  } else {
-    return date.toLocaleDateString('zh-CN')
   }
 }
 
@@ -648,40 +588,6 @@ onMounted(() => {
 }
 
 
-.feedback-card {
-  margin-top: 20px;
-}
-
-.feedback-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.feedback-item {
-  padding: 15px;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-xl);
-  background: var(--surface-color);
-}
-
-.feedback-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.feedback-user {
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-.feedback-time {
-  color: var(--text-color-secondary);
-  font-size: 12px;
-}
-
 /* 统一卡片圆角 */
 :deep(.el-card) {
   border-radius: var(--radius-xl) !important;
@@ -723,16 +629,6 @@ onMounted(() => {
   font-size: 12px;
   color: #909399;
   margin-top: 4px;
-}
-
-.feedback-content {
-  color: var(--text-color);
-  line-height: 1.5;
-}
-
-.empty-feedback {
-  text-align: center;
-  padding: 40px;
 }
 
 .user-stats-grid {

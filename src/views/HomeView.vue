@@ -52,84 +52,13 @@
       </section>
     </div>
 
-    <!-- 最近记录和更新日志 -->
-    <section class="content-section">
-      <el-row :gutter="24">
-        <!-- 左侧：最近打破的记录 -->
-        <el-col :xs="24" :sm="24" :md="12" :lg="12">
-          <div class="section-card glass-card">
-            <h2 class="section-title">
-              <ShinyText :speed="4" className="enhanced-shiny">New G-Records</ShinyText>
-            </h2>
-            <div class="records-list" v-loading="recordsLoading">
-              <div v-if="recentRecords.length === 0" class="empty-placeholder">
-                暂无记录
-              </div>
-              <div v-else v-for="(record, index) in recentRecords" :key="index" class="record-item">
-                <div class="record-header">
-                  <span class="record-event">{{ getEventName(record.event) }}</span>
-                  <span class="record-date">{{ formatDate(record.timestamp) }}</span>
-                </div>
-                <div class="record-content">
-                  <div class="record-user">
-                    <span class="user-name">{{ record.nickname || '匿名' }}</span>
-                  </div>
-                  <div class="record-times">
-                    <span v-if="record.isSingleRecord" class="record-single">
-                      单次: {{ formatTime(record.singleSeconds) }}
-                    </span>
-                    <span v-if="record.isAverageRecord" class="record-average">
-                      平均: {{ formatTime(record.averageSeconds) }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </el-col>
-        
-        <!-- 右侧：更新日志 -->
-        <el-col :xs="24" :sm="24" :md="12" :lg="12">
-          <div class="section-card glass-card">
-            <h2 class="section-title">
-              <ShinyText :speed="4" className="enhanced-shiny">最近更新</ShinyText>
-            </h2>
-            <div class="changelog-list">
-              <div v-for="log in recentChangelogs" :key="log.version" class="changelog-item">
-                <div class="changelog-header">
-                  <span class="changelog-version">v{{ log.version }}</span>
-                  <span class="changelog-date">{{ log.date }}</span>
-                </div>
-                <ul class="changelog-changes">
-                  <li v-for="(change, changeIndex) in log.changes" :key="changeIndex">
-                    {{ change }}
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </el-col>
-      </el-row>
-    </section>
   </div>
 </template>
 
 <script setup>
 import { Icon } from '@iconify/vue'
-import { useUserStore } from '@/stores/user'
-import { useRecordsStore } from '@/stores/records'
-import { storeToRefs } from 'pinia'
-import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
-import { getEventName, getEventType } from '@/config/events'
-import ShinyText from '@/components/ShinyText.vue'
-// 导入更新日志数据
-import { getRecentChangelogs } from '@/services/changelog.js'
-// 导入 API
-import { getRecentRecordBreaks } from '@/api/index.js'
-
-const userStore = useUserStore()
-const recordsStore = useRecordsStore()
-const { user } = storeToRefs(userStore)
+import { ref, reactive } from 'vue'
+import { getEventName } from '@/config/events'
 
 // 移除主卡片的倾斜效果相关代码
 const featureCardRefs = ref([])
@@ -191,64 +120,6 @@ const features = [
   }
 ]
 
-// 最近记录相关
-const recordsLoading = ref(false)
-const recentRecords = ref([])
-
-// 更新日志相关
-const recentChangelogs = ref([])
-
-// 格式化时间
-const formatTime = (time) => {
-  return recordsStore.formatTime(time)
-}
-
-// 格式化日期
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  
-  return `${year}.${month}.${day}`
-}
-
-// 获取最近打破的记录
-const fetchRecentRecords = async () => {
-  recordsLoading.value = true
-  try {
-    // 使用新的后端 API 直接获取最近打破的记录
-    const result = await getRecentRecordBreaks({ limit: 5 })
-    if (result.code === 200) {
-      recentRecords.value = result.data || []
-    } else {
-      console.error('获取最近记录失败:', result.message)
-      recentRecords.value = []
-    }
-  } catch (error) {
-    console.error('获取最近记录失败:', error)
-    recentRecords.value = []
-  } finally {
-    recordsLoading.value = false
-  }
-}
-
-// 获取最近更新日志
-const fetchRecentChangelogs = async () => {
-  try {
-    // 使用共享的更新日志数据服务（现在是异步的）
-    recentChangelogs.value = await getRecentChangelogs(5)
-  } catch (error) {
-    console.error('获取更新日志失败:', error)
-    recentChangelogs.value = []
-  }
-}
-
-onMounted(async () => {
-  fetchRecentRecords()
-  await fetchRecentChangelogs()
-})
 </script>
 
 <style scoped>

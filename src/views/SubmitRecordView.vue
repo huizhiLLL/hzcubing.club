@@ -651,6 +651,7 @@ onMounted(() => {
   color: var(--primary-color);
   font-weight: 600;
   font-size: 16px;
+  font-family: 'Consolas', 'Monaco', monospace;
 }
 
 .record-info {

@@ -377,6 +377,7 @@ onMounted(() => {
   font-weight: 600;
   color: var(--text-color);
   transition: all var(--duration-normal) var(--ease-in-out);
+  font-family: 'Consolas', 'Monaco', monospace;
 }
 
 .record-value:hover {

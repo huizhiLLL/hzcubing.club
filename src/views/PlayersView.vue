@@ -45,7 +45,7 @@
           
           <el-table-column label="注册时间" min-width="120">
             <template #default="scope">
-              {{ formatDate(scope.row.createTime) }}
+              <span class="date-text">{{ formatDate(scope.row.createTime) }}</span>
             </template>
           </el-table-column>
         </el-table>
@@ -243,6 +243,10 @@ onMounted(() => {
 .player-name-link:hover {
   text-decoration: underline;
   color: var(--el-color-primary-light-3);
+}
+
+.date-text {
+  font-family: 'Consolas', 'Monaco', monospace;
 }
 
 .wca-id {

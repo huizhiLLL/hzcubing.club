@@ -5,9 +5,7 @@ import { useRecordsStore } from '@/stores/records'
 import { usePermissionStore } from '@/stores/permission'
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
-import Changelog from '@/components/Changelog.vue'
 import AuthDialog from '@/components/AuthDialog.vue'
-import FeedbackDialog from '@/components/FeedbackDialog.vue'
 import ParticlesBackground from '@/components/ParticlesBackground.vue'
 import ClickEffect from '@/components/ClickEffect.vue'
 import { ref, onMounted, watch, computed } from 'vue'
@@ -41,9 +39,7 @@ watch(isStandalonePage, (isStandalone) => {
   }
 }, { immediate: true })
 
-const changelogRef = ref()
 const authDialogRef = ref()
-const feedbackDialogRef = ref()
 const authDialogVisible = ref(false)
 const authDialogMode = ref('login')
 const moreMenuVisible = ref(false)
@@ -57,15 +53,13 @@ const closeSidebar = () => {
   sidebarVisible.value = false
 }
 
-const showChangelog = () => {
-  changelogRef.value?.open()
-  // 在移动端下自动收起侧边菜单
+const openChangelog = () => {
+  window.open('https://docs.huizhi.pro/hzcubing/changelog.html', '_blank')
   closeSidebar()
 }
 
 const showFeedback = () => {
-  feedbackDialogRef.value?.open()
-  // 在移动端下自动收起侧边菜单
+  // 反馈功能已移除，这里不再执行任何操作
   closeSidebar()
 }
 
@@ -243,13 +237,9 @@ const handleLoginSuccess = () => {
           <el-icon><Icon icon="mdi:shield-crown" /></el-icon>
           <span>超级管理</span>
         </el-menu-item>
-        <el-menu-item @click="showChangelog">
+        <el-menu-item index="changelog" @click="openChangelog">
           <el-icon><Icon icon="mdi:history" /></el-icon>
           <span>更新日志</span>
-        </el-menu-item>
-        <el-menu-item @click="showFeedback">
-          <el-icon><Icon icon="mdi:message-text" /></el-icon>
-          <span>反馈</span>
         </el-menu-item>
         <!-- <el-menu-item index="/online-competition">
           <el-icon><Icon icon="mdi:trophy-award" /></el-icon>
@@ -314,13 +304,9 @@ const handleLoginSuccess = () => {
                       <Icon icon="mdi:shield-crown" class="dropdown-icon super-admin-icon" />
                       超级管理
                     </el-dropdown-item>
-                    <el-dropdown-item @click="showChangelog">
+                    <el-dropdown-item @click="openChangelog">
                       <Icon icon="mdi:history" class="dropdown-icon" />
                       更新日志
-                    </el-dropdown-item>
-                    <el-dropdown-item @click="showFeedback">
-                      <Icon icon="mdi:message-text" class="dropdown-icon" />
-                      反馈
                     </el-dropdown-item>
                     <!-- <el-dropdown-item @click="router.push('/online-competition')">
                       <Icon icon="mdi:trophy-award" class="dropdown-icon" />
@@ -421,8 +407,6 @@ const handleLoginSuccess = () => {
       </div>
     </el-footer>
 
-    <Changelog ref="changelogRef" />
-    <FeedbackDialog ref="feedbackDialogRef" />
     <AuthDialog 
       v-model:visible="authDialogVisible"
       :mode="authDialogMode"

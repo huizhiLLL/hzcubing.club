@@ -117,7 +117,7 @@
               class-name="hide-on-mobile"
             >
               <template #default="scope">
-                {{ formatDate(scope.row.timestamp) }}
+              <span class="date-text">{{ formatDate(scope.row.timestamp) }}</span>
               </template>
             </el-table-column>
           </el-table>
@@ -170,7 +170,7 @@
         
         <div class="detail-item" v-if="selectedRecord.timestamp">
           <span class="label">提交时间:</span>
-          <span class="value">{{ formatDate(selectedRecord.timestamp, true) }}</span>
+          <span class="value date-text">{{ formatDate(selectedRecord.timestamp, true) }}</span>
         </div>
       </div>
     </el-dialog>
@@ -553,11 +553,12 @@ const viewRecord = async (recordId) => {
 .time-value {
   font-weight: 600;
   color: var(--text-color);
-  font-size: 16px;
+  font-size: 20px;
+  font-family: 'Consolas', 'Monaco', monospace;
 }
 
 .time-value.clickable {
-  color: #1e88a8;
+  color: black;
   cursor: pointer;
   position: relative;
   transition: all 0.2s ease;
@@ -570,6 +571,10 @@ const viewRecord = async (recordId) => {
 
 .time-value.clickable:active {
   transform: scale(0.98);
+}
+
+.date-text {
+  font-family: 'Consolas', 'Monaco', monospace;
 }
 
 .no-event-selected {
@@ -662,7 +667,6 @@ const viewRecord = async (recordId) => {
   }
   
   .time-value.clickable {
-    background-color: rgba(30, 136, 168, 0.1);
     padding: 4px 8px;
     border-radius: 4px;
   }
@@ -688,15 +692,15 @@ const viewRecord = async (recordId) => {
 
   .time-value {
     font-size: 13px;
+  font-family: 'Consolas', 'Monaco', monospace;
   }
   }
 
 .time-value {
-  font-size: 13px;
+  font-size: 15px;
   }
 
 .time-value.clickable {
-  background-color: rgba(30, 136, 168, 0.1);
   padding: 4px 8px;
   border-radius: 4px;
 }

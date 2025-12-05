@@ -132,14 +132,6 @@ export function uploadAvatar(avatarData) {
   })
 }
 
-// 反馈API
-export function submitFeedback(feedbackData) {
-  return request('/feedback', {
-    method: 'POST',
-    body: JSON.stringify(feedbackData)
-  })
-}
-
 // 玩家API
 export function getPlayers() {
   return request('/get-players', { method: 'GET' })
@@ -231,50 +223,12 @@ export function getWebsiteStats() {
   return request('/website-stats', { method: 'GET' })
 }
 
-// 反馈管理API
-export function getFeedbackList(params = {}) {
-  const q = new URLSearchParams()
-  if (params.page) q.set('page', String(params.page))
-  if (params.pageSize) q.set('pageSize', String(params.pageSize))
-  const qs = q.toString()
-  const suffix = qs ? `?${qs}` : ''
-  return request(`/feedback-list${suffix}`, { method: 'GET' })
-}
-
 // 访问统计API
 export function trackVisit(visitData) {
   return request('/visit-track', {
     method: 'POST',
     body: JSON.stringify(visitData)
   })
-}
-
-// 更新日志API
-export function getChangelogs(params = {}) {
-  const q = new URLSearchParams()
-  if (params.page) q.set('page', String(params.page))
-  if (params.pageSize) q.set('pageSize', String(params.pageSize))
-  const qs = q.toString()
-  const suffix = qs ? `?${qs}` : ''
-  return request(`/changelog${suffix}`, { method: 'GET' })
-}
-
-export function addChangelog(changelogData) {
-  return request('/changelog', {
-    method: 'POST',
-    body: JSON.stringify(changelogData)
-  })
-}
-
-export function updateChangelog(id, changelogData) {
-  return request('/changelog', {
-    method: 'PUT',
-    body: JSON.stringify({ id, ...changelogData })
-  })
-}
-
-export function deleteChangelog(id) {
-  return request(`/changelog?id=${id}`, { method: 'DELETE' })
 }
 
 // 整活项目管理相关
@@ -339,7 +293,6 @@ export default {
   getUsersHistoryRecord,
   
   // 其他功能
-  submitFeedback,
   getPlayers,
   
   // Minecraft相关
@@ -362,14 +315,7 @@ export default {
   
   // 统计和管理
   getWebsiteStats,
-  getFeedbackList,
   trackVisit,
-  
-  // 更新日志管理
-  getChangelogs,
-  addChangelog,
-  updateChangelog,
-  deleteChangelog,
   
   // 整活项目管理
   getMemeEvents,

@@ -91,14 +91,12 @@
               <template #default="props">
                 <div class="record-details">
                   <div class="detail-item">
-                    <span class="detail-label">单次成绩：</span>
                     <span class="detail-value">
                       {{ formatTime(props.row.singleSeconds) }}
                       <el-tag v-if="props.row.isSingleRecord" size="small" type="danger" effect="dark">GR</el-tag>
                     </span>
                   </div>
                   <div class="detail-item">
-                    <span class="detail-label">单次保持者：</span>
                     <span class="detail-value">
                       <template v-if="props.row.userId">
                         <router-link :to="`/user/${props.row.userId}`" class="player-link">
@@ -114,14 +112,12 @@
                     </span>
                   </div>
                   <div class="detail-item">
-                    <span class="detail-label">平均成绩：</span>
                     <span class="detail-value">
                       {{ formatTime(props.row.averageSeconds) }}
                       <el-tag v-if="props.row.isAverageRecord" size="small" type="danger" effect="dark">GR</el-tag>
                     </span>
                   </div>
                   <div class="detail-item">
-                    <span class="detail-label">平均保持者：</span>
                     <span class="detail-value">
                       <template v-if="props.row.userId">
                         <router-link :to="`/user/${props.row.userId}`" class="player-link">
@@ -137,8 +133,7 @@
                     </span>
                   </div>
                   <div class="detail-item">
-                    <span class="detail-label">记录时间：</span>
-                    <span class="detail-value">{{ formatDate(props.row.timestamp) }}</span>
+                    <span class="detail-value date-text">{{ formatDate(props.row.timestamp) }}</span>
                   </div>
                 </div>
               </template>
@@ -209,21 +204,10 @@
               class-name="hide-on-mobile"
             >
               <template #default="scope">
-                {{ formatDate(scope.row.timestamp) }}
+                <span class="date-text">{{ formatDate(scope.row.timestamp) }}</span>
               </template>
             </el-table-column>
           </el-table>
-
-          <div class="pagination">
-            <el-pagination
-              v-model:current-page="currentPage"
-              v-model:page-size="pageSize"
-              :total="totalRecords"
-              :page-sizes="[10, 20, 50, 100]"
-              layout="total, sizes, prev, pager, next"
-              class="responsive-pagination"
-            />
-          </div>
         </div>
       </div>
     </ElementTransition>
@@ -429,63 +413,8 @@ const historyRecords = computed(() => {
   // 将结果反转，使最新记录在上面
   recordBreakHistory.reverse()
   
-  // 返回分页后的记录
+  // 不再分页，直接返回全部
   return recordBreakHistory
-    .slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value)
-})
-
-const totalRecords = computed(() => {
-  if (!selectedHistoryEvent.value) return 0
-  
-  // 计算打破记录的总数
-  const records = recordsStore.getRecordsByEvent(selectedHistoryEvent.value)
-  
-  let bestSingleTime = Infinity
-  let bestAverageTime = Infinity
-  let count = 0
-  
-  // 按时间从早到晚排序
-  const sortedRecords = [...records].sort((a, b) => {
-    // 安全地解析日期，确保有效比较
-    const dateA = a.timestamp ? new Date(a.timestamp).getTime() : 0
-    const dateB = b.timestamp ? new Date(b.timestamp).getTime() : 0
-    return dateA - dateB
-  })
-  
-  sortedRecords.forEach(record => {
-    let isBreakingRecord = false
-    
-    // 确保有效地转换时间
-    const singleTime = typeof record.singleSeconds === 'number' ? record.singleSeconds : null
-    const averageTime = typeof record.averageSeconds === 'number' ? record.averageSeconds : null
-    
-    // 检查单次是否打破记录
-    if (singleTime !== null && singleTime < bestSingleTime) {
-      bestSingleTime = singleTime
-      isBreakingRecord = true
-    }
-    
-    // 检查平均是否打破记录
-    if (averageTime !== null && averageTime < bestAverageTime) {
-      bestAverageTime = averageTime
-      isBreakingRecord = true
-    }
-    
-    // 如果打破了记录，计数加1
-    if (isBreakingRecord) {
-      count++
-    }
-  })
-  
-  return count
-})
-
-// 重置分页
-watch(selectedHistoryEvent, () => {
-  currentPage.value = 1
-  // 切换项目时也补齐昵称
-  const list = recordsStore.getRecordsByEvent(selectedHistoryEvent.value)
-  recordsStore.ensureNicknamesForRecords(list)
 })
 
 const formatTime = (time) => {
@@ -606,8 +535,9 @@ const allEvents = computed(() => {
 }
 
 .record-main {
-  font-weight: 500;
+  font-weight: 700;
   font-size: 1em;
+  font-family: 'Consolas', 'Monaco', monospace;
 }
 
 .record-sub {
@@ -627,14 +557,14 @@ const allEvents = computed(() => {
   gap: 8px;
 }
 
-.detail-label {
-  color: var(--el-text-color-secondary);
-  min-width: 90px;
-}
-
 .detail-value {
   font-weight: 500;
   color: #1e88a8;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.date-text {
+  font-family: 'Consolas', 'Monaco', monospace;
 }
 
 .player-link {
@@ -735,11 +665,6 @@ const allEvents = computed(() => {
 
   .detail-item {
     gap: 4px;
-  }
-
-  .detail-label {
-    min-width: 80px;
-    font-size: 0.9em;
   }
 
   .detail-value {

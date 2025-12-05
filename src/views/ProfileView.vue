@@ -1480,6 +1480,7 @@ const eventGroups = computed(() => {
   align-items: center;
   gap: 8px;
   font-family: 'Consolas', 'Monaco', monospace;
+  font-weight: 600;
 }
 
 /* 历史成绩表格中的成绩数据字体 */
