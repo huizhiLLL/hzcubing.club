@@ -278,6 +278,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useRecordsStore } from '@/stores/records'
+import { formatTime as formatTimeUtil, normalizeFloat } from '@/utils/timeFormatter'
 import ElementTransition from '@/components/ElementTransition.vue'
 import { ElMessage } from 'element-plus'
 import { categories, events, getEventName, getEventType, getAllEvents } from '@/config/events'
@@ -453,18 +454,8 @@ const maxEventCount = computed(() => {
   return counts.length > 0 ? Math.max(...counts) : 0
 })
 
-// 格式化时间（向下取整到两位小数）
-const formatTime = (time) => {
-  if (!time || isNaN(time)) return '-'
-  // 向下取整到两位小数：先乘以100，向下取整，再除以100
-  const truncated = Math.floor(time * 100) / 100
-  if (truncated < 60) {
-    return truncated.toFixed(2)
-  }
-  const minutes = Math.floor(truncated / 60)
-  const seconds = (truncated % 60).toFixed(2).padStart(5, '0')
-  return `${minutes}:${seconds}`
-}
+// 使用统一的格式化时间函数
+const formatTime = formatTimeUtil
 
 // 格式化日期
 const formatDate = (dateString, includeTime = false) => {
@@ -541,8 +532,8 @@ const fetchUserRecords = async () => {
       const map = {}
       ;(result.data || []).forEach(it => {
         map[it.event] = {
-          singleSeconds: typeof it.bestSingleSeconds === 'number' ? it.bestSingleSeconds : null,
-          averageSeconds: typeof it.bestAverageSeconds === 'number' ? it.bestAverageSeconds : null
+          singleSeconds: typeof it.bestSingleSeconds === 'number' ? normalizeFloat(it.bestSingleSeconds) : null,
+          averageSeconds: typeof it.bestAverageSeconds === 'number' ? normalizeFloat(it.bestAverageSeconds) : null
         }
       })
       personalBests.value = map
@@ -560,11 +551,15 @@ const fetchUserHistoryRecords = async () => {
   try {
     const result = await api.getUsersHistoryRecord(userId.value)
     if (result.code === 200 && result.data) {
-      const rows = (result.data || []).map(r => ({
-        ...r,
-        singleSeconds: typeof r.singleSeconds === 'number' ? r.singleSeconds : (r.single && typeof r.single.time === 'number' ? r.single.time : null),
-        averageSeconds: typeof r.averageSeconds === 'number' ? r.averageSeconds : (r.average && typeof r.average.time === 'number' ? r.average.time : null)
-      }))
+      const rows = (result.data || []).map(r => {
+        const single = typeof r.singleSeconds === 'number' ? r.singleSeconds : (r.single && typeof r.single.time === 'number' ? r.single.time : null)
+        const average = typeof r.averageSeconds === 'number' ? r.averageSeconds : (r.average && typeof r.average.time === 'number' ? r.average.time : null)
+        return {
+          ...r,
+          singleSeconds: typeof single === 'number' ? normalizeFloat(single) : null,
+          averageSeconds: typeof average === 'number' ? normalizeFloat(average) : null
+        }
+      })
       historyRecords.value = rows
       // 计算排名前先确保recordsStore有数据
       await ensureRecordsLoaded()
@@ -618,10 +613,14 @@ const calculateRankings = () => {
         
         eventRecords.forEach(er => {
           if (!er.userId || er.singleSeconds == null) return
-          if (!userBestSingles.has(er.userId) || er.singleSeconds < userBestSingles.get(er.userId).time) {
+          // 标准化时间值以确保比较准确
+          const normalizedTime = normalizeFloat(er.singleSeconds)
+          if (normalizedTime === null) return
+          
+          if (!userBestSingles.has(er.userId) || normalizedTime < userBestSingles.get(er.userId).time) {
             userBestSingles.set(er.userId, {
               userId: er.userId,
-              time: er.singleSeconds
+              time: normalizedTime
             })
           }
         })
@@ -630,7 +629,7 @@ const calculateRankings = () => {
         const sortedSingles = Array.from(userBestSingles.values())
           .sort((a, b) => a.time - b.time)
         
-        // 查找当前用户的排名
+        // 查找当前用户的排名（通过 userId 查找）
         const userRank = sortedSingles.findIndex(r => r.userId === userId.value) + 1
         if (userRank > 0) {
           record.singleRank = userRank
@@ -644,10 +643,14 @@ const calculateRankings = () => {
         
         eventRecords.forEach(er => {
           if (!er.userId || er.averageSeconds == null) return
-          if (!userBestAverages.has(er.userId) || er.averageSeconds < userBestAverages.get(er.userId).time) {
+          // 标准化时间值以确保比较准确
+          const normalizedTime = normalizeFloat(er.averageSeconds)
+          if (normalizedTime === null) return
+          
+          if (!userBestAverages.has(er.userId) || normalizedTime < userBestAverages.get(er.userId).time) {
             userBestAverages.set(er.userId, {
               userId: er.userId,
-              time: er.averageSeconds
+              time: normalizedTime
             })
           }
         })
@@ -656,7 +659,7 @@ const calculateRankings = () => {
         const sortedAverages = Array.from(userBestAverages.values())
           .sort((a, b) => a.time - b.time)
         
-        // 查找当前用户的排名
+        // 查找当前用户的排名（通过 userId 查找）
         const userRank = sortedAverages.findIndex(r => r.userId === userId.value) + 1
         if (userRank > 0) {
           record.averageRank = userRank
@@ -851,6 +854,36 @@ const firstPlaceRecords = computed(() => {
   margin-bottom: 20px;
 }
 
+/* 简化标签栏样式，移除白色背景 */
+.profile-tabs :deep(.el-tabs__header) {
+  background: transparent;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.profile-tabs :deep(.el-tabs__nav-wrap::after) {
+  background-color: rgba(220, 223, 230, 0.3);
+}
+
+.profile-tabs :deep(.el-tabs__item) {
+  background: transparent;
+  color: var(--el-text-color-regular);
+  transition: color 0.3s ease;
+}
+
+.profile-tabs :deep(.el-tabs__item:hover) {
+  color: var(--el-color-primary);
+}
+
+.profile-tabs :deep(.el-tabs__item.is-active) {
+  background: transparent;
+  color: var(--el-color-primary);
+  font-weight: 600;
+}
+
+.profile-tabs :deep(.el-tabs__active-bar) {
+  background-color: var(--el-color-primary);
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -930,10 +963,6 @@ const firstPlaceRecords = computed(() => {
   gap: 8px;
 }
 
-.rank-tabs :deep(.el-tabs__content) {
-  padding: 8px 0;
-}
-
 .pagination-container {
   margin-top: 20px;
   display: flex;
@@ -957,15 +986,6 @@ const firstPlaceRecords = computed(() => {
 
 .detail-value {
   flex: 1;
-}
-
-.video-link {
-  color: var(--el-color-primary);
-  text-decoration: none;
-}
-
-.video-link:hover {
-  text-decoration: underline;
 }
 
 @media (max-width: 768px) {
@@ -1007,47 +1027,6 @@ const firstPlaceRecords = computed(() => {
   padding: 0 5px;
   font-size: 12px;
   line-height: 1;
-}
-
-.chart-container {
-  margin-top: 24px;
-  margin-bottom: 24px;
-}
-
-.event-distribution {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.event-bar {
-  display: flex;
-  align-items: center;
-}
-
-.event-name {
-  width: 80px;
-  font-size: 14px;
-}
-
-.bar-container {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  height: 24px;
-}
-
-.bar {
-  height: 100%;
-  background-color: var(--el-color-primary-light-5);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-.bar-value {
-  margin-left: 8px;
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
 }
 
 .record-cell {

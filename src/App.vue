@@ -361,47 +361,22 @@ const handleLoginSuccess = () => {
 
     <!-- 页脚 - 仅在非独立页面显示 -->
     <el-footer v-if="!isStandalonePage" class="glass-footer">
-      <div class="footer-container text-center">
+      <div class="footer-container">
         <div class="footer-content">
           <div class="footer-section">
-            <p class="copyright">© {{ new Date().getFullYear() }} 会枝Cubing. All rights reserved.</p>
-            
-            <!-- ICP备案信息区域 -->
-            <div class="icp-info">
-              <a href="https://beian.miit.gov.cn" target="_blank" class="icp-link">豫ICP备2025116824号</a>
-              <!-- <a href="http://www.beian.gov.cn" target="_blank" class="police-link">
-                <img src="/images/icons/police-badge.svg" alt="公安备案" class="police-icon" />
-                公安备案号
-              </a> -->
-            </div>
-          </div>
-          
-          <!-- 社交媒体账号区域 -->
-          <div class="social-links">
-            <!-- QQ群 -->
-            <div class="social-link qq-group" title="QQ群">
-              <img src="/images/icons/qq-icon.svg" alt="QQ群" class="social-icon" />
-              <div class="qrcode-popup">
-                <img src="/images/qq-group-qrcode.png" alt="QQ群二维码" class="qrcode-img" />
-                <p class="qrcode-text">扫码加入QQ群</p>
-              </div>
-            </div>
-            <!-- B站账号 -->
-            <a href="https://space.bilibili.com/1299547652" target="_blank" class="social-link" title="会枝L">
-              <img src="/images/icons/bilibili-icon.svg" alt="Bilibili" class="social-icon" />
-            </a>
-
-            
-            <!-- GitHub仓库 -->
-            <a href="https://github.com/huizhiLLL/hzcubing.club" target="_blank" class="social-link" title="GitHub">
-              <svg t="1726641706144" class="social-icon icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4396" width="200" height="200">
-                <path
-                  d="M512 74.666667A437.333333 437.333333 0 0 0 74.666667 512c0 192 117.333333 354.133333 281.6 416 21.333333 4.266667 21.333333-8.533333 21.333333-21.333333v-74.666667c-117.333333 21.333333-140.8-51.2-140.8-51.2-17.066667-42.666667-42.666667-51.2-42.666667-51.2-36.266667-23.466667 2.133333-23.466667 2.133333-23.466667 40.533333 2.133333 60.8 38.4 60.8 38.4 36.266667 64 93.866667 44.8 117.333333 34.133333 2.133333-27.733333 14.933333-44.8 27.733334-53.333333-89.6-8.533333-185.6-44.8-185.6-200.533333 0-44.8 14.933333-81.066667 40.533333-108.8-4.266667-10.666667-17.066667-51.2 4.266667-106.666667 0 0 34.133333-10.666667 113.066666 40.533333a386.133333 386.133333 0 0 1 102.4-12.8c34.133333 0 68.266667 4.266667 102.4 12.8 78.933333-51.2 113.066667-40.533333 113.066667-40.533333 21.333333 55.466667 8.533333 96 4.266667 106.666667 25.6 27.733333 40.533333 64 40.533333 108.8 0 155.733333-96 192-185.6 200.533333 14.933333 12.8 27.733333 38.4 27.733333 76.8v110.933333c0 12.8 8.533333 25.6 21.333333 21.333333 164.266667-61.866667 281.6-224 281.6-416C949.333333 192 755.2 74.666667 512 74.666667z"
-                  p-id="4397"
-                  fill="#000000"
-                ></path>
-              </svg>
-            </a>
+            <p class="copyright">
+              © {{ new Date().getFullYear() }} 会枝Cubing. All rights reserved.
+              <!-- GitHub仓库 -->
+              <a href="https://github.com/huizhiLLL/hzcubing.club" target="_blank" class="github-link" title="GitHub">
+                <svg t="1726641706144" class="github-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4396" width="20" height="20">
+                  <path
+                    d="M512 74.666667A437.333333 437.333333 0 0 0 74.666667 512c0 192 117.333333 354.133333 281.6 416 21.333333 4.266667 21.333333-8.533333 21.333333-21.333333v-74.666667c-117.333333 21.333333-140.8-51.2-140.8-51.2-17.066667-42.666667-42.666667-51.2-42.666667-51.2-36.266667-23.466667 2.133333-23.466667 2.133333-23.466667 40.533333 2.133333 60.8 38.4 60.8 38.4 36.266667 64 93.866667 44.8 117.333333 34.133333 2.133333-27.733333 14.933333-44.8 27.733334-53.333333-89.6-8.533333-185.6-44.8-185.6-200.533333 0-44.8 14.933333-81.066667 40.533333-108.8-4.266667-10.666667-17.066667-51.2 4.266667-106.666667 0 0 34.133333-10.666667 113.066666 40.533333a386.133333 386.133333 0 0 1 102.4-12.8c34.133333 0 68.266667 4.266667 102.4 12.8 78.933333-51.2 113.066667-40.533333 113.066667-40.533333 21.333333 55.466667 8.533333 96 4.266667 106.666667 25.6 27.733333 40.533333 64 40.533333 108.8 0 155.733333-96 192-185.6 200.533333 14.933333 12.8 27.733333 38.4 27.733333 76.8v110.933333c0 12.8 8.533333 25.6 21.333333 21.333333 164.266667-61.866667 281.6-224 281.6-416C949.333333 192 755.2 74.666667 512 74.666667z"
+                    p-id="4397"
+                    fill="currentColor"
+                  ></path>
+                </svg>
+              </a>
+            </p>
           </div>
         </div>
       </div>
@@ -880,11 +855,6 @@ const handleLoginSuccess = () => {
   font-weight: 500;
 }
 
-.copyright {
-  color: var(--text-color-secondary);
-  font-size: 14px;
-}
-
 @media (max-width: 768px) {
   .page-container {
     padding: 10px;
@@ -1019,7 +989,7 @@ const handleLoginSuccess = () => {
 
 .footer-content {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
@@ -1034,118 +1004,33 @@ const handleLoginSuccess = () => {
 .copyright {
   color: var(--text-color-secondary);
   font-size: 14px;
-  margin-bottom: 10px;
-}
-
-.icp-info {
-  display: flex;
-  gap: 15px;
-  font-size: 12px;
-  color: var(--text-color-secondary);
-}
-
-.icp-link, .police-link {
-  color: var(--text-color-secondary);
-  text-decoration: none;
+  margin: 0;
   display: flex;
   align-items: center;
-  transition: all 0.2s ease;
-  opacity: 0.8;
+  gap: 8px;
 }
 
-.icp-link:hover, .police-link:hover {
-  color: var(--primary-color);
-  opacity: 1;
-  transform: translateY(-1px);
-}
-
-.police-icon {
-  height: 16px;
-  margin-right: 5px;
-}
-
-.social-links {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-
-.social-link {
-  display: flex;
+.github-link {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.social-link:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  background-color: rgba(255, 255, 255, 0.95);
-  border-color: var(--primary-color);
-}
-
-.social-icon {
-  width: 24px;
-  height: 24px;
   color: var(--text-color-secondary);
-  transition: color 0.2s ease;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  margin-left: 8px;
 }
 
-.social-link:hover .social-icon {
+.github-link:hover {
   color: var(--primary-color);
+  transform: translateY(-2px);
 }
 
-/* 确保SVG图标使用统一的颜色 */
-.social-icon svg {
-  fill: currentColor;
+.github-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
 }
 
-.social-icon svg path {
-  fill: currentColor;
-}
-
-.qq-group {
-  cursor: pointer;
-}
-
-.qrcode-popup {
-  position: absolute;
-  bottom: 45px;
-  right: -82px;
-  background-color: white;
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  width: 200px;
-  z-index: 10;
-}
-
-.qq-group:hover .qrcode-popup {
-  display: flex;
-}
-
-.qrcode-img {
-  width: 180px;
-  height: 180px;
-  object-fit: contain;
-}
-
-.qrcode-text {
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--text-color);
-}
 
 @media (max-width: 768px) {
   .footer-content {
@@ -1153,18 +1038,13 @@ const handleLoginSuccess = () => {
     text-align: center;
   }
   
-  .icp-info {
-    flex-direction: column;
-    gap: 8px;
-    align-items: center;
+  .copyright {
+    flex-wrap: wrap;
+    justify-content: center;
   }
   
-  .social-links {
-    margin-top: 15px;
-  }
-  
-  .qrcode-popup {
-    right: -82px;
+  .github-link {
+    margin-left: 0;
   }
 }
 
@@ -1274,96 +1154,6 @@ const handleLoginSuccess = () => {
   }
 }
 
-/* 优化首页卡片布局 */
-:deep(.home-feature-card),
-:deep(.home-card) {
-  @media (max-width: 768px) {
-    width: 100% !important;
-    max-width: 350px !important;
-    margin-bottom: 16px !important;
-    
-    .el-card__body {
-      padding: 15px !important;
-    }
-  }
-}
-
-/* 优化图表容器 */
-:deep(.chart-container) {
-  @media (max-width: 768px) {
-    height: auto !important;
-    min-height: 250px !important;
-    width: 100% !important;
-  }
-}
-
-/* 优化图片显示 */
-:deep(img.responsive-image) {
-  @media (max-width: 768px) {
-    max-width: 100% !important;
-    height: auto !important;
-  }
-}
-
-/* 优化标题和文本 */
-:deep(h1) {
-  @media (max-width: 768px) {
-    font-size: 24px !important;
-  }
-}
-
-:deep(h2) {
-  @media (max-width: 768px) {
-    font-size: 20px !important;
-  }
-}
-
-:deep(h3) {
-  @media (max-width: 768px) {
-    font-size: 18px !important;
-  }
-}
-
-:deep(.large-text) {
-  @media (max-width: 768px) {
-    font-size: 16px !important;
-  }
-}
-
-/* 移动端下隐藏首页特性卡片，减小渐变卡片高度 */
-:deep(.home-container .hero-features) {
-  @media (max-width: 768px) {
-    display: none !important;
-  }
-}
-
-:deep(.home-container .hero-section) {
-  @media (max-width: 768px) {
-    height: auto !important;
-    min-height: 250px !important;
-    padding: 30px 20px !important;
-  }
-}
-
-:deep(.home-container .hero-inner) {
-  @media (max-width: 768px) {
-    padding: 20px 10px !important;
-  }
-}
-
-/* 优化首页卡片布局 */
-:deep(.home-feature-card),
-:deep(.home-card) {
-  @media (max-width: 768px) {
-    width: 100% !important;
-    max-width: 350px !important;
-    margin-bottom: 16px !important;
-    
-    .el-card__body {
-      padding: 15px !important;
-    }
-  }
-}
 
 /* 独立页面样式 - 只针对计时器页面 */
 .standalone-main {

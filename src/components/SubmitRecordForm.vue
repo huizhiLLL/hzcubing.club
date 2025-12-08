@@ -2,16 +2,6 @@
   <div class="card">
     <div class="header-with-tip">
       <h2 class="text-2xl font-bold mb-6">上传成绩</h2>
-      <el-tooltip
-        content="想要添加新的【整活项目】？
-        管理员可以在管理面板中直接添加，
-        普通用户可以在意见箱中提出建议"
-        placement="top"
-        effect="light"
-        class="form-popover"
-      >
-        <span class="new-project-tip">我想开创新项目</span>
-      </el-tooltip>
     </div>
     
     <div class="form-scroll-container">
@@ -236,11 +226,10 @@
           />
         </el-form-item>
 
-        <!-- 按钮区域：仅保留上传按钮，居中显示 -->
+        <!-- 按钮区域：仅保留上传按钮，左对齐显示 -->
         <el-form-item class="form-actions">
           <div class="action-buttons">
             <el-button
-              type="primary"
               class="submit-button"
               @click="submitForm(formRef)"
               :loading="loading"
@@ -586,16 +575,6 @@ onMounted(async () => {
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 .form-container {
   background: transparent;
@@ -721,43 +700,6 @@ onMounted(async () => {
   --el-switch-on-color: var(--primary-color);
 }
 
-/* 文字按钮样式 */
-:deep(.el-button--text) {
-  background-color: transparent;
-  box-shadow: none;
-}
-
-:deep(.el-button--text:hover) {
-  background-color: rgba(var(--el-color-primary-rgb), 0.1);
-  color: var(--primary-color);
-  transform: translateY(-1px);
-}
-
-/* 主要按钮样式 */
-:deep(.el-button--primary) {
-  border: none;
-  background: linear-gradient(45deg, var(--primary-color), var(--primary-color-light));
-  background-size: 200% 200%;
-  animation: gradientAnimation 4s ease infinite;
-  box-shadow: 0 4px 12px rgba(var(--el-color-primary-rgb), 0.3);
-}
-
-:deep(.el-button--primary:hover) {
-  background: linear-gradient(45deg, var(--primary-color-light), var(--primary-color));
-  box-shadow: 0 6px 16px rgba(var(--el-color-primary-rgb), 0.4);
-}
-
-/* 默认按钮样式 */
-:deep(.el-button--default) {
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background-color: #ffffff;
-  color: var(--text-color);
-}
-
-:deep(.el-button--default:hover) {
-  background-color: #f9f9f9;
-  border-color: rgba(0, 0, 0, 0.2);
-}
 
 /* 表单操作区域样式 */
 .form-actions {
@@ -767,31 +709,28 @@ onMounted(async () => {
 }
 
 .form-actions :deep(.el-form-item__content) {
-  justify-content: center;
+  justify-content: flex-start;
   margin-bottom: 0;
 }
 
 .action-buttons {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 20px;
   width: 100%;
-  max-width: 400px;
 }
 
-.action-buttons .submit-button,
-.action-buttons .reset-button {
-  min-width: 140px;
-  height: 46px;
+.action-buttons .submit-button {
+  min-width: 100px;
+  height: 40px;
   border-radius: 8px;
-  padding: 0;
+  padding: 0 20px;
   position: relative;
   overflow: hidden;
 }
 
 /* 隐藏Element Plus默认的按钮内容 */
-.action-buttons .submit-button :deep(.el-button__content),
-.action-buttons .reset-button :deep(.el-button__content) {
+.action-buttons .submit-button :deep(.el-button__content) {
   display: none;
 }
 
@@ -843,53 +782,6 @@ onMounted(async () => {
   margin: 0 2px;
 }
 
-.form-note {
-  font-size: 12px;
-  color: #f56c6c;
-  margin-top: 5px;
-}
-
-.more-options-toggle {
-  display: flex;
-  justify-content: center;
-  margin: 12px 0;
-  position: relative;
-  z-index: 5;
-}
-
-.collapse-options-toggle {
-  display: flex;
-  justify-content: center;
-  margin: 16px 0 20px;
-  position: relative;
-  z-index: 5;
-}
-
-.more-options-toggle :deep(.el-button),
-.collapse-options-toggle :deep(.el-button) {
-  background-color: #f5f7fa;
-  padding: 8px 16px;
-  border-radius: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.more-options-toggle :deep(.el-button:hover),
-.collapse-options-toggle :deep(.el-button:hover) {
-  background-color: #f0f2f5;
-  transform: translateY(-2px);
-}
-
-.more-options {
-  position: relative;
-  z-index: 5;
-  border-top: 1px dashed rgba(0, 0, 0, 0.15);
-  padding-top: 16px;
-  margin-top: 4px;
-  margin-bottom: 16px;
-  transition: all 0.3s ease;
-  animation: fadeIn 0.3s ease-out;
-}
 
 .header-with-tip {
   display: flex;
@@ -915,20 +807,6 @@ onMounted(async () => {
   border-radius: 2px;
 }
 
-.new-project-tip {
-  font-size: 14px;
-  color: var(--el-color-primary);
-  cursor: pointer;
-  transition: color 0.3s;
-}
-
-.new-project-tip:hover {
-  color: var(--el-color-primary-dark-2);
-}
-
-.form-popover {
-  background: #ffffff;
-}
 
 :deep(.el-tooltip__popper) {
   background: #ffffff !important;
@@ -1030,10 +908,10 @@ onMounted(async () => {
     gap: 12px;
   }
   
-  .action-buttons .submit-button,
-  .action-buttons .reset-button {
-    min-width: 110px;
-    height: 40px;
+  .action-buttons .submit-button {
+    min-width: 90px;
+    height: 38px;
+    padding: 0 16px;
   }
   
   .button-content {
@@ -1074,58 +952,33 @@ onMounted(async () => {
   width: 200px;
 }
 
-/* 添加短输入框样式 */
-.short-input {
-  width: 350px;
-}
 
-/* 上传按钮样式 */
+/* 上传按钮样式 - 淡雅风格 */
 .action-buttons .submit-button {
-  background: linear-gradient(135deg, #4b7bec, #3867d6);
-  border: none;
-  box-shadow: 0 4px 15px rgba(59, 103, 214, 0.4);
+  background-color: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  box-shadow: none;
+  color: #606266;
 }
 
 .action-buttons .submit-button .button-text {
-  color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  color: #606266;
+  text-shadow: none;
 }
 
 .action-buttons .submit-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(59, 103, 214, 0.5);
-  background: linear-gradient(135deg, #5d8bf4, #4b7bec);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background-color: #e4e7ed;
+  border-color: #d3d4d6;
+  color: #409eff;
 }
 
 .action-buttons .submit-button:hover .button-text {
-  color: #ffffff;
+  color: #409eff;
 }
 
-/* 重置按钮样式 */
-.action-buttons .reset-button {
-  background: linear-gradient(135deg, #f5f7fa, #e2e6ed);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.action-buttons .reset-button .button-text {
-  color: #3a3f51;
-  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
-}
-
-.action-buttons .reset-button:hover {
-  background: linear-gradient(135deg, #ffffff, #f0f2f7);
-  border-color: rgba(0, 0, 0, 0.15);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-}
-
-.action-buttons .reset-button:hover .button-text {
-  color: #202538;
-}
-
-.action-buttons .submit-button:active,
-.action-buttons .reset-button:active {
+.action-buttons .submit-button:active {
   transform: translateY(1px);
 }
 </style> 

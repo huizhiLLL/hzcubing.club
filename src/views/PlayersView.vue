@@ -54,7 +54,7 @@
           <el-pagination
             v-model:current-page="currentPage"
             v-model:page-size="pageSize"
-            :page-sizes="[10, 20, 50, 100]"
+            :page-sizes="[20, 40]"
             layout="total, sizes, prev, pager, next"
             :total="filteredPlayers.length"
             @size-change="handleSizeChange"
@@ -80,7 +80,6 @@ const loading = ref(true)
 const searchQuery = ref('')
 const currentPage = ref(1)
 const pageSize = ref(10)
-const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
 // 过滤后的选手列表
 const filteredPlayers = computed(() => {
@@ -114,12 +113,6 @@ const formatDate = (dateString) => {
   } catch (error) {
     return '日期格式错误'
   }
-}
-
-// 查看选手详情
-const viewPlayerDetails = (player) => {
-  // 跳转到选手详情页
-  router.push(`/user/${player._id || player.id}`)
 }
 
 // 处理页面大小变化

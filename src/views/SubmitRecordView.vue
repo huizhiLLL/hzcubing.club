@@ -254,7 +254,8 @@ import { useUserStore } from '@/stores/user'
 import SubmitRecordForm from '@/components/SubmitRecordForm.vue'
 import ElementTransition from '@/components/ElementTransition.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getEventName, getAllEvents } from '@/config/events'
+import { getEventName } from '@/config/events'
+import { formatTime } from '@/utils/timeFormatter'
 
 const recordsStore = useRecordsStore()
 const userStore = useUserStore()
@@ -477,9 +478,7 @@ const refreshHistory = async () => {
   await fetchUserHistory()
 }
 
-const formatTime = (time) => {
-  return recordsStore.formatTime(time)
-}
+// 使用统一的格式化时间函数
 
 const formatDate = (timestamp) => {
   if (!timestamp) return '-'
@@ -682,15 +681,6 @@ onMounted(() => {
   line-height: 1.5;
 }
 
-.video-link {
-  color: var(--primary-color);
-  text-decoration: none;
-}
-
-.video-link:hover {
-  text-decoration: underline;
-}
-
 .empty-tip {
   color: var(--text-color-secondary);
   font-size: 14px;
@@ -782,10 +772,6 @@ onMounted(() => {
   }
 }
 
-.full-width {
-  width: 100%;
-}
-
 .short-input {
   width: 150px;
 }
@@ -829,10 +815,6 @@ onMounted(() => {
 
 .edit-form {
   padding: 0 10px;
-}
-
-.view-records-link {
-  text-decoration: none;
 }
 
 /* 自定义el-button样式 */

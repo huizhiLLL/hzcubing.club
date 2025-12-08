@@ -86,29 +86,6 @@
           </div>
         </template>
       </el-table-column>
-      
-      <el-table-column
-        label="魔方"
-        prop="cube"
-        width="100"
-        :show-overflow-tooltip="true"
-      >
-        <template #default="{ row }">
-          <span class="cube-info">{{ row.cube || '-' }}</span>
-        </template>
-      </el-table-column>
-      
-      <el-table-column
-        label="方法"
-        prop="method"
-        width="100"
-        :show-overflow-tooltip="true"
-      >
-        <template #default="{ row }">
-          <span class="method-info">{{ row.method || '-' }}</span>
-        </template>
-      </el-table-column>
-      
       <el-table-column
         label="提交时间"
         prop="timestamp"
@@ -125,7 +102,7 @@
       
       <el-table-column
         label="操作"
-        width="120"
+        width="250"
         fixed="right"
       >
         <template #default="{ row }">
@@ -172,7 +149,7 @@
               <span class="value">{{ selectedRecord.nickname || '匿名用户' }}</span>
             </div>
             <div class="detail-item">
-              <span class="label">提交时间:</span>
+              <span class="label">时间:</span>
               <span class="value">{{ formatDate(selectedRecord.timestamp) }} {{ formatTime(selectedRecord.timestamp, true) }}</span>
             </div>
           </div>
@@ -199,7 +176,7 @@
         </div>
         
         <div class="detail-section">
-          <h4>设备信息</h4>
+          <h4>其他</h4>
           <div class="detail-grid">
             <div class="detail-item">
               <span class="label">魔方:</span>
@@ -222,6 +199,10 @@
 import { ref, computed, defineProps, defineEmits } from 'vue'
 import { getEventName } from '@/config/events'
 import { Refresh, View } from '@element-plus/icons-vue'
+import { useRecordsStore } from '@/stores/records'
+import { formatTime as formatTimeUtil } from '@/utils/timeFormatter'
+
+const recordsStore = useRecordsStore()
 
 const props = defineProps({
   records: {
@@ -263,19 +244,8 @@ const formatTime = (time, isTimestamp = false) => {
     return `${hours}:${minutes}`
   }
   
-  // 格式化成绩时间（向下取整到两位小数）
-  if (time === null || time === undefined || isNaN(time)) return '-'
-  
-  const totalSeconds = parseFloat(time)
-  // 向下取整到两位小数：先乘以100，向下取整，再除以100
-  const truncated = Math.floor(totalSeconds * 100) / 100
-  if (truncated >= 60) {
-    const minutes = Math.floor(truncated / 60)
-    const seconds = (truncated % 60).toFixed(2)
-    return `${minutes}:${seconds.padStart(5, '0')}`
-  } else {
-    return truncated.toFixed(2)
-  }
+  // 使用统一的格式化成绩时间函数
+  return formatTimeUtil(time)
 }
 
 // 格式化日期

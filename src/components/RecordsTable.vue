@@ -191,7 +191,7 @@ import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getEventName } from '@/config/events'
-import { canEditRecord, canDeleteRecord } from '@/utils/permissions'
+import { formatTime } from '@/utils/timeFormatter'
 
 const props = defineProps({
   records: {
@@ -238,10 +238,7 @@ const isValidField = (value) => {
   return value !== null && value !== undefined && value !== 'null' && value !== ''
 }
 
-// 格式化时间
-const formatTime = (time) => {
-  return recordsStore.formatTime(time)
-}
+// 使用统一的格式化时间函数
 
 // 格式化日期
 const formatDate = (dateString, showTime = false) => {
@@ -296,18 +293,6 @@ const refresh = async () => {
 const isCurrentUserRecord = (record) => {
   if (!userStore.user || !record) return false
   return record.userId === userStore.user._id
-}
-
-// 检查是否可以编辑记录
-const canEdit = (record) => {
-  if (!userStore.user) return false
-  return canEditRecord(record, userStore.user._id)
-}
-
-// 检查是否可以删除记录
-const canDelete = (record) => {
-  if (!userStore.user) return false
-  return canDeleteRecord(record, userStore.user._id)
 }
 
 // 确认删除
@@ -404,15 +389,6 @@ onMounted(() => {
 .value {
   flex: 1;
   color: #303133;
-}
-
-.video-link {
-  color: #409EFF;
-  text-decoration: none;
-}
-
-.video-link:hover {
-  text-decoration: underline;
 }
 
 .actions {

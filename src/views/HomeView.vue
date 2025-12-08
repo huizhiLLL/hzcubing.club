@@ -58,7 +58,6 @@
 <script setup>
 import { Icon } from '@iconify/vue'
 import { ref, reactive } from 'vue'
-import { getEventName } from '@/config/events'
 
 // 移除主卡片的倾斜效果相关代码
 const featureCardRefs = ref([])
@@ -284,13 +283,6 @@ const features = [
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
 }
 
-.feature-local-icon {
-  width: 32px;
-  height: 32px;
-  margin-bottom: 12px;
-  transform: translateZ(20px);
-}
-
 .feature-title {
   font-size: 20px;
   font-weight: 600;
@@ -317,156 +309,6 @@ const features = [
 .feature-card:hover .feature-description {
   transform: translateZ(10px) scale(1.02);
   color: rgba(255, 255, 255, 1);
-}
-
-/* 内容区域样式 */
-.content-section {
-  margin: var(--space-2xl) 0;
-}
-
-.section-card {
-  padding: var(--space-xl);
-  height: 100%;
-  border-radius: var(--radius-xl);
-  margin-bottom: var(--space-lg);
-  transition: all var(--duration-normal) var(--ease-in-out);
-}
-
-.section-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-xl);
-}
-
-.section-title {
-  font-size: 24px;
-  font-weight: 600;
-  margin-bottom: var(--space-lg);
-  color: var(--text-color);
-  border-bottom: 2px solid var(--border-light);
-  padding-bottom: var(--space-md);
-  position: relative;
-}
-
-.section-title::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 60px;
-  height: 2px;
-  background: var(--primary-color);
-  border-radius: var(--radius-full);
-}
-
-/* 记录列表样式 */
-.records-list {
-  min-height: 200px;
-  padding-bottom: 0;
-  margin-bottom: 0;
-}
-
-.record-item {
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(var(--border-color-rgb), 0.1);
-}
-
-.record-item:last-child {
-  border-bottom: none;
-}
-
-.record-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.record-event {
-  font-weight: bold;
-  color:rgb(107, 119, 255);
-}
-
-.record-date {
-  color: var(--text-color-secondary);
-  font-size: 12px;
-}
-
-.record-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.user-name {
-  font-weight: 500;
-  color: #333;
-}
-
-.record-times {
-  display: flex;
-  gap: 12px;
-}
-
-.record-single, .record-average {
-  font-family: monospace;
-  font-size: 14px;
-  background-color: rgba(255, 107, 107, 0.1);
-  padding: 2px 6px;
-  border-radius: 4px;
-  color: #e74c3c;
-}
-
-.record-average {
-  background-color: rgba(52, 152, 219, 0.1);
-  color: #3498db;
-}
-
-.empty-placeholder {
-  text-align: center;
-  padding: 40px 0;
-  color: var(--text-color-secondary);
-}
-
-/* 更新日志样式 */
-.changelog-list {
-  max-height: 400px;
-  overflow-y: auto;
-  padding-bottom: 0;
-  margin-bottom: 0;
-}
-
-.changelog-item {
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(var(--border-color-rgb), 0.1);
-}
-
-.changelog-item:last-child {
-  border-bottom: none;
-}
-
-.changelog-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.changelog-version {
-  font-weight: bold;
-  color: rgb(107, 119, 255);
-}
-
-.changelog-date {
-  color: var(--text-color-secondary);
-  font-size: 12px;
-}
-
-.changelog-changes {
-  padding-left: 20px;
-  margin: 8px 0;
-}
-
-.changelog-changes li {
-  margin-bottom: 4px;
-  color: var(--text-color);
 }
 
 @media (max-width: 768px) {
@@ -520,15 +362,6 @@ const features = [
     line-height: 1.4;
   }
   
-  .section-card {
-    padding: var(--space-lg);
-    margin-bottom: var(--space-md);
-  }
-  
-  .section-title {
-    font-size: 20px;
-    margin-bottom: var(--space-md);
-  }
 }
 
 @media (max-width: 480px) {
@@ -575,24 +408,10 @@ const features = [
     font-size: 13px;
   }
   
-  .section-card {
-    padding: var(--space-md);
-  }
-  
-  .section-title {
-    font-size: 18px;
-  }
-  
   .hero-features .el-row {
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
 }
 
-/* 增强闪光效果 */
-:deep(.enhanced-shiny) {
-  font-weight: bold;
-  color: #ff6b6b;
-  text-shadow: 0 0 8px rgba(255, 107, 107, 0.3);
-}
 </style> 

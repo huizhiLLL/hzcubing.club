@@ -1,81 +1,36 @@
 <template>
-  <div class="super-admin-container">
-    <div class="admin-layout">
-      <!-- 侧边栏 -->
-      <aside class="admin-sidebar">
-        <div class="sidebar-header">
-          <h2>超级管理</h2>
-          <el-tag 
-            :type="getRoleTagType(userStore.userRole)" 
-            size="small"
-            effect="plain"
-          >
-            {{ getRoleDisplayName(userStore.userRole) }}
-          </el-tag>
-        </div>
-        
-        <el-menu
-          v-model:default-active="activeMenu"
-          class="admin-menu"
-          @select="handleMenuSelect"
-        >
-          <!-- 继承管理员功能 -->
-          <el-sub-menu index="admin-functions">
-            <template #title>
-              <el-icon><DataBoard /></el-icon>
-              <span>管理员功能</span>
-            </template>
-            <el-menu-item index="dashboard">
-              <el-icon><DataBoard /></el-icon>
-              <span>仪表板</span>
-            </el-menu-item>
-            <el-menu-item index="records">
-              <el-icon><Trophy /></el-icon>
-              <span>成绩管理</span>
-            </el-menu-item>
-          </el-sub-menu>
-          
-          <!-- 超级管理员专属功能 -->
-          <el-sub-menu index="super-admin-functions">
-            <template #title>
-              <el-icon><Key /></el-icon>
-              <span>超级管理</span>
-            </template>
-            <el-menu-item index="user-management">
-              <el-icon><UserFilled /></el-icon>
-              <span>用户管理</span>
-            </el-menu-item>
-          </el-sub-menu>
-        </el-menu>
-        
-        <div class="sidebar-footer">
-          <el-button type="primary" @click="$router.push('/')" plain>
-            <el-icon><Back /></el-icon>
-            返回首页
-          </el-button>
-        </div>
-      </aside>
+  <AdminLayout title="超级管理" :default-menu="activeMenu" @menu-select="handleMenuSelect">
+    <template #menu-items>
+      <!-- 继承管理员功能 -->
+      <el-menu-item index="dashboard">
+        <el-icon><DataBoard /></el-icon>
+        <span>仪表板</span>
+      </el-menu-item>
+      <el-menu-item index="records">
+        <el-icon><Trophy /></el-icon>
+        <span>成绩管理</span>
+      </el-menu-item>
+      <el-menu-item index="meme-events">
+        <el-icon><Trophy /></el-icon>
+        <span>整活项目</span>
+      </el-menu-item>
       
-      <!-- 主内容区 -->
-      <main class="admin-main">
-        <!-- 管理员功能（继承） -->
-        <div v-if="activeMenu === 'dashboard'" class="admin-section">
-          <h3 class="section-title">网站统计</h3>
-          <!-- 复用管理员页面的仪表板内容 -->
-          <AdminDashboard />
-        </div>
-        
-        <!-- 成绩管理（继承自管理员） -->
-        <div v-if="activeMenu === 'records'" class="admin-section">
-          <h3 class="section-title">成绩记录管理</h3>
-          <AdminRecordsTable 
-            :records="allRecords" 
-            :loading="recordsLoading"
-            @refresh="fetchAllRecords"
-          />
-        </div>
-        
-        <!-- 用户管理 -->
+      <!-- 超级管理员专属功能 -->
+      <el-menu-item index="user-management">
+        <el-icon><UserFilled /></el-icon>
+        <span>用户管理</span>
+      </el-menu-item>
+    </template>
+    
+    <template #content>
+      <!-- 管理员功能（继承） -->
+      <AdminCommonSections 
+        v-if="['dashboard', 'records', 'meme-events'].includes(activeMenu)"
+        :active-menu="activeMenu"
+        ref="commonSectionsRef"
+      />
+      
+      <!-- 用户管理 -->
         <div v-if="activeMenu === 'user-management'" class="admin-section">
           <div class="section-header">
             <h3 class="section-title">用户管理</h3>
@@ -125,24 +80,26 @@
             </el-table-column>
             <el-table-column prop="createTime" label="注册时间" width="120">
               <template #default="{ row }">
-                {{ formatDate(row.createTime) }}
+                {{ formatUserDate(row.createTime) }}
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="200">
+            <el-table-column label="操作" width="200" class-name="action-column">
               <template #default="{ row }">
-                <el-button-group>
-                  <el-button size="small" @click="editUserRole(row)">
-                    <el-icon><Edit /></el-icon>
-                    角色
-                  </el-button>
-                  <el-button 
-                    size="small" 
-                    :type="row.status === 'active' ? 'warning' : 'success'"
-                    @click="toggleUserStatus(row)"
-                  >
-                    {{ row.status === 'active' ? '禁用' : '启用' }}
-                  </el-button>
-                </el-button-group>
+                <div class="action-buttons">
+                  <el-button-group>
+                    <el-button size="small" @click="editUserRole(row)">
+                      <el-icon><Edit /></el-icon>
+                      角色
+                    </el-button>
+                    <el-button 
+                      size="small" 
+                      :type="row.status === 'active' ? 'warning' : 'success'"
+                      @click="toggleUserStatus(row)"
+                    >
+                      {{ row.status === 'active' ? '禁用' : '启用' }}
+                    </el-button>
+                  </el-button-group>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -159,11 +116,10 @@
             />
           </div>
         </div>
-        
-      </main>
-    </div>
+    </template>
+  </AdminLayout>
     
-    <!-- 编辑用户角色对话框 -->
+  <!-- 编辑用户角色对话框 -->
     <el-dialog
       v-model="editRoleDialogVisible"
       title="编辑用户角色"
@@ -211,34 +167,31 @@
         </el-button>
       </template>
     </el-dialog>
-    
-  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
-import { useRecordsStore } from '@/stores/records'
-import { getRoleDisplayName, getRoleColor } from '@/utils/permissions'
+import AdminLayout from '@/components/AdminLayout.vue'
+import AdminCommonSections from '@/components/AdminCommonSections.vue'
+import { useAdminCommon } from '@/composables/useAdminCommon'
+import { getRoleDisplayName } from '@/utils/permissions'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
-  DataBoard, Trophy, ChatDotRound, User, UserFilled, 
-  Key, Back, Search, Refresh
+  DataBoard, Trophy, UserFilled, Search, Refresh, Edit
 } from '@element-plus/icons-vue'
-import AdminDashboard from '@/components/AdminDashboard.vue'
-import RecordsTable from '@/components/RecordsTable.vue'
-import AdminRecordsTable from '@/components/AdminRecordsTable.vue'
 import api from '@/api/index.js'
 
 const router = useRouter()
-const userStore = useUserStore()
 const permissionStore = usePermissionStore()
+
+// 使用公共 composable
+const { getRoleTagType } = useAdminCommon()
 
 const activeMenu = ref('dashboard')
 const loading = ref(false)
-const recordsLoading = ref(false)
+const commonSectionsRef = ref(null)
 
 // 用户管理相关
 const users = ref([])
@@ -248,9 +201,6 @@ const currentPage = ref(1)
 const pageSize = ref(20)
 const totalUsers = ref(0)
 
-// 管理员功能继承的数据
-const allRecords = ref([])
-const userFeedbacks = ref([])
 // 对话框相关
 const editRoleDialogVisible = ref(false)
 const selectedUser = ref(null)
@@ -291,7 +241,14 @@ const loadSectionData = async (section) => {
         // 仪表板数据由AdminDashboard组件自己加载
         break
       case 'records':
-        await fetchAllRecords()
+        if (commonSectionsRef.value) {
+          await commonSectionsRef.value.fetchAllRecords()
+        }
+        break
+      case 'meme-events':
+        if (commonSectionsRef.value) {
+          await commonSectionsRef.value.fetchMemeEvents()
+        }
         break
       case 'user-management':
         await fetchUsers()
@@ -301,41 +258,6 @@ const loadSectionData = async (section) => {
     ElMessage.error('加载数据失败: ' + error.message)
   } finally {
     loading.value = false
-  }
-}
-
-// 获取所有成绩记录（继承自管理员）
-const fetchAllRecords = async () => {
-  recordsLoading.value = true
-  try {
-    // 分批获取所有records，避免数量限制
-    let allRecordsData = []
-    let page = 1
-    const pageSize = 100
-    
-    while (true) {
-      const result = await api.getRecords({ page, pageSize })
-      if (result.code === 200 && result.data && result.data.length > 0) {
-        allRecordsData = allRecordsData.concat(result.data)
-        
-        // 如果返回的数据少于pageSize，说明已经是最后一页
-        if (result.data.length < pageSize) {
-          break
-        }
-        page++
-      } else {
-        break
-      }
-    }
-    
-    allRecords.value = allRecordsData
-    console.log(`超级管理员页面：获取到${allRecordsData.length}条成绩记录`)
-  } catch (error) {
-    console.error('获取成绩记录失败:', error)
-    ElMessage.error('获取成绩记录失败: ' + error.message)
-    allRecords.value = []
-  } finally {
-    recordsLoading.value = false
   }
 }
 
@@ -446,22 +368,15 @@ const handleCurrentChange = (page) => {
   fetchUsers()
 }
 
-// 格式化日期
-const formatDate = (dateString) => {
+// 格式化用户日期（用于用户管理表格）
+const formatUserDate = (dateString) => {
+  if (!dateString) return '-'
   const date = new Date(dateString)
+  if (isNaN(date)) return '-'
   return date.toLocaleDateString('zh-CN')
 }
 
-// 获取角色标签类型（用于Element Plus的type属性）
-const getRoleTagType = (role) => {
-  const roleTypes = {
-    'guest': 'info',
-    'user': 'primary',
-    'admin': 'warning',
-    'super_admin': 'danger'
-  }
-  return roleTypes[role] || 'info'
-}
+// getRoleTagType 已从 useAdminCommon 导入
 
 onMounted(() => {
   // 检查超级管理员权限
@@ -477,55 +392,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.super-admin-container {
-  min-height: 100vh;
-  background: var(--background-color);
-}
-
-.admin-layout {
-  display: flex;
-  min-height: 100vh;
-}
-
-.admin-sidebar {
-  width: 250px;
-  background: var(--surface-color);
-  border-right: 1px solid var(--border-light);
-  display: flex;
-  flex-direction: column;
-  border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
-}
-
-.sidebar-header {
-  padding: 20px;
-  border-bottom: 1px solid var(--border-light);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.sidebar-header h2 {
-  margin: 0;
-  color: var(--text-color);
-  font-size: 18px;
-}
-
-.admin-menu {
-  flex: 1;
-  border: none;
-}
-
-.sidebar-footer {
-  padding: 20px;
-  border-top: 1px solid var(--border-light);
-}
-
-.admin-main {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-}
-
 .admin-section {
   max-width: 1200px;
 }
@@ -554,21 +420,23 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
-/* 统一卡片圆角 */
-:deep(.el-card) {
-  border-radius: var(--radius-xl) !important;
-  overflow: hidden;
+/* 操作按钮默认隐藏，鼠标悬停时显示 */
+.action-buttons {
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
-/* 统一表格圆角 */
-:deep(.el-table) {
-  border-radius: var(--radius-lg) !important;
-  overflow: hidden;
+:deep(.el-table__row:hover .action-buttons) {
+  opacity: 1;
 }
 
-/* 统一对话框圆角 */
-:deep(.el-dialog) {
-  border-radius: var(--radius-2xl) !important;
+/* 确保操作列有足够的空间 */
+:deep(.action-column) {
+  padding: 0 !important;
+}
+
+:deep(.action-column .cell) {
+  padding: 0 !important;
 }
 
 .changelog-table {
@@ -765,15 +633,6 @@ onMounted(() => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .admin-layout {
-    flex-direction: column;
-  }
-  
-  .admin-sidebar {
-    width: 100%;
-    height: auto;
-  }
-  
   .section-header {
     flex-direction: column;
     gap: 15px;

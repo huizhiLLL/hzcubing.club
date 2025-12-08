@@ -216,18 +216,15 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useUserStore } from '@/stores/user'
 import { useRecordsStore } from '@/stores/records'
 import RecordsTable from '@/components/RecordsTable.vue'
 import ElementTransition from '@/components/ElementTransition.vue'
 import { ElMessage } from 'element-plus'
 import { InfoFilled } from '@element-plus/icons-vue'
 import { categories, events, getEventName, getAllEvents, getMemeEventsFromAPI } from '@/config/events'
+import { formatTime } from '@/utils/timeFormatter'
 
-const userStore = useUserStore()
 const recordsStore = useRecordsStore()
-
-const { user } = userStore
 
 const selectedCategory = ref('official')
 const selectedEvent = ref('official_all')
@@ -417,9 +414,7 @@ const historyRecords = computed(() => {
   return recordBreakHistory
 })
 
-const formatTime = (time) => {
-  return recordsStore.formatTime(time)
-}
+// 使用统一的格式化时间函数
 
 const formatDate = (timestamp) => {
   if (!timestamp) return '-'

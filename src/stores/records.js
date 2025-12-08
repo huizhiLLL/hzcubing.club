@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useUserStore } from './user'
 import api from '@/api'
+import { normalizeFloat as normalizeFloatUtil, formatTime as formatTimeUtil } from '@/utils/timeFormatter'
 
 export const useRecordsStore = defineStore('records', () => {
   const userStore = useUserStore()
@@ -11,12 +12,20 @@ export const useRecordsStore = defineStore('records', () => {
   const error = ref(null)
   const userNicknameCache = ref({})
 
+  // 使用统一的标准化函数
+  function normalizeFloat(value) {
+    return normalizeFloatUtil(value)
+  }
+
   // 将时间字符串或数字转换为秒数
   function convertToSeconds(time) {
     if (time === null || time === undefined) return null
     
-    // 如果已经是数字，直接返回（确保不是 NaN）
-    if (typeof time === 'number') return Number.isNaN(time) ? null : time
+    // 如果已经是数字，先标准化再返回（确保不是 NaN）
+    if (typeof time === 'number') {
+      const normalized = normalizeFloat(time)
+      return normalized === null || Number.isNaN(normalized) ? null : normalized
+    }
 
     // 标准化字符串
     const raw = time.toString().trim()
@@ -49,26 +58,14 @@ export const useRecordsStore = defineStore('records', () => {
       seconds = null
     }
 
-    // 兜底：NaN 转 null
+    // 兜底：NaN 转 null，并标准化结果
     if (seconds === null || Number.isNaN(seconds)) return null
-    return seconds
+    return normalizeFloat(seconds)
   }
 
-  // 格式化时间显示（向下取整到两位小数）
+  // 使用统一的格式化时间函数
   function formatTime(seconds) {
-    if (seconds === null || seconds === undefined) return '-'
-    
-    // 向下取整到两位小数：先乘以100，向下取整，再除以100
-    const truncated = Math.floor(seconds * 100) / 100
-    
-    if (truncated < 60) {
-      return truncated.toFixed(2)
-    }
-    
-    const minutes = Math.floor(truncated / 60)
-    const remainingSeconds = (truncated % 60).toFixed(2).padStart(5, '0')
-    
-    return `${minutes}:${remainingSeconds}`
+    return formatTimeUtil(seconds)
   }
 
   // 从后端获取所有记录
@@ -90,6 +87,13 @@ export const useRecordsStore = defineStore('records', () => {
           if (typeof r.averageSeconds !== 'number' && r.average && typeof r.average.time !== 'undefined') {
             const sec = convertToSeconds(r.average.time)
             if (typeof sec === 'number') r.averageSeconds = sec
+          }
+          // 标准化浮点数，修正精度问题
+          if (typeof r.singleSeconds === 'number') {
+            r.singleSeconds = normalizeFloat(r.singleSeconds)
+          }
+          if (typeof r.averageSeconds === 'number') {
+            r.averageSeconds = normalizeFloat(r.averageSeconds)
           }
           return r
         })
@@ -150,7 +154,16 @@ export const useRecordsStore = defineStore('records', () => {
       const result = await api.getUserRecords(userId)
       
       if (result.code === 200) {
-        return result.data || []
+        // 标准化返回数据中的浮点数
+        return (result.data || []).map((r) => {
+          if (typeof r.singleSeconds === 'number') {
+            r.singleSeconds = normalizeFloat(r.singleSeconds)
+          }
+          if (typeof r.averageSeconds === 'number') {
+            r.averageSeconds = normalizeFloat(r.averageSeconds)
+          }
+          return r
+        })
       } else {
         throw new Error(result.message || '获取个人成绩记录失败')
       }
@@ -213,6 +226,13 @@ export const useRecordsStore = defineStore('records', () => {
         const result = await api.addRecord(recordWithTimestamp)
         if (result.code === 200) {
           const savedRecord = { ...recordWithTimestamp, _id: result.data._id }
+          // 标准化浮点数
+          if (typeof savedRecord.singleSeconds === 'number') {
+            savedRecord.singleSeconds = normalizeFloat(savedRecord.singleSeconds)
+          }
+          if (typeof savedRecord.averageSeconds === 'number') {
+            savedRecord.averageSeconds = normalizeFloat(savedRecord.averageSeconds)
+          }
           // 本地也补齐昵称
           if (savedRecord.userId && (!savedRecord.nickname || savedRecord.nickname === '')) {
             await ensureNicknamesForRecords([savedRecord])
@@ -330,6 +350,13 @@ export const useRecordsStore = defineStore('records', () => {
         const index = records.value.findIndex(r => r._id === record._id)
         if (index !== -1) {
           const merged = { ...records.value[index], ...record }
+          // 标准化浮点数
+          if (typeof merged.singleSeconds === 'number') {
+            merged.singleSeconds = normalizeFloat(merged.singleSeconds)
+          }
+          if (typeof merged.averageSeconds === 'number') {
+            merged.averageSeconds = normalizeFloat(merged.averageSeconds)
+          }
           // 本地也补齐昵称
           await ensureNicknamesForRecords([merged])
           records.value[index] = merged
@@ -485,6 +512,7 @@ export const useRecordsStore = defineStore('records', () => {
     getUserPersonalBests,
     convertToSeconds,
     formatTime,
-    updateRecord
+    updateRecord,
+    normalizeFloat
   }
 }) 

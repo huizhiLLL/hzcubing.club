@@ -180,15 +180,14 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRecordsStore } from '@/stores/records'
-import { useUserStore } from '@/stores/user'
 import ElementTransition from '@/components/ElementTransition.vue'
 import { ElMessage } from 'element-plus'
 import { Icon } from '@iconify/vue'
-import { categories, events, getEventName, getCurrentEvents, getMemeEventsFromAPI } from '@/config/events'
+import { categories, events, getEventName, getMemeEventsFromAPI } from '@/config/events'
 import api from '@/api'
+import { formatTime } from '@/utils/timeFormatter'
 
 const recordsStore = useRecordsStore()
-const userStore = useUserStore()
 
 const selectedCategory = ref('official')
 const selectedEvent = ref('333')
@@ -344,11 +343,6 @@ const loadMemeEvents = async () => {
     console.error('加载整活项目失败:', error)
     dynamicMemeEvents.value = []
   }
-}
-
-// 格式化时间
-const formatTime = (time) => {
-  return recordsStore.formatTime(time)
 }
 
 // 格式化日期
@@ -606,15 +600,6 @@ const viewRecord = async (recordId) => {
   flex: 1;
 }
 
-.video-link {
-  color: #409eff;
-  text-decoration: none;
-}
-
-.video-link:hover {
-  text-decoration: underline;
-}
-
 @media (max-width: 768px) {
   .leaderboard-container {
     padding: 12px;
@@ -692,16 +677,7 @@ const viewRecord = async (recordId) => {
 
   .time-value {
     font-size: 13px;
-  font-family: 'Consolas', 'Monaco', monospace;
+    font-family: 'Consolas', 'Monaco', monospace;
   }
-  }
-
-.time-value {
-  font-size: 15px;
-  }
-
-.time-value.clickable {
-  padding: 4px 8px;
-  border-radius: 4px;
 }
 </style> 
