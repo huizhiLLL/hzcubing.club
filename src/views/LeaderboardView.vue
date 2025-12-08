@@ -547,7 +547,7 @@ const viewRecord = async (recordId) => {
 .time-value {
   font-weight: 600;
   color: var(--text-color);
-  font-size: 20px;
+  font-size: 15px;
   font-family: 'Consolas', 'Monaco', monospace;
 }
 
