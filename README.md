@@ -17,5 +17,4 @@
 - **数据库**: MongoDB
 - **部署**: Vercel + Sealos
 
-© 2025 会枝Cubing. All rights reserved.
 更新时间：2025-12-28
