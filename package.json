@@ -20,6 +20,7 @@
     "element-plus": "^2.9.10",
     "framer-motion": "^12.19.1",
     "gsap": "^3.13.0",
+    "node-fetch": "^3.3.2",
     "normalize.css": "^8.0.1",
     "pinia": "^3.0.2",
     "tsparticles": "^2.12.0",

@@ -271,6 +271,14 @@ export function getAstroLeaderboard(params = {}) {
   return request(`/astrobot-hzcubing?action=leaderboard${qs ? `&${qs}` : ''}`, { method: 'GET' })
 }
 
+// Astrobot 插件相关 - 获取最佳记录（GR记录）
+export function getAstroBestRecords(params = {}) {
+  const q = new URLSearchParams()
+  if (params.event) q.set('event', String(params.event))
+  const qs = q.toString()
+  return request(`/astrobot-hzcubing?action=best-records${qs ? `&${qs}` : ''}`, { method: 'GET' })
+}
+
 export default {
   // 用户相关
   getUser,
@@ -324,7 +332,8 @@ export default {
   deleteMemeEvent,
 
   // Astrobot 插件
-  getAstroLeaderboard
+  getAstroLeaderboard,
+  getAstroBestRecords
 }
 
 

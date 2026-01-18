@@ -38,13 +38,10 @@
       >
         <template #default="scope">
           <div class="record-cell">
-          <span v-if="scope.row.singleSeconds !== undefined" class="record-value">
+          <span class="record-value">
             {{ formatTime(scope.row.singleSeconds) }}
             <span v-if="scope.row.singleRank" class="rank">(#{{ scope.row.singleRank }})</span>
           </span>
-          <template v-else>
-            <span>-</span>
-          </template>
             
             <!-- 显示单次记录持有人（桌面/移动统一） -->
             <span v-if="scope.row.singleHolderNickname" class="holder-nickname">
@@ -64,13 +61,10 @@
       >
         <template #default="scope">
           <div class="record-cell">
-          <span v-if="scope.row.averageSeconds !== undefined" class="record-value">
+          <span class="record-value">
             {{ formatTime(scope.row.averageSeconds) }}
             <span v-if="scope.row.averageRank" class="rank">(#{{ scope.row.averageRank }})</span>
           </span>
-          <template v-else>
-            <span>-</span>
-          </template>
             
             <!-- 显示平均记录持有人（桌面/移动统一） -->
             <span v-if="scope.row.averageHolderNickname" class="holder-nickname">

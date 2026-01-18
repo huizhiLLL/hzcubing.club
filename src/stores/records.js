@@ -74,38 +74,70 @@ export const useRecordsStore = defineStore('records', () => {
     error.value = null
     
     try {
-      // 拉取全量或足够大的数据集，避免分页导致"最佳记录"不完整
-      const result = await api.getRecords({ page: 1, pageSize: 10000 })
+      // 分批获取所有记录，避免后端 pageSize 限制（最大200条）
+      let allRecordsData = []
+      let page = 1
+      const pageSize = 200 // 后端最大限制
       
-      if (result.code === 200) {
-        records.value = (result.data || []).map((r) => {
-          // 兼容旧结构：在缺少 seconds 时从旧字段转换
-          if (typeof r.singleSeconds !== 'number' && r.single && typeof r.single.time !== 'undefined') {
-            const sec = convertToSeconds(r.single.time)
-            if (typeof sec === 'number') r.singleSeconds = sec
-          }
-          if (typeof r.averageSeconds !== 'number' && r.average && typeof r.average.time !== 'undefined') {
-            const sec = convertToSeconds(r.average.time)
-            if (typeof sec === 'number') r.averageSeconds = sec
-          }
-          // 标准化浮点数，修正精度问题
-          if (typeof r.singleSeconds === 'number') {
-            r.singleSeconds = normalizeFloat(r.singleSeconds)
-          }
-          if (typeof r.averageSeconds === 'number') {
-            r.averageSeconds = normalizeFloat(r.averageSeconds)
-          }
-          return r
-        })
-        await ensureNicknamesForRecords(records.value)
-        // 更新个人最佳记录
-        personalBests.value = {}
-        records.value.forEach(record => {
-          updatePersonalBests(record)
-        })
-      } else {
-        throw new Error(result.message || '获取成绩记录失败')
+      while (true) {
+        const result = await api.getRecords({ page, pageSize })
+        
+        if (result.code !== 200) {
+          throw new Error(result.message || '获取成绩记录失败')
+        }
+        
+        const pageData = result.data || []
+        if (pageData.length === 0) {
+          break
+        }
+        
+        allRecordsData = allRecordsData.concat(pageData)
+        
+        // 如果返回的数据少于 pageSize，说明已经是最后一页
+        if (pageData.length < pageSize) {
+          break
+        }
+        
+        page++
       }
+      
+      // 处理记录数据
+      records.value = allRecordsData.map((r) => {
+        // 兼容旧结构：在缺少 seconds 时从旧字段转换（参考 astrobot-hzcubing.js 的处理逻辑）
+        // 如果 singleSeconds 不是数字（null/undefined），尝试从 single.time 转换
+        if (typeof r.singleSeconds !== 'number') {
+          if (r.single && typeof r.single.time !== 'undefined') {
+            const sec = convertToSeconds(r.single.time)
+            if (sec !== null && typeof sec === 'number') {
+              r.singleSeconds = sec
+            }
+          }
+        }
+        // 如果 averageSeconds 不是数字（null/undefined），尝试从 average.time 转换
+        if (typeof r.averageSeconds !== 'number') {
+          if (r.average && typeof r.average.time !== 'undefined') {
+            const sec = convertToSeconds(r.average.time)
+            if (sec !== null && typeof sec === 'number') {
+              r.averageSeconds = sec
+            }
+          }
+        }
+        // 标准化浮点数，修正精度问题
+        if (typeof r.singleSeconds === 'number') {
+          r.singleSeconds = normalizeFloat(r.singleSeconds)
+        }
+        if (typeof r.averageSeconds === 'number') {
+          r.averageSeconds = normalizeFloat(r.averageSeconds)
+        }
+        return r
+      })
+      
+      await ensureNicknamesForRecords(records.value)
+      // 更新个人最佳记录
+      personalBests.value = {}
+      records.value.forEach(record => {
+        updatePersonalBests(record)
+      })
     } catch (err) {
       console.error('获取成绩记录错误:', err)
       error.value = err.message
@@ -417,33 +449,57 @@ export const useRecordsStore = defineStore('records', () => {
     return records.value.reduce((bestRecords, record) => {
       const event = record.event
       if (!event) return bestRecords
-      const s = record.singleSeconds
-      const a = record.averageSeconds
+      
+      // 参考 astrobot-hzcubing.js 的处理逻辑：确保正确获取成绩值
+      // 如果 singleSeconds 不是数字，尝试从 single.time 转换（双重保险）
+      let s = record.singleSeconds
+      if (typeof s !== 'number') {
+        if (record.single && typeof record.single.time !== 'undefined') {
+          const sec = convertToSeconds(record.single.time)
+          if (sec !== null && typeof sec === 'number') {
+            s = sec
+          }
+        }
+      }
+      
+      // 如果 averageSeconds 不是数字，尝试从 average.time 转换（双重保险）
+      let a = record.averageSeconds
+      if (typeof a !== 'number') {
+        if (record.average && typeof record.average.time !== 'undefined') {
+          const sec = convertToSeconds(record.average.time)
+          if (sec !== null && typeof sec === 'number') {
+            a = sec
+          }
+        }
+      }
+      
       const nicknameFromCache = (uid) => (uid ? (userNicknameCache.value?.[uid] || '') : '')
       if (!bestRecords[event]) {
         bestRecords[event] = {
           event,
           // 单次最佳
-          singleSeconds: typeof s === 'number' ? s : null,
+          singleSeconds: typeof s === 'number' ? normalizeFloat(s) : null,
           singleHolderUserId: typeof s === 'number' ? (record.userId || null) : null,
           singleHolderNickname: typeof s === 'number' ? (record.nickname || nicknameFromCache(record.userId) || '') : '',
           singleTimestamp: typeof s === 'number' ? record.timestamp : null,
           // 平均最佳
-          averageSeconds: typeof a === 'number' ? a : null,
+          averageSeconds: typeof a === 'number' ? normalizeFloat(a) : null,
           averageHolderUserId: typeof a === 'number' ? (record.userId || null) : null,
           averageHolderNickname: typeof a === 'number' ? (record.nickname || nicknameFromCache(record.userId) || '') : '',
           averageTimestamp: typeof a === 'number' ? record.timestamp : null
         }
       } else {
         const current = bestRecords[event]
-        if (typeof s === 'number' && (current.singleSeconds == null || s < current.singleSeconds)) {
-          current.singleSeconds = s
+        // 确保 s 是有效的数字才进行比较
+        if (typeof s === 'number' && !isNaN(s) && (current.singleSeconds == null || s < current.singleSeconds)) {
+          current.singleSeconds = normalizeFloat(s)
           current.singleHolderUserId = record.userId || null
           current.singleHolderNickname = record.nickname || nicknameFromCache(record.userId) || ''
           current.singleTimestamp = record.timestamp
         }
-        if (typeof a === 'number' && (current.averageSeconds == null || a < current.averageSeconds)) {
-          current.averageSeconds = a
+        // 确保 a 是有效的数字才进行比较
+        if (typeof a === 'number' && !isNaN(a) && (current.averageSeconds == null || a < current.averageSeconds)) {
+          current.averageSeconds = normalizeFloat(a)
           current.averageHolderUserId = record.userId || null
           current.averageHolderNickname = record.nickname || nicknameFromCache(record.userId) || ''
           current.averageTimestamp = record.timestamp
