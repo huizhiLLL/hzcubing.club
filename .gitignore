@@ -11,6 +11,7 @@ dist/
 # Editor directories and files
 .vscode/
 .cursor/
+.claude/
 
 
 # Vite related
@@ -18,4 +19,5 @@ dist/
 *.cache
 
 # Temporary folders
-.temp/
+temp/
+tools/

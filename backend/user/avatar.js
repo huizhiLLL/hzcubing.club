@@ -55,8 +55,30 @@ export default async function (ctx) {
     }
     
     // 从请求体中获取数据，用户只能上传自己的头像
-    const { fileName, fileType, fileSize, fileData } = ctx.request.body || {}
+    const { fileName, fileType, fileSize, fileData, avatarUrl: inputAvatarUrl, url } = ctx.request.body || {}
     const userId = currentUser._id
+
+    // 新格式：直接写入 URL（迁移后的头像/第三方图床）
+    const directUrl = inputAvatarUrl || url
+    if (directUrl) {
+      const s = String(directUrl).trim()
+      if (!/^https?:\/\//i.test(s)) {
+        return { code: 400, message: '头像URL格式不合法' }
+      }
+
+      const db = cloud.database()
+      await db.collection('users').doc(userId).update({
+        avatar: s
+      })
+
+      return {
+        code: 200,
+        message: '头像更新成功',
+        data: {
+          avatarUrl: s
+        }
+      }
+    }
     
     // 验证必要参数
     if (!fileData) {
@@ -66,9 +88,42 @@ export default async function (ctx) {
         message: '没有提供头像文件'
       }
     }
+
+    // 兼容：如果 fileData 直接传了 URL
+    if (typeof fileData === 'string' && /^https?:\/\//i.test(fileData.trim())) {
+      const s = fileData.trim()
+      const db = cloud.database()
+      await db.collection('users').doc(userId).update({
+        avatar: s
+      })
+
+      return {
+        code: 200,
+        message: '头像更新成功',
+        data: {
+          avatarUrl: s
+        }
+      }
+    }
+
+    // 兼容：如果 fileData 是 dataURL（data:image/...;base64,xxx）
+    let base64Payload = fileData
+    let resolvedFileType = fileType
+    if (typeof fileData === 'string' && fileData.startsWith('data:')) {
+      const m = fileData.match(/^data:([^;]+);base64,(.+)$/)
+      if (!m) {
+        return { code: 400, message: 'dataURL格式不合法' }
+      }
+      resolvedFileType = resolvedFileType || m[1]
+      base64Payload = m[2]
+    }
+
+    if (!resolvedFileType) {
+      return { code: 400, message: '缺少文件类型' }
+    }
     
     // 将base64转换为Buffer
-    const buffer = Buffer.from(fileData, 'base64')
+    const buffer = Buffer.from(base64Payload, 'base64')
     
     if (buffer.length === 0) {
       return {
@@ -78,7 +133,7 @@ export default async function (ctx) {
     }
     
     // 生成文件名
-    const fileExt = fileType.split('/')[1] || 'png'
+    const fileExt = resolvedFileType.split('/')[1] || 'png'
     const timestamp = Date.now()
     const cloudFileName = `avatar_${userId}_${timestamp}.${fileExt}`
 
@@ -98,7 +153,7 @@ export default async function (ctx) {
       console.log('使用数据库存储头像')
       const db = cloud.database()
       // 直接将base64数据存入数据库
-      avatarUrl = `data:${fileType};base64,${fileData}`
+      avatarUrl = `data:${resolvedFileType};base64,${base64Payload}`
     } 
     // 方法2: 尝试使用 cloud.uploadFile (如果存在)
     else if (typeof cloud.uploadFile === 'function') {
