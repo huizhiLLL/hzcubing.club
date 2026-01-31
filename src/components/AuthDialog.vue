@@ -224,12 +224,12 @@ defineExpose({
 <style scoped>
 /* 现代化毛玻璃效果 */
 .auth-dialog :deep(.el-dialog) {
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
+  background: var(--glass-bg-hover) !important;
+  backdrop-filter: blur(var(--glass-blur-lg)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg)) !important;
   border-radius: var(--radius-xl) !important;
   box-shadow: var(--shadow-2xl) !important;
-  border: 1px solid var(--border-light) !important;
+  border: var(--glass-border) !important;
   overflow: hidden !important;
   padding: 0 !important;
   transition: all var(--duration-normal) var(--ease-in-out) !important;
@@ -238,8 +238,8 @@ defineExpose({
 /* 自定义遮罩层 */
 :deep(.auth-dialog-modal) {
   background-color: rgba(0, 0, 0, 0.4) !important;
-  backdrop-filter: blur(5px) !important;
-  -webkit-backdrop-filter: blur(5px) !important;
+  backdrop-filter: blur(var(--glass-blur-sm)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) !important;
 }
 
 /* 确保背景是透明的 */

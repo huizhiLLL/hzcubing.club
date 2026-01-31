@@ -1,5 +1,9 @@
 <template>
   <div class="leaderboard-container">
+    <!-- Dynamic Ambient Orbs -->
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
     <div v-if="error" class="error-alert">
       <el-alert
         title="获取数据失败"
@@ -12,9 +16,12 @@
     </div>
 
     <ElementTransition name="slide-up" :duration="600" :delay="200" appear>
-      <div class="card glass-card" v-loading="loading">
+      <div class="bento-card" v-loading="loading">
         <div class="filter-header">
-          <h2 class="section-title">排行榜</h2>
+          <h2 class="section-title">
+            <el-icon class="title-icon"><Trophy /></el-icon>
+            排行榜
+          </h2>
           <div class="filter-controls">
             <div class="filter-row">
               <el-select v-model="selectedCategory" placeholder="选择项目类型" class="category-select glass-select">
@@ -63,7 +70,7 @@
             <el-table-column 
               prop="rank" 
               label="排名" 
-              width="80"
+              min-width="60"
               align="center"
             >
               <template #default="scope">
@@ -183,6 +190,7 @@ import { useRecordsStore } from '@/stores/records'
 import ElementTransition from '@/components/ElementTransition.vue'
 import { ElMessage } from 'element-plus'
 import { Icon } from '@iconify/vue'
+import { Trophy } from '@element-plus/icons-vue'
 import { categories, events, getEventName, getMemeEventsFromAPI } from '@/config/events'
 import api from '@/api'
 import { formatTime } from '@/utils/timeFormatter'
@@ -410,61 +418,164 @@ const viewRecord = async (recordId) => {
   display: flex;
   flex-direction: column;
   gap: 32px;
-  padding: 16px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  min-height: 80vh;
+}
+
+/* Ambient Orbs */
+.ambient-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: 0;
+  opacity: 0.6;
+  animation: floatOrb 20s infinite ease-in-out;
+  pointer-events: none;
+}
+
+.orb-1 {
+  top: -10%;
+  right: -5%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(66, 211, 146, 0.4) 0%, rgba(66, 211, 146, 0) 70%);
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  bottom: 10%;
+  left: -10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(64, 158, 255, 0.4) 0%, rgba(64, 158, 255, 0) 70%);
+  animation-delay: -5s;
+}
+
+@keyframes floatOrb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+
+/* Bento Card Style */
+.bento-card {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur-lg));
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg));
+  border: var(--glass-border);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.bento-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--glass-shadow-lg);
 }
 
 .error-alert {
   margin-bottom: 16px;
+  position: relative;
+  z-index: 2;
 }
 
 .filter-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 24px;
 }
 
 .section-title {
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--text-color);
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-icon {
+  font-size: 32px;
+  color: #f1c40f; /* Gold for trophy */
+  filter: drop-shadow(0 2px 4px rgba(241, 196, 15, 0.3));
 }
 
 .filter-controls {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  width: 100%;
 }
 
 .filter-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
-  width: 100%;
 }
 
 .category-select,
 .event-select {
-  min-width: 120px;
-  width: auto;
-  flex: 0 1 auto;
+  min-width: 140px;
 }
 
-.rank-type-select {
-  margin-left: 0;
+/* Glass Select Overrides */
+:deep(.el-input__wrapper) {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+  backdrop-filter: blur(8px);
+  box-shadow: none !important;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 1px var(--primary-color) !important;
 }
 
 .table-responsive {
   overflow-x: auto;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  padding: 8px;
+  -webkit-overflow-scrolling: touch;
 }
 
+/* Glass Table Styles */
 .leaderboard-table {
-  width: 100%;
+  background: transparent !important;
+  --el-table-border-color: rgba(0, 0, 0, 0.05);
+  --el-table-header-bg-color: transparent;
+  --el-table-row-hover-bg-color: rgba(66, 211, 146, 0.1);
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+}
+
+:deep(.el-table__inner-wrapper::before) {
+  display: none;
+}
+
+:deep(.el-table th.el-table__cell) {
+  background-color: transparent !important;
+  font-weight: 700;
+  color: #2c3e50;
+  font-size: 15px;
+}
+
+:deep(.el-table tr) {
+  background-color: transparent !important;
 }
 
 .rank-cell {
@@ -479,24 +590,15 @@ const viewRecord = async (recordId) => {
   justify-content: center;
 }
 
-.gold-medal {
-  color: #f7d794;
-  font-size: 20px;
-}
-
-.silver-medal {
-  color: #c0c0c0;
-  font-size: 20px;
-}
-
-.bronze-medal {
-  color: #cd7f32;
-  font-size: 20px;
-}
+.gold-medal { color: #f7d794; font-size: 24px; filter: drop-shadow(0 2px 4px rgba(247, 215, 148, 0.4)); }
+.silver-medal { color: #dcdde1; font-size: 24px; filter: drop-shadow(0 2px 4px rgba(220, 221, 225, 0.4)); }
+.bronze-medal { color: #e1b12c; font-size: 24px; filter: drop-shadow(0 2px 4px rgba(225, 177, 44, 0.4)); }
 
 .rank-number {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-color);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
 }
 
 .player-cell {
@@ -507,34 +609,15 @@ const viewRecord = async (recordId) => {
 
 .player-name {
   font-weight: 600;
-  color: inherit;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 16px;
-  letter-spacing: 0.5px;
+  color: #2c3e50;
   text-decoration: none;
-  transition: all var(--duration-normal) var(--ease-in-out);
+  font-size: 16px;
+  transition: all 0.3s ease;
   position: relative;
 }
 
-.player-name::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--primary-color);
-  transition: width var(--duration-normal) var(--ease-in-out);
-}
-
 .player-name:hover {
-  transform: translateY(-1px);
-}
-
-.player-name:hover::after {
-  width: 100%;
+  color: var(--primary-color);
 }
 
 .time-cell {
@@ -545,139 +628,164 @@ const viewRecord = async (recordId) => {
 }
 
 .time-value {
-  font-weight: 600;
-  color: var(--text-color);
-  font-size: 15px;
-  font-family: 'Consolas', 'Monaco', monospace;
-}
-
-.time-value.clickable {
-  color: black;
-  cursor: pointer;
-  position: relative;
+  font-weight: 700;
+  color: #2c3e50;
+  font-size: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 4px 8px;
+  border-radius: 6px;
   transition: all 0.2s ease;
 }
 
-.time-value.clickable:hover {
-  color: #409eff;
-  text-decoration: underline;
+.time-value.clickable {
+  cursor: pointer;
+  background: rgba(64, 158, 255, 0.1);
 }
 
-.time-value.clickable:active {
-  transform: scale(0.98);
+.time-value.clickable:hover {
+  background: rgba(64, 158, 255, 0.2);
+  color: var(--primary-color);
+  transform: translateY(-1px);
 }
 
 .date-text {
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: 'JetBrains Mono', monospace;
+  color: #666;
+  font-size: 14px;
 }
 
 .no-event-selected {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 200px;
+  min-height: 300px;
+}
+
+/* Glass Dialog & Details */
+:deep(.glass-dialog) {
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+:deep(.el-dialog__header) {
+  margin: 0;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+:deep(.el-dialog__body) {
+  padding: 24px;
 }
 
 .record-details {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .detail-item {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.detail-item:last-child {
+  border-bottom: none;
 }
 
 .label {
-  font-weight: 500;
-  color: var(--text-color);
-  min-width: 80px;
+  font-weight: 600;
+  color: #666;
+  min-width: 90px;
 }
 
 .value {
-  color: var(--text-color);
+  color: #2c3e50;
   flex: 1;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {
   .leaderboard-container {
-    padding: 12px;
-    gap: 24px;
+    padding: 16px;
+    gap: 20px;
+  }
+
+  .bento-card {
+    padding: 20px;
+    border-radius: 16px;
   }
 
   .section-title {
-    font-size: 18px;
+    font-size: 22px;
   }
 
   .filter-header {
     flex-direction: column;
     align-items: flex-start;
-    margin-bottom: 16px;
-  }
-
-  .filter-controls {
-    width: 100%;
+    gap: 16px;
+    margin-bottom: 24px;
   }
 
   .filter-row {
     flex-direction: column;
     width: 100%;
+    align-items: stretch;
   }
 
   .category-select,
-  .event-select {
+  .event-select,
+  .rank-type-select {
     width: 100%;
   }
 
   .rank-type-select {
-    margin-left: 0;
-    align-self: center;
+    margin: 0;
+    display: flex;
+  }
+  
+  :deep(.el-radio-button) {
+    flex: 1;
+  }
+  
+  :deep(.el-radio-button__inner) {
+    width: 100%;
   }
 
   :deep(.hide-on-mobile) {
     display: none;
   }
-
-  .player-cell {
-    gap: 6px;
-  }
-
-  .player-name {
-    font-size: 14px;
+  
+  /* Table Mobile Optimizations */
+  :deep(.el-table .cell) {
+    padding: 8px 4px;
+    line-height: 1.4;
   }
 
   .time-value {
+    font-size: 14px;
+    padding: 2px 6px;
+  }
+  
+  .rank-number {
     font-size: 14px;
   }
   
-  .time-value.clickable {
-    padding: 4px 8px;
-    border-radius: 4px;
-  }
-}
-
-@media (max-width: 480px) {
-  .leaderboard-container {
-    padding: 8px;
-    gap: 16px;
-  }
-
-  .section-title {
-    font-size: 16px;
-  }
-
-  .card {
-    padding: 16px;
-  }
-
   .player-name {
-    font-size: 13px;
+    font-size: 14px;
+    white-space: normal;
+    display: block;
+    line-height: 1.3;
   }
-
-  .time-value {
-    font-size: 13px;
-    font-family: 'Consolas', 'Monaco', monospace;
+  
+  .medal-rank {
+    transform: scale(0.9);
   }
 }
 </style> 

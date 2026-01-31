@@ -1,109 +1,96 @@
 <template>
   <div class="submit-container">
+    <!-- 动态背景光球 -->
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
     <el-row :gutter="24">
       <el-col :xs="24" :sm="24" :md="14">
         <ElementTransition name="slide-up" :duration="600" :delay="200" appear>
-          <submit-record-form @success="handleSubmitSuccess" />
+          <div class="bento-card glass-card form-card">
+            <submit-record-form @success="handleSubmitSuccess" />
+          </div>
         </ElementTransition>
       </el-col>
 
       <el-col :xs="24" :sm="24" :md="10">
         <ElementTransition name="slide-up" :duration="600" :delay="400" appear>
-          <div class="card">
+          <div class="bento-card glass-card history-card">
             <div class="history-header">
-              <h2 class="section-title">上传历史</h2>
-              <el-button type="primary" text @click="refreshHistory">
-                刷新
+              <h2 class="section-title">
+                <el-icon><Timer /></el-icon> 上传历史
+              </h2>
+              <el-button type="primary" text bg size="small" @click="refreshHistory" class="refresh-btn">
+                <el-icon><Refresh /></el-icon> 刷新
               </el-button>
             </div>
             
-            <!-- 添加筛选栏 -->
+            <!-- 筛选栏 -->
             <div class="filter-container">
-              <div class="filter-row">
-                <el-select
-                  v-model="filterEvent"
-                  placeholder="按项目筛选"
-                  clearable
-                  class="filter-select"
-                >
-                  <el-option
-                    v-for="event in userEventsOptions"
-                    :key="event.value"
-                    :label="event.label"
-                    :value="event.value"
-                  />
-                </el-select>
-                <el-button 
-                  v-if="filterEvent" 
-                  type="primary" 
-                  text 
-                  @click="filterEvent = ''"
-                >
-                  清除筛选
-                </el-button>
-              </div>
+              <el-select
+                v-model="filterEvent"
+                placeholder="按项目筛选"
+                clearable
+                class="filter-select glass-select"
+              >
+                <el-option
+                  v-for="event in userEventsOptions"
+                  :key="event.value"
+                  :label="event.label"
+                  :value="event.value"
+                />
+              </el-select>
             </div>
             
-            <div class="records-list-container" v-loading="historyLoading">
-              <div class="records-list">
-                <template v-if="filteredRecords.length > 0">
-                  <div v-for="record in filteredRecords" 
-                       :key="record._id || record.timestamp" 
-                       class="record-item"
-                  >
-                    <div class="record-content">
-                      <div class="record-main">
-                        <span class="event-name">{{ getEventName(record.event) }}</span>
-                        <div class="record-times">
-                          <template v-if="record.singleSeconds !== null && record.singleSeconds !== undefined">
-                            <span class="record-label">单次:</span>
-                            <span class="record-time">{{ formatTime(record.singleSeconds) }}</span>
-                          </template>
-                          <template v-if="record.averageSeconds !== null && record.averageSeconds !== undefined">
-                            <span class="record-label">平均:</span>
-                            <span class="record-time">{{ formatTime(record.averageSeconds) }}</span>
-                          </template>
-                        </div>
+            <div class="records-list-container custom-scrollbar" v-loading="historyLoading">
+              <div v-if="filteredRecords.length > 0" class="history-list">
+                <div v-for="record in filteredRecords" 
+                     :key="record._id || record.timestamp" 
+                     class="history-item"
+                >
+                  <div class="item-header">
+                    <span class="event-tag">{{ getEventName(record.event) }}</span>
+                    <span class="date-text">{{ formatDate(record.timestamp) }}</span>
+                  </div>
+                  
+                  <div class="item-content">
+                    <div class="time-group">
+                      <div class="time-item" v-if="record.singleSeconds !== null">
+                        <span class="label">单次</span>
+                        <span class="value">{{ formatTime(record.singleSeconds) }}</span>
                       </div>
-                      <div class="record-info">
-                        <span class="record-date">{{ formatDate(record.timestamp) }}</span>
-                        <div class="record-actions">
-                          <el-button 
-                            type="primary" 
-                            link 
-                            @click="handleEdit(record)"
-                          >
-                            修改
-                          </el-button>
-                          <el-button 
-                            type="danger" 
-                            link 
-                            @click="handleDelete(record)"
-                          >
-                            删除
-                          </el-button>
-                        </div>
-                      </div>
-                      <div v-if="record.cube" class="record-cube">
-                        使用魔方: {{ record.cube }}
-                      </div>
-                      <div v-if="record.method" class="record-method">
-                        解法: {{ record.method }}
+                      <div class="time-item" v-if="record.averageSeconds !== null">
+                        <span class="label">平均</span>
+                        <span class="value">{{ formatTime(record.averageSeconds) }}</span>
                       </div>
                     </div>
+                    
+                    <div class="item-actions">
+                      <el-button type="primary" link size="small" @click="handleEdit(record)">
+                        <el-icon><Edit /></el-icon>
+                      </el-button>
+                      <el-button type="danger" link size="small" @click="handleDelete(record)">
+                        <el-icon><Delete /></el-icon>
+                      </el-button>
+                    </div>
                   </div>
-                </template>
-                <template v-else-if="!historyLoading">
-                  <el-empty
-                    description="暂无上传记录"
-                    :image-size="200"
-                  >
-                    <template #description>
-                      <p>{{ userRecords.length > 0 ? '没有找到符合筛选条件的记录' : '暂无上传记录' }}</p>
-                      <p class="empty-tip">{{ userRecords.length > 0 ? '尝试更改筛选条件' : '开始上传你的第一个成绩吧！' }}</p>
-                    </template>
-                  </el-empty>
-                </template>
+                  
+                  <div v-if="record.cube || record.method" class="item-footer">
+                    <span v-if="record.cube" class="info-tag">
+                      <el-icon><Box /></el-icon> {{ record.cube }}
+                    </span>
+                    <span v-if="record.method" class="info-tag">
+                      <el-icon><Guide /></el-icon> {{ record.method }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div v-else-if="!historyLoading" class="empty-state">
+                <el-empty
+                  :description="userRecords.length > 0 ? '没有找到符合条件的记录' : '暂无上传记录'"
+                  :image-size="120"
+                />
               </div>
             </div>
           </div>
@@ -116,7 +103,9 @@
       v-model="editDialogVisible"
       title="修改记录"
       width="500px"
-      class="edit-dialog"
+      class="glass-dialog"
+      :close-on-click-modal="false"
+      destroy-on-close
     >
       <div class="edit-form">
         <el-form
@@ -254,6 +243,7 @@ import { useUserStore } from '@/stores/user'
 import SubmitRecordForm from '@/components/SubmitRecordForm.vue'
 import ElementTransition from '@/components/ElementTransition.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Timer, Refresh, Edit, Delete, Box, Guide } from '@element-plus/icons-vue'
 import { getEventName } from '@/config/events'
 import { formatTime } from '@/utils/timeFormatter'
 
@@ -517,259 +507,310 @@ onMounted(() => {
 
 <style scoped>
 .submit-container {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  padding: 16px;
-  animation: fadeIn 0.5s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.card {
-  min-height: auto;
-  display: flex;
-  flex-direction: column;
-  max-height: 600px;
-  margin-bottom: 0;
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  box-shadow: var(--shadow-lg);
-  transition: all var(--duration-normal) var(--ease-in-out);
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-height: calc(100vh - 60px);
   padding: 24px;
+  position: relative;
+  overflow-x: hidden;
 }
 
-.card:hover {
+/* 动态背景光球 */
+.ambient-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: 0;
+  animation: float 20s infinite ease-in-out;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.orb-1 {
+  top: -10%;
+  right: -5%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(64, 158, 255, 0.4) 0%, rgba(64, 158, 255, 0) 70%);
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  bottom: -10%;
+  left: -5%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(103, 194, 58, 0.3) 0%, rgba(103, 194, 58, 0) 70%);
+  animation-delay: -10s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(30px, 50px) rotate(10deg); }
+  66% { transform: translate(-20px, 20px) rotate(-5deg); }
+}
+
+/* Bento Card 风格 */
+.bento-card {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur-lg));
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg));
+  border: var(--glass-border);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+}
+
+.bento-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-2xl);
-  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.form-card {
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-card {
+  display: flex;
+  flex-direction: column;
+  max-height: 800px;
+  padding: 24px;
 }
 
 .history-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .section-title {
-  font-size: 24px;
-  font-weight: bold;
-  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text-color);
-}
-
-.filter-container {
-  margin-bottom: 24px;
-}
-
-.filter-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin: 0;
 }
 
-.filter-select {
-  flex: 1;
+.refresh-btn {
+  font-weight: 500;
+}
+
+.filter-container {
+  margin-bottom: 16px;
+}
+
+.glass-select :deep(.el-input__wrapper) {
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset;
 }
 
 .records-list-container {
-  overflow-y: auto;
-  max-height: 460px;
-  border-radius: var(--radius-lg);
-  position: relative;
   flex: 1;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(144, 147, 153, 0.5) rgba(255, 255, 255, 0.05);
+  overflow-y: auto;
+  padding-right: 8px;
+  margin-right: -8px;
 }
 
-.records-list {
+/* 自定义滚动条 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.history-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding-right: 4px;
 }
 
-.record-item {
+.history-item {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
   padding: 16px;
-  background-color: rgba(245, 247, 250, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: var(--radius-lg);
-  transition: all var(--duration-normal) var(--ease-in-out);
+  transition: all 0.2s ease;
+}
+
+.history-item:hover {
+  background: rgba(255, 255, 255, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.event-tag {
+  font-weight: 700;
+  color: var(--primary-color);
+  background: rgba(64, 158, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.date-text {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+.item-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.time-group {
+  display: flex;
+  gap: 16px;
+}
+
+.time-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.time-item .label {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+.time-item .value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.item-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.history-item:hover .item-actions {
+  opacity: 1;
+}
+
+.item-footer {
+  display: flex;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+.info-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.empty-state {
+  padding: 40px 0;
+  display: flex;
+  justify-content: center;
+}
+
+/* Glass Dialog Styles */
+.glass-dialog :deep(.el-dialog) {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+}
+
+.glass-dialog :deep(.el-dialog__header) {
+  margin-right: 0;
+  padding: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.glass-dialog :deep(.el-dialog__title) {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.glass-dialog :deep(.el-dialog__body) {
+  padding: 32px 24px;
+}
+
+.glass-dialog :deep(.el-dialog__footer) {
+  padding: 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Edit Form Styles */
+.edit-form {
+  padding: 0 12px;
+}
+
+.time-edit-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 8px 12px;
+  border-radius: 8px;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.record-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+.time-input-small {
+  width: 60px;
 }
 
-.record-content {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.time-input-small :deep(.el-input__wrapper) {
+  padding: 0 4px;
 }
 
-.record-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.event-name {
-  font-weight: 600;
-  color: var(--text-color);
+.time-separator {
+  font-weight: bold;
   font-size: 16px;
-}
-
-.record-times {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.record-label {
   color: var(--text-color-secondary);
-  font-size: 14px;
 }
 
-.record-time {
-  color: var(--primary-color);
-  font-weight: 600;
-  font-size: 16px;
-  font-family: 'Consolas', 'Monaco', monospace;
-}
-
-.record-info {
+.format-switch {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-}
-
-.record-date {
-  color: var(--text-color-secondary);
-  font-size: 14px;
-}
-
-.record-actions {
-  display: flex;
   gap: 12px;
+  background: rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 8px;
 }
 
-.record-actions .el-button {
-  padding: 4px 0;
-}
-
-.record-cube,
-.record-method {
+.format-label {
   font-size: 14px;
   color: var(--text-color-secondary);
-  margin-top: 2px;
-  line-height: 1.5;
-}
-
-.empty-tip {
-  color: var(--text-color-secondary);
-  font-size: 14px;
-  margin-top: 8px;
-}
-
-/* 修改滚动条样式 */
-.records-list-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.records-list-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.records-list-container::-webkit-scrollbar-thumb {
-  background-color: rgba(144, 147, 153, 0.5);
-  border-radius: 4px;
-}
-
-.records-list-container::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(144, 147, 153, 0.7);
-}
-
-@media (max-width: 768px) {
-  .submit-container {
-    padding: 12px;
-    gap: 24px;
-  }
-
-  .record-main {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .record-times {
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .record-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .record-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .records-list-container {
-    max-height: 380px;
-  }
-
-  .card {
-    padding: 16px;
-  }
-
-  .record-item {
-    padding: 12px;
-  }
-  
-  .record-content {
-    gap: 8px;
-  }
-  
-  .event-name {
-    font-size: 15px;
-  }
-  
-  .record-time {
-    font-size: 15px;
-  }
-
-  .edit-dialog :deep(.el-dialog) {
-    width: 95% !important;
-    margin: 0 auto;
-  }
-  
-  .edit-dialog :deep(.el-dialog__body) {
-    padding: 16px;
-  }
-  
-  .edit-form {
-    padding: 0;
-  }
+  font-weight: 500;
 }
 
 .short-input {
@@ -780,82 +821,24 @@ onMounted(() => {
   width: 100px;
 }
 
-.edit-dialog {
-  background: #ffffff;
-}
-
-.edit-dialog :deep(.el-dialog) {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.edit-dialog :deep(.el-dialog__header) {
-  padding: 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.edit-dialog :deep(.el-dialog__title) {
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.edit-dialog :deep(.el-dialog__body) {
-  padding: 24px 20px;
-}
-
-.edit-dialog :deep(.el-dialog__footer) {
-  padding: 16px 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.edit-form {
-  padding: 0 10px;
-}
-
-/* 自定义el-button样式 */
-:deep(.el-button) {
-  transition: all 0.3s;
-}
-
-:deep(.el-button:hover) {
-  transform: translateY(-2px);
-}
-
-.time-edit-container {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background-color: #f5f7fa;
-  padding: 5px 10px;
-  border-radius: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  max-width: 220px;
-}
-
-.time-input-small {
-  width: 50px;
-  text-align: center;
-}
-
-.time-separator {
-  font-weight: bold;
-  font-size: 16px;
-  margin: 0 2px;
-}
-
-.format-switch {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.format-label {
-  font-size: 14px;
-  color: var(--text-color-secondary);
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .submit-container {
+    padding: 16px;
+  }
+  
+  .bento-card {
+    padding: 20px;
+    border-radius: 20px;
+  }
+  
+  .history-card {
+    max-height: 500px;
+    margin-top: 20px;
+  }
+  
+  .glass-dialog :deep(.el-dialog) {
+    width: 90% !important;
+  }
 }
 </style> 

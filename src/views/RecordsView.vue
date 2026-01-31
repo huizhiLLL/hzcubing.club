@@ -1,5 +1,8 @@
 <template>
   <div class="records-container">
+    <!-- 动态背景光球 -->
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
 
     <div v-if="error" class="error-alert">
       <el-alert
@@ -13,9 +16,11 @@
     </div>
 
     <ElementTransition name="slide-up" :duration="600" :delay="0" appear>
-      <div class="card glass-card" v-loading="loading">
+      <div class="bento-card glass-card" v-loading="loading">
         <div class="filter-header">
-          <h2 class="section-title">GR</h2>
+          <h2 class="section-title">
+            <el-icon><Trophy /></el-icon> 记录榜单
+          </h2>
           <div class="filter-controls">
             <el-select v-model="selectedCategory" placeholder="选择项目类型" class="category-select glass-select">
               <el-option
@@ -52,10 +57,12 @@
       </div>
     </ElementTransition>
 
-    <ElementTransition name="slide-up" :duration="600" :delay="400" appear>
-      <div class="card glass-card" v-loading="loading">
+    <ElementTransition name="slide-up" :duration="600" :delay="200" appear>
+      <div class="bento-card glass-card" v-loading="loading">
         <div class="filter-header">
-          <h2 class="section-title">历史记录</h2>
+          <h2 class="section-title">
+            <el-icon><Timer /></el-icon> 历史记录
+          </h2>
           <div class="filter-controls">
             <el-select
               v-model="selectedHistoryEvent"
@@ -82,8 +89,9 @@
           <el-table
             :data="historyRecords"
             style="width: 100%"
-            :stripe="true"
             class="custom-table glass-table"
+            :header-cell-style="{ background: 'transparent', color: 'var(--el-text-color-primary)' }"
+            :row-style="{ background: 'transparent' }"
           >
             <el-table-column 
               type="expand"
@@ -91,12 +99,14 @@
               <template #default="props">
                 <div class="record-details">
                   <div class="detail-item">
+                    <span class="detail-label">单次成绩:</span>
                     <span class="detail-value">
                       {{ formatTime(props.row.singleSeconds) }}
-                      <el-tag v-if="props.row.isSingleRecord" size="small" type="danger" effect="dark">GR</el-tag>
+                      <el-tag v-if="props.row.isSingleRecord" size="small" type="danger" effect="dark" class="rank-tag">GR</el-tag>
                     </span>
                   </div>
                   <div class="detail-item">
+                    <span class="detail-label">单次保持者:</span>
                     <span class="detail-value">
                       <template v-if="props.row.userId">
                         <router-link :to="`/user/${props.row.userId}`" class="player-link">
@@ -112,12 +122,14 @@
                     </span>
                   </div>
                   <div class="detail-item">
+                    <span class="detail-label">平均成绩:</span>
                     <span class="detail-value">
                       {{ formatTime(props.row.averageSeconds) }}
-                      <el-tag v-if="props.row.isAverageRecord" size="small" type="danger" effect="dark">GR</el-tag>
+                      <el-tag v-if="props.row.isAverageRecord" size="small" type="danger" effect="dark" class="rank-tag">GR</el-tag>
                     </span>
                   </div>
                   <div class="detail-item">
+                    <span class="detail-label">平均保持者:</span>
                     <span class="detail-value">
                       <template v-if="props.row.userId">
                         <router-link :to="`/user/${props.row.userId}`" class="player-link">
@@ -133,6 +145,7 @@
                     </span>
                   </div>
                   <div class="detail-item">
+                    <span class="detail-label">时间:</span>
                     <span class="detail-value date-text">{{ formatDate(props.row.timestamp) }}</span>
                   </div>
                 </div>
@@ -141,19 +154,21 @@
             <el-table-column 
               prop="index" 
               label="序号" 
-              min-width="60"
+              width="60"
               type="index"
               :index="1"
+              align="center"
+              class-name="hide-on-mobile"
             />
             <el-table-column
               label="单次"
-              min-width="160"
+              min-width="120"
             >
               <template #default="scope">
                 <div class="record-cell">
                   <div class="record-main">
-                    {{ formatTime(scope.row.singleSeconds) }}
-                    <el-tag v-if="scope.row.isSingleRecord" size="small" type="danger" effect="dark">GR</el-tag>
+                    <span class="time">{{ formatTime(scope.row.singleSeconds) }}</span>
+                    <el-tag v-if="scope.row.isSingleRecord" size="small" type="danger" effect="dark" class="rank-tag">GR</el-tag>
                   </div>
                   <div class="record-sub">
                     <template v-if="scope.row.userId">
@@ -173,13 +188,13 @@
             </el-table-column>
             <el-table-column
               label="平均"
-              min-width="160"
+              min-width="120"
             >
               <template #default="scope">
                 <div class="record-cell">
                   <div class="record-main">
-                    {{ formatTime(scope.row.averageSeconds) }}
-                    <el-tag v-if="scope.row.isAverageRecord" size="small" type="danger" effect="dark">GR</el-tag>
+                    <span class="time">{{ formatTime(scope.row.averageSeconds) }}</span>
+                    <el-tag v-if="scope.row.isAverageRecord" size="small" type="danger" effect="dark" class="rank-tag">GR</el-tag>
                   </div>
                   <div class="record-sub">
                     <template v-if="scope.row.userId">
@@ -220,7 +235,7 @@ import { useRecordsStore } from '@/stores/records'
 import RecordsTable from '@/components/RecordsTable.vue'
 import ElementTransition from '@/components/ElementTransition.vue'
 import { ElMessage } from 'element-plus'
-import { InfoFilled } from '@element-plus/icons-vue'
+import { InfoFilled, Trophy, Timer } from '@element-plus/icons-vue'
 import { categories, events, getEventName, getAllEvents, getMemeEventsFromAPI } from '@/config/events'
 import { formatTime } from '@/utils/timeFormatter'
 
@@ -439,10 +454,66 @@ const allEvents = computed(() => {
 
 <style scoped>
 .records-container {
+  min-height: 100vh;
+  padding: var(--space-xl);
+  position: relative;
+  overflow-x: hidden;
+  max-width: 1400px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 32px;
-  padding: 16px;
+}
+
+/* 动态背景光球 */
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: 0;
+  opacity: 0.4;
+  animation: float 10s infinite ease-in-out;
+}
+
+.orb-1 {
+  top: 5%;
+  right: 5%;
+  width: 400px;
+  height: 400px;
+  background: var(--primary-gradient);
+}
+
+.orb-2 {
+  bottom: 10%;
+  left: 5%;
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  animation-delay: -5s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -30px); }
+}
+
+/* Bento Card 通用样式 */
+.bento-card {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur-lg));
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg));
+  border: var(--glass-border);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.bento-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-xl);
 }
 
 .header-actions {
@@ -453,6 +524,8 @@ const allEvents = computed(() => {
 
 .error-alert {
   margin-bottom: -16px;
+  z-index: 2;
+  position: relative;
 }
 
 .filter-header {
@@ -462,6 +535,8 @@ const allEvents = computed(() => {
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .filter-controls {
@@ -471,10 +546,35 @@ const allEvents = computed(() => {
 }
 
 .section-title {
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--text-color);
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c3e50;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title .el-icon {
+  color: var(--primary-color);
+  font-size: 24px;
+}
+
+/* Glass Inputs */
+:deep(.glass-select .el-input__wrapper) {
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: none;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 4px 12px;
+  transition: all 0.3s;
+}
+
+:deep(.glass-select .el-input__wrapper:hover),
+:deep(.glass-select .el-input__wrapper.is-focus) {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color-light);
 }
 
 .category-select {
@@ -491,32 +591,16 @@ const allEvents = computed(() => {
   -webkit-overflow-scrolling: touch;
 }
 
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 24px;
-  width: 100%;
-  overflow-x: auto;
+/* Glass Table */
+.glass-table {
+  background: transparent !important;
+  --el-table-border-color: rgba(0, 0, 0, 0.05);
+  --el-table-header-bg-color: transparent;
+  --el-table-row-hover-bg-color: rgba(66, 211, 146, 0.1);
 }
 
-.responsive-pagination {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-:deep(.custom-table) {
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-:deep(.custom-table .el-table__header-wrapper) {
-  background-color: var(--background-color);
-}
-
-:deep(.custom-table .el-table__row:hover > td) {
-  background-color: var(--background-color);
+:deep(.el-table__inner-wrapper::before) {
+  display: none;
 }
 
 :deep(.el-table .cell) {
@@ -532,7 +616,15 @@ const allEvents = computed(() => {
 .record-main {
   font-weight: 700;
   font-size: 1em;
-  font-family: 'Consolas', 'Monaco', monospace;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: #2c3e50;
 }
 
 .record-sub {
@@ -540,33 +632,55 @@ const allEvents = computed(() => {
   font-size: 0.9em;
 }
 
+.rank-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  border: none;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);
+  box-shadow: 0 2px 8px rgba(238, 82, 83, 0.4);
+}
+
 .record-details {
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  margin: 10px 0;
 }
 
 .detail-item {
   display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+.detail-label {
+  color: #666;
+  font-weight: 600;
+  min-width: 80px;
 }
 
 .detail-value {
   font-weight: 500;
-  color: #1e88a8;
-  font-family: 'Consolas', 'Monaco', monospace;
+  color: #2c3e50;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .date-text {
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: 'JetBrains Mono', monospace;
+  color: #666;
 }
 
 .player-link {
-  color: inherit;
+  color: var(--primary-color-dark);
   text-decoration: none;
-  font-weight: 500;
-  transition: all var(--duration-normal) var(--ease-in-out);
+  font-weight: 600;
+  transition: all 0.3s ease;
   position: relative;
 }
 
@@ -578,11 +692,11 @@ const allEvents = computed(() => {
   width: 0;
   height: 2px;
   background: var(--primary-color);
-  transition: width var(--duration-normal) var(--ease-in-out);
+  transition: width 0.3s ease;
 }
 
 .player-link:hover {
-  transform: translateY(-1px);
+  color: var(--primary-color);
 }
 
 .player-link:hover::after {
@@ -598,177 +712,63 @@ const allEvents = computed(() => {
 
 @media (max-width: 768px) {
   .records-container {
-    padding: 12px;
-    gap: 24px;
+    padding: 16px;
+    gap: 20px;
   }
 
-  .section-title {
-    font-size: 20px;
-  }
-
-  .filter-header {
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 16px;
-  }
-
-  .filter-controls {
-    width: 100%;
-  }
-
-  .category-select,
-  .event-select {
-    width: 100%;
-  }
-
-  :deep(.el-pagination) {
-    justify-content: flex-start;
-    padding: 0;
-  }
-
-  :deep(.el-pagination .el-pagination__total) {
-    display: block;
-    width: 100%;
-    margin-bottom: 8px;
-  }
-
-  :deep(.el-pagination .el-pagination__sizes) {
-    margin-right: 0;
-    margin-bottom: 8px;
-  }
-
-  .record-cell {
-    gap: 2px;
-  }
-
-  .record-main {
-    font-size: 0.95em;
-  }
-
-  .record-sub {
-    font-size: 0.85em;
-  }
-
-  :deep(.hide-on-mobile) {
-    display: none;
-  }
-
-  .record-details {
-    padding: 12px;
-    gap: 8px;
-  }
-
-  .detail-item {
-    gap: 4px;
-  }
-
-  .detail-value {
-    font-size: 0.9em;
-  }
-
-  .header-actions {
-    gap: 8px;
-  }
-  
-  /* 移动端表格适配 */
-  :deep(.el-table) {
-    font-size: 13px;
-  }
-  
-  :deep(.el-table .cell) {
-    padding-left: 5px;
-    padding-right: 5px;
-  }
-  
-  :deep(.el-table__header th) {
-    padding: 6px 0;
-  }
-  
-  :deep(.el-table__row td) {
-    padding: 6px 0;
-  }
-  
-  /* 减小序号列宽度 */
-  :deep(.el-table .el-table__cell:first-child .cell) {
-    padding: 0 2px;
-  }
-  
-  /* 调整表格内容间距 */
-  :deep(.el-table-column--selection .cell) {
-    padding-right: 2px;
-  }
-}
-
-@media (max-width: 480px) {
-  .records-container {
-    padding: 8px;
-    gap: 16px;
+  .bento-card {
+    padding: 20px;
+    border-radius: 16px;
   }
 
   .section-title {
     font-size: 18px;
   }
-
-  :deep(.el-table) {
-    font-size: 12px;
+  
+  .filter-header {
+    margin-bottom: 16px;
+    gap: 12px;
   }
 
-  :deep(.el-pagination) {
-    font-size: 12px;
-  }
-
-  .record-main {
-    font-size: 0.9em;
-  }
-
-  .record-sub {
-    font-size: 0.8em;
-  }
-
-  .record-details {
-    padding: 8px;
-    gap: 6px;
-  }
-
-  .detail-label {
-    min-width: 75px;
-    font-size: 0.85em;
-  }
-
-  .detail-value {
-    font-size: 0.85em;
+  .filter-controls {
+    width: 100%;
+    flex-direction: column;
+    gap: 12px;
   }
   
-  /* 更小屏幕的表格适配 */
+  .category-select,
+  .event-select {
+    width: 100%;
+  }
+
+  :deep(.hide-on-mobile) {
+    display: none;
+  }
+  
+  /* Table Mobile Optimizations */
   :deep(.el-table .cell) {
-    padding-left: 2px;
-    padding-right: 2px;
+    padding: 8px 4px;
+    font-size: 13px;
   }
   
-  :deep(.el-tag--small) {
-    padding: 0 2px;
-    margin-left: 2px;
+  .record-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
   }
   
-  .record-cell {
-    gap: 0;
+  .record-sub {
+    font-size: 12px;
+  }
+  
+  .time {
+    font-size: 14px;
+  }
+  
+  .rank-tag {
+    transform: scale(0.85);
+    transform-origin: left center;
+    margin-top: 2px;
   }
 }
-
-/* 添加表格列宽度控制 */
-:deep(.el-table .el-table__cell:nth-child(1)) {
-  width: 60px !important;
-  min-width: 60px !important;
-}
-
-:deep(.el-table .el-table__cell:nth-child(2)),
-:deep(.el-table .el-table__cell:nth-child(3)) {
-  width: auto !important;
-  min-width: 120px !important;
-}
-
-:deep(.el-table .el-table__cell:nth-child(4)) {
-  width: 120px !important;
-  min-width: 120px !important;
-}
-</style> 
+</style>

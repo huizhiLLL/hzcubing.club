@@ -1,275 +1,143 @@
 <template>
-  <div class="profile-container">
+  <div class="view-container">
+    <!-- 动态背景光球 -->
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
     <ElementTransition name="zoom" :duration="600" appear>
-      <div class="card profile-header glass-card">
+      <div class="bento-card profile-header">
         <div class="user-profile">
-          <div class="avatar-container" v-if="user?.avatar && !isDefaultAvatar(user.avatar)">
+          <div class="avatar-wrapper">
             <el-avatar
-              :size="128"
-              :src="user.avatar"
+              :size="120"
+              :src="user?.avatar"
               class="avatar"
-            />
+              :class="{ 'default-avatar': !user?.avatar || isDefaultAvatar(user?.avatar) }"
+            >
+              <template #default>
+                <span class="avatar-text">{{ user?.nickname?.charAt(0)?.toUpperCase() || 'User' }}</span>
+              </template>
+            </el-avatar>
           </div>
           <div class="user-info">
             <h1 class="nickname">{{ user?.nickname || '加载中...' }}</h1>
             <p class="bio">{{ user?.bio || '这个人很懒，什么都没写~' }}</p>
-            <p v-if="user?.wcaId" class="wca-id">WCA ID: {{ user.wcaId }}</p>
+            <div class="user-meta" v-if="user?.wcaId">
+              <el-tag effect="dark" type="primary" class="wca-tag">WCA ID: {{ user.wcaId }}</el-tag>
+            </div>
           </div>
         </div>
       </div>
     </ElementTransition>
 
     <ElementTransition name="slide-up" :duration="600" :delay="200" appear>
-      <el-tabs v-model="activeTab" class="profile-tabs glass-tabs">
-        <el-tab-pane label="个人最佳" name="personal-bests">
-          <div class="card glass-card">
-            <div class="section-header">
-              <div></div>
-              <el-select v-model="selectedCategory" placeholder="项目类型" size="small" style="width: 120px;" class="glass-select">
-                <el-option label="全部类型" value="all" />
-                <el-option label="官方项目" value="official" />
-                <el-option label="趣味项目" value="fun" />
-                <el-option label="整活项目" value="meme" />
-              </el-select>
-            </div>
-            
-            <el-table
-              v-loading="loading"
-              :data="filteredPersonalBests"
-              style="width: 100%"
-              empty-text="该选手暂无成绩记录"
-              class="glass-table"
-            >
-              <el-table-column label="项目" prop="eventName" min-width="120" />
-              <el-table-column label="单次" min-width="120">
-                <template #default="scope">
-                  <div class="record-value" v-if="!isNaN(scope.row.singleSeconds)">
-                    {{ formatTime(scope.row.singleSeconds) }}
-                    <el-tag v-if="scope.row.singleRank === 1" size="small" type="danger" effect="dark" class="gr-tag">
-                      GR
-                    </el-tag>
-                  </div>
-                  <span v-else>-</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="平均" min-width="120">
-                <template #default="scope">
-                  <div class="record-value" v-if="!isNaN(scope.row.averageSeconds)">
-                    {{ formatTime(scope.row.averageSeconds) }}
-                    <el-tag v-if="scope.row.averageRank === 1" size="small" type="danger" effect="dark" class="gr-tag">
-                      GR
-                    </el-tag>
-                  </div>
-                  <span v-else>-</span>
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-        </el-tab-pane>
-        
-        <el-tab-pane label="历史成绩" name="history">
-          <div class="card glass-card">
-            <div class="section-header">
-              <h2 class="section-title">历史成绩</h2>
-              <div class="filter-controls">
-                <el-select v-model="selectedEvent" placeholder="选择项目" size="small" class="glass-select">
-                  <el-option label="全部项目" value="all" />
-                  <el-option
-                    v-for="event in userEvents"
-                    :key="event"
-                    :label="getEventName(event)"
-                    :value="event"
-                  />
-                </el-select>
-                <el-select v-model="sortOrder" placeholder="排序方式" size="small" class="glass-select">
-                  <el-option label="最新优先" value="latest" />
-                  <el-option label="最快优先" value="fastest" />
+      <div class="tabs-container">
+        <el-tabs v-model="activeTab" class="glass-tabs">
+          <el-tab-pane label="个人最佳" name="personal-bests">
+            <div class="bento-card tab-content">
+              <div class="section-header">
+                <h3 class="section-title">
+                  <el-icon><Trophy /></el-icon> 最佳成绩
+                </h3>
+                <el-select v-model="selectedCategory" placeholder="项目类型" size="default" class="glass-select" style="width: 140px;">
+                  <el-option label="全部类型" value="all" />
+                  <el-option label="官方项目" value="official" />
+                  <el-option label="趣味项目" value="fun" />
+                  <el-option label="整活项目" value="meme" />
                 </el-select>
               </div>
+              
+              <el-table
+                v-loading="loading"
+                :data="filteredPersonalBests"
+                style="width: 100%"
+                empty-text="该选手暂无成绩记录"
+                class="glass-table"
+                :header-cell-style="{ background: 'transparent', color: 'var(--el-text-color-primary)' }"
+                :row-style="{ background: 'transparent' }"
+              >
+                <el-table-column label="项目" prop="eventName" min-width="140">
+                  <template #default="scope">
+                    <div class="event-cell">
+                      <span class="event-name">{{ scope.row.eventName }}</span>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="单次" min-width="120">
+                  <template #default="scope">
+                    <div class="record-value" v-if="!isNaN(scope.row.singleSeconds)">
+                      <span class="time">{{ formatTime(scope.row.singleSeconds) }}</span>
+                      <el-tag v-if="scope.row.singleRank === 1" size="small" type="danger" effect="dark" class="rank-tag">GR</el-tag>
+                    </div>
+                    <span v-else class="empty-value">-</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="平均" min-width="120">
+                  <template #default="scope">
+                    <div class="record-value" v-if="!isNaN(scope.row.averageSeconds)">
+                      <span class="time">{{ formatTime(scope.row.averageSeconds) }}</span>
+                      <el-tag v-if="scope.row.averageRank === 1" size="small" type="danger" effect="dark" class="rank-tag">GR</el-tag>
+                    </div>
+                    <span v-else class="empty-value">-</span>
+                  </template>
+                </el-table-column>
+              </el-table>
             </div>
-            
-            <el-table
-              v-loading="historyLoading"
-              :data="filteredHistoryRecords"
-              style="width: 100%"
-              empty-text="暂无历史成绩记录"
-              class="glass-table"
-            >
-              <el-table-column label="项目" prop="eventName" min-width="100" />
-              <el-table-column label="单次" min-width="100">
-                <template #default="scope">
-                  <span class="time-value">{{ formatTime(scope.row.singleSeconds) }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="平均" min-width="100">
-                <template #default="scope">
-                  <span class="time-value">{{ formatTime(scope.row.averageSeconds) }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="提交时间" min-width="160">
-                <template #default="scope">
-                  <div class="record-cell" @click="showRecordDetails(scope.row)">
-                  <span>{{ formatDate(scope.row.timestamp) }}</span>
-                    <span class="detail-text">
-                    详情
-                    </span>
+          </el-tab-pane>
+          
+          <el-tab-pane label="统计分析" name="statistics">
+            <div class="bento-card tab-content">
+              <h3 class="section-title">
+                <el-icon><DataAnalysis /></el-icon> 数据概览
+              </h3>
+              
+              <div class="stats-overview">
+                <template v-if="totalRecords > 0">
+                  <div class="stats-card">
+                    <div class="stat-value">{{ activeEvents }}</div>
+                    <div class="stat-label">参与项目</div>
+                  </div>
+                  <div class="stats-card">
+                    <div class="stat-value">{{ totalRecords }}</div>
+                    <div class="stat-label">总成绩数</div>
+                  </div>
+                  <div class="stats-card highlight" v-if="firstPlaceCount > 0">
+                    <div class="stat-value">{{ firstPlaceCount }}</div>
+                    <div class="stat-label">冠军项目</div>
+                  </div>
+                  <div class="stats-card highlight" v-if="topThreeCount > 0">
+                    <div class="stat-value">{{ topThreeCount }}</div>
+                    <div class="stat-label">前三项目</div>
                   </div>
                 </template>
-              </el-table-column>
-            </el-table>
-            
-            <div class="pagination-container" v-if="totalHistoryRecords > 0">
-              <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
-                :page-sizes="[10, 20, 50, 100]"
-                layout="total, sizes, prev, pager, next"
-                :total="totalHistoryRecords"
-                @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"
-              />
-            </div>
-          </div>
-        </el-tab-pane>
-        
-        <el-tab-pane label="统计分析" name="statistics">
-          <div class="card glass-card">
-            <h2 class="section-title"></h2>
-            
-            <div class="stats-container">
-              <template v-if="totalRecords > 0">
-                <div class="stats-message">
-                  <template v-if="firstPlaceCount > 0">
-                    该选手一共在 <span class="highlight-number">{{ firstPlaceCount }}</span> 个项目中取得了第一名
-                  </template>
-                  
-                  <template v-if="topThreeCount > 0">
-                    <template v-if="firstPlaceCount > 0">，</template>
-                    <template v-else>该选手</template>
-                    在 <span class="highlight-number">{{ topThreeCount }}</span> 个项目中取得了前三名
-                  </template>
-                  
-                  <template v-if="firstPlaceCount > 0 || topThreeCount > 0">，</template>
-                  <template v-else>该选手</template>
-                  总共参与了 <span class="highlight-number">{{ activeEvents }}</span> 个项目，
-                  上传了 <span class="highlight-number">{{ totalRecords }}</span> 个成绩数
-                </div>
-              </template>
-              <template v-else>
-                <div class="stats-message">
-                  该选手还未参与任何项目哦
-                </div>
-              </template>
-                </div>
-            
-            <div class="medal-container" v-if="topThreeCount > 0">
-              <h3 class="chart-title">排名分布</h3>
-              <div class="rank-list">
-                <div v-for="(item, index) in sortedTopThreeRecords" :key="index" class="rank-item">
-                  <span class="event-name">{{ getEventName(item.eventCode) }}</span>
-                  <div class="rank-badges">
-                    <el-tag v-if="item.singleRank === 1" type="danger" effect="dark" size="small" round>
-                      单次 #1
-                    </el-tag>
-                    <el-tag v-else-if="item.singleRank === 2" type="warning" effect="dark" size="small" round>
-                      单次 #2
-                    </el-tag>
-                    <el-tag v-else-if="item.singleRank === 3" type="success" effect="dark" size="small" round>
-                      单次 #3
-                    </el-tag>
-                    
-                    <el-tag v-if="item.averageRank === 1" type="danger" effect="dark" size="small" round>
-                      平均 #1
-                    </el-tag>
-                    <el-tag v-else-if="item.averageRank === 2" type="warning" effect="dark" size="small" round>
-                      平均 #2
-                    </el-tag>
-                    <el-tag v-else-if="item.averageRank === 3" type="success" effect="dark" size="small" round>
-                      平均 #3
-                    </el-tag>
+                <template v-else>
+                  <div class="empty-stats">该选手还未参与任何项目</div>
+                </template>
+              </div>
+              
+              <div class="medal-section" v-if="topThreeCount > 0">
+                <h4 class="subsection-title">排名分布</h4>
+                <div class="rank-grid">
+                  <div v-for="(item, index) in sortedTopThreeRecords" :key="index" class="rank-card">
+                    <div class="rank-event">{{ getEventName(item.eventCode) }}</div>
+                    <div class="rank-badges">
+                      <div v-if="item.singleRank <= 3" class="rank-badge" :class="`rank-${item.singleRank}`">
+                        <span class="badge-label">单次</span>
+                        <span class="badge-val">#{{ item.singleRank }}</span>
+                      </div>
+                      <div v-if="item.averageRank <= 3" class="rank-badge" :class="`rank-${item.averageRank}`">
+                        <span class="badge-label">平均</span>
+                        <span class="badge-val">#{{ item.averageRank }}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <!-- 项目分布部分暂时隐藏，但保留代码 -->
-            <div class="chart-container" v-if="false && activeEvents > 0">
-              <h3 class="chart-title">项目分布</h3>
-              <div class="event-distribution">
-                <div 
-                  v-for="(count, event) in eventDistribution" 
-                  :key="event"
-                  class="event-bar"
-                >
-                  <div class="event-name">{{ getEventName(event) }}</div>
-                  <div class="bar-container">
-                    <div class="bar" :style="{ width: `${(count / maxEventCount) * 100}%` }"></div>
-                    <span class="bar-value">{{ count }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </el-tab-pane>
-      </el-tabs>
-    </ElementTransition>
-    
-    <!-- 记录详情对话框 -->
-    <el-dialog
-      v-model="recordDetailVisible"
-      title="成绩详情"
-      width="500px"
-    >
-      <div v-if="selectedRecord" class="record-details">
-        <div class="detail-item">
-          <span class="detail-label">项目:</span>
-          <span class="detail-value">{{ getEventName(selectedRecord.event) }}</span>
-        </div>
-        
-        <template v-if="!isNaN(selectedRecord.singleSeconds)">
-          <div class="detail-item">
-            <span class="detail-label">单次成绩:</span>
-            <span class="detail-value">{{ formatTime(selectedRecord.singleSeconds) }}</span>
-          </div>
-          
-          <div class="detail-item" v-if="selectedRecord.singleRank">
-            <span class="detail-label">单次排名:</span>
-            <span class="detail-value">#{{ selectedRecord.singleRank }}</span>
-          </div>
-        </template>
-        
-        <template v-if="!isNaN(selectedRecord.averageSeconds)">
-          <div class="detail-item">
-            <span class="detail-label">平均成绩:</span>
-            <span class="detail-value">{{ formatTime(selectedRecord.averageSeconds) }}</span>
-          </div>
-          
-          <div class="detail-item" v-if="selectedRecord.averageRank">
-            <span class="detail-label">平均排名:</span>
-            <span class="detail-value">#{{ selectedRecord.averageRank }}</span>
-          </div>
-        </template>
-        
-        <!-- 魔方信息 -->
-        <div class="detail-item" v-if="isValidField(selectedRecord.cube)">
-          <span class="detail-label">使用魔方:</span>
-          <span class="detail-value">{{ selectedRecord.cube }}</span>
-        </div>
-        
-        <!-- 方法信息 -->
-        <div class="detail-item" v-if="isValidField(selectedRecord.method)">
-          <span class="detail-label">解法:</span>
-          <span class="detail-value">{{ selectedRecord.method }}</span>
-        </div>
-        
-        <!-- 已移除感想与视频链接字段展示 -->
-        
-        <div class="detail-item">
-          <span class="detail-label">提交时间:</span>
-          <span class="detail-value">{{ formatDate(selectedRecord.timestamp, true) }}</span>
-        </div>
+          </el-tab-pane>
+        </el-tabs>
       </div>
-    </el-dialog>
+    </ElementTransition>
   </div>
 </template>
 
@@ -282,6 +150,7 @@ import { formatTime as formatTimeUtil, normalizeFloat } from '@/utils/timeFormat
 import ElementTransition from '@/components/ElementTransition.vue'
 import { ElMessage } from 'element-plus'
 import { categories, events, getEventName, getEventType, getAllEvents } from '@/config/events'
+import { Trophy, DataAnalysis } from '@element-plus/icons-vue'
 import api from '@/api'
 
 const route = useRoute()
@@ -291,15 +160,8 @@ const user = ref(null)
 const personalBests = ref({})
 const historyRecords = ref([])
 const loading = ref(true)
-const historyLoading = ref(false)
 const activeTab = ref('personal-bests')
 const selectedCategory = ref('all')
-const selectedEvent = ref('all')
-const sortOrder = ref('latest')
-const currentPage = ref(1)
-const pageSize = ref(10)
-const recordDetailVisible = ref(false)
-const selectedRecord = ref(null)
 
 const userId = computed(() => route.params.id)
 
@@ -368,59 +230,6 @@ const filteredPersonalBests = computed(() => {
   })
 })
 
-// 过滤历史记录
-const filteredHistoryRecords = computed(() => {
-  let records = historyRecords.value.map(record => ({
-    ...record,
-    eventName: getEventName(record.event)
-  }))
-  
-  // 按项目过滤
-  if (selectedEvent.value !== 'all') {
-    records = records.filter(record => record.event === selectedEvent.value)
-  }
-  
-  // 排序
-  if (sortOrder.value === 'fastest') {
-    records.sort((a, b) => {
-      const aTime = a.singleSeconds ?? Infinity
-      const bTime = b.singleSeconds ?? Infinity
-      return aTime - bTime
-    })
-  } else {
-    // 默认按时间倒序
-    records.sort((a, b) => {
-      const aDate = new Date(a.timestamp)
-      const bDate = new Date(b.timestamp)
-      return bDate - aDate
-    })
-  }
-  
-  // 分页
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return records.slice(start, end)
-})
-
-// 总历史记录数
-const totalHistoryRecords = computed(() => {
-  if (selectedEvent.value === 'all') {
-    return historyRecords.value.length
-  }
-  return historyRecords.value.filter(record => record.event === selectedEvent.value).length
-})
-
-// 获取用户参与过的所有项目
-const userEvents = computed(() => {
-  const events = new Set()
-  historyRecords.value.forEach(record => {
-    if (record.event) {
-      events.add(record.event)
-    }
-  })
-  return Array.from(events).sort()
-})
-
 // 统计数据
 const totalRecords = computed(() => historyRecords.value.length)
 
@@ -435,75 +244,8 @@ const activeEvents = computed(() => {
 const topThreeCount = ref(0)
 const firstPlaceCount = ref(0)
 
-// 项目分布
-const eventDistribution = computed(() => {
-  const distribution = {}
-  
-  historyRecords.value.forEach(record => {
-    if (!distribution[record.event]) {
-      distribution[record.event] = 0
-    }
-    distribution[record.event]++
-  })
-  
-  return distribution
-})
-
-const maxEventCount = computed(() => {
-  const counts = Object.values(eventDistribution.value)
-  return counts.length > 0 ? Math.max(...counts) : 0
-})
-
 // 使用统一的格式化时间函数
 const formatTime = formatTimeUtil
-
-// 格式化日期
-const formatDate = (dateString, includeTime = false) => {
-  if (!dateString) return '-'
-  
-  try {
-    const date = new Date(dateString.$date || dateString)
-    
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    
-    let result = `${year}.${month}.${day}`
-    
-    if (includeTime) {
-      const hours = String(date.getHours()).padStart(2, '0')
-      const minutes = String(date.getMinutes()).padStart(2, '0')
-      result += ` ${hours}:${minutes}`
-    }
-    
-    return result
-  } catch (error) {
-    return '日期格式错误'
-  }
-}
-
-// 显示记录详情
-const showRecordDetails = (record) => {
-  // 处理记录对象，但保留null或undefined值
-  const processedRecord = {
-    ...record,
-    cube: record.cube,
-    method: record.method
-  }
-  
-  selectedRecord.value = processedRecord
-  recordDetailVisible.value = true
-}
-
-// 处理分页
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-}
-
-const handleCurrentChange = (page) => {
-  currentPage.value = page
-}
 
 // 获取用户基本信息
 const fetchUserData = async () => {
@@ -547,7 +289,6 @@ const fetchUserRecords = async () => {
 
 // 获取用户历史记录
 const fetchUserHistoryRecords = async () => {
-  historyLoading.value = true
   try {
     const result = await api.getUsersHistoryRecord(userId.value)
     if (result.code === 200 && result.data) {
@@ -568,8 +309,6 @@ const fetchUserHistoryRecords = async () => {
     }
   } catch (error) {
     console.error('获取用户历史成绩出错:', error)
-  } finally {
-    historyLoading.value = false
   }
 }
 
@@ -725,19 +464,6 @@ onMounted(() => {
   fetchUserHistoryRecords()
 })
 
-// 处理可能是字符串"null"的字段
-const getDisplayValue = (value) => {
-  if (value === null || value === undefined || value === 'null' || value === '') {
-    return '未知'
-  }
-  return value
-}
-
-// 检查字段是否有效
-const isValidField = (value) => {
-  return value !== null && value !== undefined && value !== 'null' && value !== ''
-}
-
 // 检查是否为默认头像
 const isDefaultAvatar = (avatar) => {
   if (!avatar) return true
@@ -802,30 +528,96 @@ const firstPlaceRecords = computed(() => {
 </script>
 
 <style scoped>
-.profile-container {
-  max-width: 1200px;
+/* 继承全局设计变量 */
+.view-container {
+  min-height: 100vh;
+  padding: var(--space-xl);
+  position: relative;
+  overflow-x: hidden;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
 }
 
+/* 动态背景光球 */
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: 0;
+  opacity: 0.4;
+  animation: float 10s infinite ease-in-out;
+}
+
+.orb-1 {
+  top: 5%;
+  right: 5%;
+  width: 400px;
+  height: 400px;
+  background: var(--primary-gradient);
+}
+
+.orb-2 {
+  bottom: 10%;
+  left: 5%;
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  animation-delay: -5s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -30px); }
+}
+
+/* Bento Card 通用样式 */
+.bento-card {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur-lg));
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg));
+  border: var(--glass-border);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.bento-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* 个人信息头部 */
 .profile-header {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .user-profile {
   display: flex;
-  gap: 32px;
-  align-items: flex-start;
+  align-items: center;
+  gap: 40px;
 }
 
-.avatar-container {
+.avatar-wrapper {
   position: relative;
-  border-radius: 50%;
-  overflow: hidden;
 }
 
 .avatar {
-  display: block;
+  border: 4px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.avatar:hover {
+  transform: scale(1.05) rotate(5deg);
+}
+
+.avatar-text {
+  font-size: 48px;
+  font-weight: bold;
+  color: var(--primary-color);
 }
 
 .user-info {
@@ -833,222 +625,305 @@ const firstPlaceRecords = computed(() => {
 }
 
 .nickname {
-  font-size: 24px;
-  font-weight: bold;
-  margin: 0 0 8px;
-  color: var(--el-text-color-primary);
+  font-size: 36px;
+  font-weight: 800;
+  margin: 0 0 12px;
+  background: linear-gradient(135deg, #2c3e50 0%, #4facfe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .bio {
-  margin: 0 0 16px;
-  color: var(--el-text-color-secondary);
+  font-size: 16px;
+  color: #666;
+  margin: 0 0 20px;
+  line-height: 1.6;
+  max-width: 600px;
 }
 
-.wca-id {
-  margin: 0;
-  color: var(--el-text-color-secondary);
+.wca-tag {
   font-size: 14px;
-}
-
-.profile-tabs {
-  margin-bottom: 20px;
-}
-
-/* 简化标签栏样式，移除白色背景 */
-.profile-tabs :deep(.el-tabs__header) {
-  background: transparent;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.profile-tabs :deep(.el-tabs__nav-wrap::after) {
-  background-color: rgba(220, 223, 230, 0.3);
-}
-
-.profile-tabs :deep(.el-tabs__item) {
-  background: transparent;
-  color: var(--el-text-color-regular);
-  transition: color 0.3s ease;
-}
-
-.profile-tabs :deep(.el-tabs__item:hover) {
-  color: var(--el-color-primary);
-}
-
-.profile-tabs :deep(.el-tabs__item.is-active) {
-  background: transparent;
-  color: var(--el-color-primary);
+  padding: 6px 12px;
+  border-radius: 8px;
   font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
-.profile-tabs :deep(.el-tabs__active-bar) {
-  background-color: var(--el-color-primary);
+/* Tabs 样式 */
+.tabs-container {
+  position: relative;
+  z-index: 1;
+}
+
+.glass-tabs :deep(.el-tabs__header) {
+  margin-bottom: 24px;
+}
+
+.glass-tabs :deep(.el-tabs__nav-wrap::after) {
+  background-color: transparent;
+}
+
+.glass-tabs :deep(.el-tabs__item) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #666;
+  padding: 0 24px;
+  transition: all 0.3s ease;
+}
+
+.glass-tabs :deep(.el-tabs__item.is-active) {
+  color: var(--primary-color);
+  font-size: 18px;
+}
+
+.glass-tabs :deep(.el-tabs__active-bar) {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--primary-gradient);
+  box-shadow: 0 2px 8px rgba(66, 211, 146, 0.4);
+}
+
+/* 标签页内容 */
+.tab-content {
+  min-height: 400px;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .section-title {
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c3e50;
   margin: 0;
-  color: var(--el-text-color-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.filter-controls {
+.section-title .el-icon {
+  color: var(--primary-color);
+  font-size: 24px;
+}
+
+/* Glass Inputs */
+:deep(.glass-select .el-input__wrapper) {
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: none;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 4px 12px;
+  transition: all 0.3s;
+}
+
+:deep(.glass-select .el-input__wrapper:hover),
+:deep(.glass-select .el-input__wrapper.is-focus) {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color-light);
+}
+
+/* Glass Table */
+.glass-table {
+  background: transparent !important;
+  --el-table-border-color: rgba(0, 0, 0, 0.05);
+  --el-table-header-bg-color: transparent;
+  --el-table-row-hover-bg-color: rgba(66, 211, 146, 0.1);
+}
+
+:deep(.el-table__inner-wrapper::before) {
+  display: none;
+}
+
+.event-cell {
   display: flex;
-  gap: 12px;
+  align-items: center;
+}
+
+.event-name {
+  font-weight: 600;
+  color: #2c3e50;
 }
 
 .record-value {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Consolas', 'Monaco', monospace;
 }
 
-/* 历史成绩表格中的成绩数据字体 */
-.time-value {
-  font-family: 'Consolas', 'Monaco', monospace;
-  font-weight: 500;
+.time {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: #2c3e50;
 }
 
-.stats-container {
-  margin-bottom: 24px;
-  padding: 16px;
-  background-color: var(--el-fill-color-light);
-  border-radius: 8px;
+.rank-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  border: none;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);
+  box-shadow: 0 2px 8px rgba(238, 82, 83, 0.4);
 }
 
-.stats-message {
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--el-text-color-primary);
+.empty-value {
+  color: #ccc;
+}
+
+/* 统计概览 */
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.stats-card {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  padding: 24px;
   text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: transform 0.3s;
 }
 
-.highlight-number {
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--el-color-primary);
-  margin: 0 4px;
+.stats-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.8);
 }
 
-.medal-container {
+.stats-card.highlight {
+  background: linear-gradient(135deg, rgba(66, 211, 146, 0.1) 0%, rgba(47, 144, 185, 0.1) 100%);
+  border-color: rgba(66, 211, 146, 0.2);
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #666;
+  font-weight: 600;
+}
+
+.empty-stats {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+}
+
+/* 排名分布 */
+.medal-section {
   margin-top: 24px;
-  margin-bottom: 24px;
 }
 
-.rank-list {
+.subsection-title {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.rank-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.rank-card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.rank-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background-color: var(--el-fill-color-light);
-  border-radius: 6px;
+.rank-event {
+  font-weight: 700;
+  color: #2c3e50;
+  font-size: 16px;
 }
 
 .rank-badges {
   display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-.pagination-container {
-  margin-top: 20px;
+.rank-badge {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
-.record-details {
-  padding: 16px;
+.rank-1 { background: rgba(255, 107, 107, 0.1); color: #ff6b6b; }
+.rank-2 { background: rgba(255, 159, 67, 0.1); color: #ff9f43; }
+.rank-3 { background: rgba(10, 189, 227, 0.1); color: #0abde3; }
+
+.badge-val {
+  font-family: 'JetBrains Mono', monospace;
 }
 
-.detail-item {
-  margin-bottom: 12px;
-  display: flex;
-}
-
-.detail-label {
-  font-weight: bold;
-  width: 100px;
-  color: var(--el-text-color-secondary);
-}
-
-.detail-value {
-  flex: 1;
-}
-
+/* 响应式 */
 @media (max-width: 768px) {
+  .view-container {
+    padding: 16px;
+  }
+  
+  .bento-card {
+    padding: 20px;
+    border-radius: 16px;
+  }
+  
   .user-profile {
     flex-direction: column;
-    align-items: center;
     text-align: center;
-    gap: 16px;
+    gap: 20px;
+  }
+  
+  .avatar {
+    width: 100px !important;
+    height: 100px !important;
+  }
+  
+  .avatar-text {
+    font-size: 36px;
   }
   
   .section-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 16px;
   }
   
-  .filter-controls {
-    width: 100%;
+  .glass-select {
+    width: 100% !important;
   }
   
-  .event-name {
-    width: 60px;
+  .stats-overview {
+    grid-template-columns: 1fr 1fr;
   }
 }
-
-.el-tag.el-tag--danger.el-tag--dark {
-  background-color: #f56c6c;
-  border-color: #f56c6c;
-  color: white;
-  font-weight: bold;
-}
-
-.gr-tag {
-  background-color: #f56c6c;
-  border-color: #f56c6c;
-  color: white;
-  font-weight: bold;
-  border-radius: 4px;
-  padding: 0 5px;
-  font-size: 12px;
-  line-height: 1;
-}
-
-.record-cell {
-  position: relative;
-  cursor: pointer;
-  padding: 8px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-}
-
-.detail-text {
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  margin-left: auto;
-  color: #67a9e0;
-  font-size: 14px;
-}
-
-.record-cell:hover .detail-text {
-  opacity: 1;
-}
-</style> 
+</style>

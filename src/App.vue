@@ -194,7 +194,7 @@ const handleLoginSuccess = () => {
       v-if="!isStandalonePage"
       v-model="sidebarVisible"
       direction="ltr"
-      size="80%"
+      size="50%"
       :with-header="false"
       class="sidebar-drawer"
     >
@@ -237,10 +237,10 @@ const handleLoginSuccess = () => {
           <el-icon><Icon icon="mdi:shield-crown" /></el-icon>
           <span>超级管理</span>
         </el-menu-item>
-        <el-menu-item index="changelog" @click="openChangelog">
+        <!-- <el-menu-item index="changelog" @click="openChangelog">
           <el-icon><Icon icon="mdi:history" /></el-icon>
           <span>更新日志</span>
-        </el-menu-item>
+        </el-menu-item> -->
         <!-- <el-menu-item index="/online-competition">
           <el-icon><Icon icon="mdi:trophy-award" /></el-icon>
           <span>线上赛（临时）</span>
@@ -304,10 +304,10 @@ const handleLoginSuccess = () => {
                       <Icon icon="mdi:shield-crown" class="dropdown-icon super-admin-icon" />
                       超级管理
                     </el-dropdown-item>
-                    <el-dropdown-item @click="openChangelog">
+                    <!-- <el-dropdown-item @click="openChangelog">
                       <Icon icon="mdi:history" class="dropdown-icon" />
                       更新日志
-                    </el-dropdown-item>
+                    </el-dropdown-item> -->
                     <!-- <el-dropdown-item @click="router.push('/online-competition')">
                       <Icon icon="mdi:trophy-award" class="dropdown-icon" />
                       线上赛
@@ -442,20 +442,19 @@ const handleLoginSuccess = () => {
 /* 移动导航栏样式 */
 .mobile-navbar {
   display: none;
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
+  width: 100%;
   height: 64px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--glass-bg-heavy);
+  backdrop-filter: blur(var(--glass-blur-lg));
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg));
   box-shadow: var(--shadow-lg);
   z-index: 1000;
   padding: 0 20px;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: var(--glass-border);
   transition: all var(--duration-normal) var(--ease-in-out);
 }
 
@@ -508,7 +507,7 @@ const handleLoginSuccess = () => {
   }
   
   .el-main {
-    padding-top: 80px !important; /* 为固定的移动导航栏留出空间 */
+    padding-top: var(--space-md) !important; /* 恢复默认内边距 */
     padding-left: var(--space-md) !important;
     padding-right: var(--space-md) !important;
     padding-bottom: var(--space-lg) !important;
@@ -558,6 +557,7 @@ const handleLoginSuccess = () => {
   align-items: center;
   gap: 12px;
   background: linear-gradient(135deg, rgba(64, 158, 255, 0.5), rgba(103, 194, 58, 0.3));
+  border-radius: 12px;
 }
 
 .sidebar-title {

@@ -9,10 +9,12 @@
     >
       <el-table-column
         label="项目"
-        min-width="100"
+        min-width="90"
+        prop="event"
+        class-name="event-column"
       >
         <template #default="scope">
-          {{ getEventName(scope.row.event) }}
+          <span class="event-name">{{ getEventName(scope.row.event) }}</span>
         </template>
       </el-table-column>
       
@@ -38,10 +40,21 @@
       >
         <template #default="scope">
           <div class="record-cell">
-          <span class="record-value">
-            {{ formatTime(scope.row.singleSeconds) }}
-            <span v-if="scope.row.singleRank" class="rank">(#{{ scope.row.singleRank }})</span>
-          </span>
+          <div class="record-value-wrapper">
+            <span class="record-value">
+              {{ formatTime(scope.row.singleSeconds) }}
+            </span>
+            <el-tag 
+              v-if="scope.row.singleRank" 
+              size="small" 
+              type="info" 
+              effect="plain" 
+              class="rank-tag"
+              round
+            >
+              #{{ scope.row.singleRank }}
+            </el-tag>
+          </div>
             
             <!-- 显示单次记录持有人（桌面/移动统一） -->
             <span v-if="scope.row.singleHolderNickname" class="holder-nickname">
@@ -61,10 +74,21 @@
       >
         <template #default="scope">
           <div class="record-cell">
-          <span class="record-value">
-            {{ formatTime(scope.row.averageSeconds) }}
-            <span v-if="scope.row.averageRank" class="rank">(#{{ scope.row.averageRank }})</span>
-          </span>
+          <div class="record-value-wrapper">
+            <span class="record-value">
+              {{ formatTime(scope.row.averageSeconds) }}
+            </span>
+            <el-tag 
+              v-if="scope.row.averageRank" 
+              size="small" 
+              type="info" 
+              effect="plain" 
+              class="rank-tag"
+              round
+            >
+              #{{ scope.row.averageRank }}
+            </el-tag>
+          </div>
             
             <!-- 显示平均记录持有人（桌面/移动统一） -->
             <span v-if="scope.row.averageHolderNickname" class="holder-nickname">
@@ -329,41 +353,78 @@ onMounted(() => {
 .table-container {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Glass Table Styles Override */
+.glass-table {
+  background: transparent !important;
+  --el-table-border-color: rgba(0, 0, 0, 0.05);
+  --el-table-header-bg-color: transparent;
+  --el-table-row-hover-bg-color: rgba(66, 211, 146, 0.1);
+}
+
+:deep(.el-table__inner-wrapper::before) {
+  display: none;
+}
+
+:deep(.el-table .cell) {
+  white-space: nowrap;
 }
 
 .records-table {
   width: 100%;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
-  transition: all var(--duration-normal) var(--ease-in-out);
+  border-radius: 12px;
 }
 
-.records-table:hover {
-  box-shadow: var(--shadow-lg);
+.record-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.rank {
-  font-size: 12px;
-  color: #909399;
-  margin-left: 4px;
+.record-value-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .record-value {
-  position: relative;
-  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
-  color: var(--text-color);
-  transition: all var(--duration-normal) var(--ease-in-out);
-  font-family: 'Consolas', 'Monaco', monospace;
+  color: #2c3e50;
+  font-size: 1em;
 }
 
-.record-value:hover {
+.rank-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  border: none;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+}
+
+.holder-nickname {
+  color: var(--el-text-color-secondary);
+  font-size: 0.9em;
+  display: none;
+}
+
+/* Player Link */
+.player-name-link {
+  color: var(--primary-color-dark, #2c3e50);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.player-name-link:hover {
   color: var(--primary-color);
-  transform: scale(1.02);
 }
 
+/* Details Dialog Styles */
 .record-details {
   display: flex;
   flex-direction: column;
@@ -372,17 +433,20 @@ onMounted(() => {
 
 .detail-item {
   display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .label {
-  flex: 0 0 80px;
-  font-weight: 500;
-  color: #606266;
+  color: #666;
+  font-weight: 600;
+  min-width: 80px;
 }
 
 .value {
-  flex: 1;
-  color: #303133;
+  font-weight: 500;
+  color: #2c3e50;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .actions {
@@ -391,101 +455,44 @@ onMounted(() => {
   justify-content: flex-end;
 }
 
-/* 添加移动端样式 */
-.record-cell {
-  display: flex;
-  flex-direction: column;
-}
-
-.holder-nickname {
-  display: none;
-  font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
-}
-
-/* 选手名字链接样式 - 无颜色但有下划线动画 */
-.player-name-link {
-  color: inherit;
-  text-decoration: none;
-  font-weight: 500;
-  transition: all var(--duration-normal) var(--ease-in-out);
-  position: relative;
-}
-
-.player-name-link::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--primary-color);
-  transition: width var(--duration-normal) var(--ease-in-out);
-}
-
-.player-name-link:hover {
-  transform: translateY(-1px);
-}
-
-.player-name-link:hover::after {
-  width: 100%;
-}
-
+/* Mobile Styles */
 @media (max-width: 768px) {
-  .holder-nickname { 
-    display: block; 
+  .holder-nickname {
+    display: block;
+    margin-top: 4px;
     font-size: 12px;
-    color: var(--text-color-secondary);
-    margin-top: var(--space-xs);
+    opacity: 0.8;
   }
   
-  :deep(.nickname-column) { 
-    display: none !important; 
+  :deep(.nickname-column) {
+    display: none !important;
   }
   
   .record-value {
-    font-weight: 600;
-    font-size: 15px;
+    font-size: 14px;
   }
 
+  .record-value-wrapper {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  
   :deep(.el-table .cell) {
-    padding: var(--space-sm) var(--space-xs);
-    font-size: 14px;
+    padding: 8px 4px;
+    line-height: 1.4;
   }
 
-  :deep(.el-table__header th) {
-    font-size: 13px;
-    padding: var(--space-sm) var(--space-xs);
-    font-weight: 600;
-  }
-  
-  :deep(.el-table) {
+  .event-name {
     font-size: 14px;
-    border-radius: var(--radius-md);
-  }
-  
-  .table-container {
-    margin: 0 calc(-1 * var(--space-md));
-    width: calc(100% + 2 * var(--space-md));
-    border-radius: var(--radius-md);
-    overflow: hidden;
-  }
-  
-  :deep(.el-table__body td) {
-    padding: var(--space-sm) var(--space-xs);
-  }
-  
-  .rank {
+    font-weight: 600;
+    white-space: normal;
     display: block;
-    margin-top: var(--space-xs);
-    font-size: 11px;
-    color: var(--text-color-muted);
+    line-height: 1.3;
   }
-  
-  /* 移动端表格行悬停效果 */
-  :deep(.el-table__body tr:hover > td) {
-    background-color: rgba(64, 158, 255, 0.05) !important;
+
+  .rank-tag {
+    transform: scale(0.9);
+    transform-origin: left center;
   }
 }
 </style> 

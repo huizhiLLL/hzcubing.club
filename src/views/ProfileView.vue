@@ -1,16 +1,25 @@
 <template>
-  <div class="profile-container">
+  <div class="view-container">
+    <!-- 动态背景光球 -->
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
     <ElementTransition name="zoom" :duration="600" appear>
-      <div class="card profile-header glass-card">
+      <div class="bento-card profile-header">
         <div class="user-profile">
-          <div class="avatar-container" @click="triggerFileUpload">
+          <div class="avatar-wrapper" @click="triggerFileUpload">
             <el-avatar
-              :size="128"
+              :size="120"
               :src="user?.avatar || '/default-avatar.svg'"
-              class="avatar"
-            />
+              class="avatar clickable"
+              :class="{ 'default-avatar': !user?.avatar || isDefaultAvatar(user?.avatar) }"
+            >
+              <template #default>
+                <span class="avatar-text">{{ user?.nickname?.charAt(0)?.toUpperCase() || 'User' }}</span>
+              </template>
+            </el-avatar>
             <div class="avatar-overlay">
-              <span>更换头像</span>
+              <el-icon><Camera /></el-icon>
             </div>
             <!-- 隐藏的文件上传输入框 -->
             <input 
@@ -22,13 +31,15 @@
             />
           </div>
           <div class="user-info">
-            <h1 class="nickname">{{ user?.nickname }}</h1>
-            <p class="bio">{{ user?.bio || '这个人很懒，什么都没写~' }}</p>
-            <p v-if="user?.wcaId" class="wca-id">WCA ID: {{ user.wcaId }}</p>
-            <div class="action-buttons">
-              <el-button @click="openEditDialog" class="edit-button" title="编辑资料">
-                <el-icon><Icon icon="mdi:pencil" /></el-icon>
+            <div class="info-header">
+              <h1 class="nickname">{{ user?.nickname }}</h1>
+              <el-button circle class="edit-btn" @click="openEditDialog" title="编辑资料">
+                <el-icon><EditPen /></el-icon>
               </el-button>
+            </div>
+            <p class="bio">{{ user?.bio || '这个人很懒，什么都没写~' }}</p>
+            <div class="user-meta" v-if="user?.wcaId">
+              <el-tag effect="dark" type="primary" class="wca-tag">WCA ID: {{ user.wcaId }}</el-tag>
             </div>
           </div>
         </div>
@@ -36,198 +47,198 @@
     </ElementTransition>
 
     <ElementTransition name="slide-up" :duration="600" :delay="200" appear>
-      <el-tabs v-model="activeTab" class="profile-tabs glass-tabs">
-        <el-tab-pane label="个人最佳" name="personal-bests">
-          <div class="card glass-card">
-            <div class="section-header">
-              <div></div>
-              <el-select v-model="selectedCategory" placeholder="项目类型" size="small" style="width: 120px;" class="glass-select">
-                <el-option label="全部类型" value="all" />
-                <el-option label="官方项目" value="official" />
-                <el-option label="趣味项目" value="fun" />
-                <el-option label="整活项目" value="meme" />
-              </el-select>
-            </div>
-            
-            <el-table
-              v-loading="loading"
-              :data="filteredPersonalBests"
-              style="width: 100%"
-              empty-text="暂无成绩记录"
-              class="glass-table"
-            >
-              <el-table-column label="项目" prop="eventName" min-width="120" />
-              <el-table-column label="单次" min-width="120">
-                <template #default="scope">
-                  <div class="record-value" v-if="!isNaN(scope.row.singleSeconds)">
-                    {{ formatTime(scope.row.singleSeconds) }}
-                    <el-tag v-if="scope.row.singleRank === 1" size="small" type="danger" effect="dark" class="gr-tag">
-                      GR
-                    </el-tag>
-                  </div>
-                  <span v-else>-</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="平均" min-width="120">
-                <template #default="scope">
-                  <div class="record-value" v-if="!isNaN(scope.row.averageSeconds)">
-                    {{ formatTime(scope.row.averageSeconds) }}
-                    <el-tag v-if="scope.row.averageRank === 1" size="small" type="danger" effect="dark" class="gr-tag">
-                      GR
-                    </el-tag>
-                  </div>
-                  <span v-else>-</span>
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-        </el-tab-pane>
-        
-        <el-tab-pane label="历史成绩" name="history">
-          <div class="card glass-card">
-            <div class="section-header">
-              <h2 class="section-title">历史成绩</h2>
-              <div class="filter-controls">
-                <el-select v-model="selectedEvent" placeholder="选择项目" size="small" class="glass-select">
-                  <el-option label="全部项目" value="all" />
-                  <el-option
-                    v-for="event in userEvents"
-                    :key="event"
-                    :label="getEventName(event)"
-                    :value="event"
-                  />
-                </el-select>
-                <el-select v-model="sortOrder" placeholder="排序方式" size="small" class="glass-select">
-                  <el-option label="最新优先" value="latest" />
-                  <el-option label="最快优先" value="fastest" />
+      <div class="tabs-container">
+        <el-tabs v-model="activeTab" class="glass-tabs">
+          <el-tab-pane label="个人最佳" name="personal-bests">
+            <div class="bento-card tab-content">
+              <div class="section-header">
+                <h3 class="section-title">
+                  <el-icon><Trophy /></el-icon> 最佳成绩
+                </h3>
+                <el-select v-model="selectedCategory" placeholder="项目类型" size="default" class="glass-select" style="width: 140px;">
+                  <el-option label="全部类型" value="all" />
+                  <el-option label="官方项目" value="official" />
+                  <el-option label="趣味项目" value="fun" />
+                  <el-option label="整活项目" value="meme" />
                 </el-select>
               </div>
-            </div>
-            
-            <el-table
-              v-loading="historyLoading"
-              :data="filteredHistoryRecords"
-              style="width: 100%"
-              empty-text="暂无历史成绩记录"
-              class="glass-table"
-            >
-              <el-table-column label="项目" prop="eventName" min-width="100" />
-              <el-table-column label="单次" min-width="100">
-                <template #default="scope">
-                  <span class="time-value">{{ formatTime(scope.row.singleSeconds) }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="平均" min-width="100">
-                <template #default="scope">
-                  <span class="time-value">{{ formatTime(scope.row.averageSeconds) }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="提交时间" min-width="160">
-                <template #default="scope">
-                  <div class="record-cell" @click="showRecordDetails(scope.row)">
-                  <span>{{ formatDate(scope.row.timestamp) }}</span>
-                    <span class="detail-text">
-                    详情
-                    </span>
-                  </div>
-                </template>
-              </el-table-column>
-            </el-table>
-            
-            <div class="pagination-container" v-if="totalHistoryRecords > 0">
-              <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
-                :page-sizes="[10, 20, 50, 100]"
-                layout="total, sizes, prev, pager, next"
-                :total="totalHistoryRecords"
-                @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"
-              />
-            </div>
-          </div>
-        </el-tab-pane>
-        
-        <el-tab-pane label="统计分析" name="statistics">
-          <div class="card glass-card">
-            <h2 class="section-title"></h2>
-            
-            <div class="stats-container">
-              <template v-if="totalRecords > 0">
-                <div class="stats-message">
-                  <template v-if="firstPlaceCount > 0">
-                    你一共在 <span class="highlight-number">{{ firstPlaceCount }}</span> 个项目中取得了第一名
+              
+              <el-table
+                v-loading="loading"
+                :data="filteredPersonalBests"
+                style="width: 100%"
+                empty-text="暂无成绩记录"
+                class="glass-table"
+                :header-cell-style="{ background: 'transparent', color: 'var(--el-text-color-primary)' }"
+                :row-style="{ background: 'transparent' }"
+              >
+                <el-table-column label="项目" prop="eventName" min-width="140">
+                  <template #default="scope">
+                    <div class="event-cell">
+                      <span class="event-name">{{ scope.row.eventName }}</span>
+                    </div>
                   </template>
-                  
-                  <template v-if="topThreeCount > 0">
-                    <template v-if="firstPlaceCount > 0">，</template>
-                    <template v-else>你</template>
-                    在 <span class="highlight-number">{{ topThreeCount }}</span> 个项目中取得了前三名
+                </el-table-column>
+                <el-table-column label="单次" min-width="120">
+                  <template #default="scope">
+                    <div class="record-value" v-if="!isNaN(scope.row.singleSeconds)">
+                      <span class="time">{{ formatTime(scope.row.singleSeconds) }}</span>
+                      <el-tag v-if="scope.row.singleRank === 1" size="small" type="danger" effect="dark" class="rank-tag">GR</el-tag>
+                    </div>
+                    <span v-else class="empty-value">-</span>
                   </template>
-                  
-                  <template v-if="firstPlaceCount > 0 || topThreeCount > 0">，</template>
-                  <template v-else>你</template>
-                  总共参与了 <span class="highlight-number">{{ activeEvents }}</span> 个项目，
-                  上传了 <span class="highlight-number">{{ totalRecords }}</span> 个成绩数
+                </el-table-column>
+                <el-table-column label="平均" min-width="120">
+                  <template #default="scope">
+                    <div class="record-value" v-if="!isNaN(scope.row.averageSeconds)">
+                      <span class="time">{{ formatTime(scope.row.averageSeconds) }}</span>
+                      <el-tag v-if="scope.row.averageRank === 1" size="small" type="danger" effect="dark" class="rank-tag">GR</el-tag>
+                    </div>
+                    <span v-else class="empty-value">-</span>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </el-tab-pane>
+          
+          <el-tab-pane label="历史成绩" name="history">
+            <div class="bento-card tab-content">
+              <div class="section-header">
+                <h3 class="section-title">
+                  <el-icon><Timer /></el-icon> 历史记录
+                </h3>
+                <div class="filter-controls">
+                  <el-select v-model="selectedEvent" placeholder="选择项目" size="default" class="glass-select" style="width: 140px;">
+                    <el-option label="全部项目" value="all" />
+                    <el-option
+                      v-for="event in userEvents"
+                      :key="event"
+                      :label="getEventName(event)"
+                      :value="event"
+                    />
+                  </el-select>
+                  <el-select v-model="sortOrder" placeholder="排序方式" size="default" class="glass-select" style="width: 120px;">
+                    <el-option label="最新优先" value="latest" />
+                    <el-option label="最快优先" value="fastest" />
+                  </el-select>
                 </div>
-              </template>
-              <template v-else>
-                <div class="stats-message">
-                  你还未参与任何项目哦
+              </div>
+              
+              <el-table
+                v-loading="historyLoading"
+                :data="filteredHistoryRecords"
+                style="width: 100%"
+                empty-text="暂无历史成绩记录"
+                class="glass-table"
+                :header-cell-style="{ background: 'transparent', color: 'var(--el-text-color-primary)' }"
+                :row-style="{ background: 'transparent' }"
+              >
+                <el-table-column label="项目" prop="eventName" min-width="120" />
+                <el-table-column label="单次" min-width="100">
+                  <template #default="scope">
+                    <span class="value time">{{ formatTime(scope.row.singleSeconds) }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="平均" min-width="100">
+                  <template #default="scope">
+                    <span class="value time">{{ formatTime(scope.row.averageSeconds) }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="提交时间" min-width="160">
+                  <template #default="scope">
+                    <div class="record-cell" @click="showRecordDetails(scope.row)">
+                      <span>{{ formatDate(scope.row.timestamp) }}</span>
+                      <span class="detail-btn">
+                        <el-icon><ArrowRight /></el-icon>
+                      </span>
+                    </div>
+                  </template>
+                </el-table-column>
+              </el-table>
+              
+              <div class="pagination-container" v-if="totalHistoryRecords > 0">
+                <el-pagination
+                  v-model:current-page="currentPage"
+                  v-model:page-size="pageSize"
+                  :page-sizes="[10, 20, 50, 100]"
+                  layout="total, sizes, prev, pager, next"
+                  :total="totalHistoryRecords"
+                  @size-change="handleSizeChange"
+                  @current-change="handleCurrentChange"
+                  class="glass-pagination"
+                  background
+                />
+              </div>
+            </div>
+          </el-tab-pane>
+          
+          <el-tab-pane label="统计分析" name="statistics">
+            <div class="bento-card tab-content">
+              <div class="section-header">
+                <h3 class="section-title">
+                  <el-icon><DataAnalysis /></el-icon> 数据概览
+                </h3>
+              </div>
+              
+              <div class="stats-overview">
+                <div class="stats-card highlight">
+                  <div class="stat-value">{{ firstPlaceCount }}</div>
+                  <div class="stat-label">第一名次数</div>
                 </div>
-              </template>
+                <div class="stats-card">
+                  <div class="stat-value">{{ topThreeCount }}</div>
+                  <div class="stat-label">前三名次数</div>
                 </div>
-            
-            <div class="medal-container" v-if="sortedTopThreeRecords.length > 0">
-              <h3 class="chart-title">排名分布</h3>
-              <div class="rank-list">
-                <div v-for="(item, index) in sortedTopThreeRecords" :key="index" class="rank-item">
-                  <span class="event-name">{{ getEventName(item.eventCode) }}</span>
-                  <div class="rank-badges">
-                    <el-tag v-if="item.singleRank === 1" type="danger" effect="dark" size="small" round>
-                      单次 #1
-                    </el-tag>
-                    <el-tag v-else-if="item.singleRank === 2" type="warning" effect="dark" size="small" round>
-                      单次 #2
-                    </el-tag>
-                    <el-tag v-else-if="item.singleRank === 3" type="success" effect="dark" size="small" round>
-                      单次 #3
-                    </el-tag>
-                    
-                    <el-tag v-if="item.averageRank === 1" type="danger" effect="dark" size="small" round>
-                      平均 #1
-                    </el-tag>
-                    <el-tag v-else-if="item.averageRank === 2" type="warning" effect="dark" size="small" round>
-                      平均 #2
-                    </el-tag>
-                    <el-tag v-else-if="item.averageRank === 3" type="success" effect="dark" size="small" round>
-                      平均 #3
-                    </el-tag>
+                <div class="stats-card">
+                  <div class="stat-value">{{ totalRecords }}</div>
+                  <div class="stat-label">总提交数</div>
+                </div>
+                <div class="stats-card">
+                  <div class="stat-value">{{ activeEvents }}</div>
+                  <div class="stat-label">参与项目</div>
+                </div>
+              </div>
+
+              <div class="medal-section" v-if="sortedTopThreeRecords.length > 0">
+                <h4 class="subsection-title">排名分布</h4>
+                <div class="rank-grid">
+                  <div v-for="(item, index) in sortedTopThreeRecords" :key="index" class="rank-card">
+                    <div class="rank-event">{{ getEventName(item.eventCode) }}</div>
+                    <div class="rank-badges">
+                      <div v-if="item.singleRank === 1" class="rank-badge rank-1">
+                        <span>单次</span> <span class="badge-val">#1</span>
+                      </div>
+                      <div v-else-if="item.singleRank === 2" class="rank-badge rank-2">
+                        <span>单次</span> <span class="badge-val">#2</span>
+                      </div>
+                      <div v-else-if="item.singleRank === 3" class="rank-badge rank-3">
+                        <span>单次</span> <span class="badge-val">#3</span>
+                      </div>
+                      
+                      <div v-if="item.averageRank === 1" class="rank-badge rank-1">
+                        <span>平均</span> <span class="badge-val">#1</span>
+                      </div>
+                      <div v-else-if="item.averageRank === 2" class="rank-badge rank-2">
+                        <span>平均</span> <span class="badge-val">#2</span>
+                      </div>
+                      <div v-else-if="item.averageRank === 3" class="rank-badge rank-3">
+                        <span>平均</span> <span class="badge-val">#3</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <!-- 项目分布部分暂时隐藏，但保留代码 -->
-            <div class="chart-container" v-if="false && activeEvents > 0">
-              <h3 class="chart-title">项目分布</h3>
-              <div class="event-distribution">
-                <div 
-                  v-for="(count, event) in eventDistribution" 
-                  :key="event"
-                  class="event-bar"
-                >
-                  <div class="event-name">{{ getEventName(event) }}</div>
-                  <div class="bar-container">
-                    <div class="bar" :style="{ width: `${(count / maxEventCount) * 100}%` }"></div>
-                    <span class="bar-value">{{ count }}</span>
-                  </div>
-                </div>
+              
+              <div v-else-if="totalRecords > 0" class="empty-stats">
+                暂无前三名记录，继续加油！
+              </div>
+              <div v-else class="empty-stats">
+                暂无数据
               </div>
             </div>
-          </div>
-        </el-tab-pane>
-      </el-tabs>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
     </ElementTransition>
 
     <!-- 编辑资料对话框 -->
@@ -246,9 +257,10 @@
           :model="editForm"
           :rules="editRules"
           label-width="80px"
+          label-position="top"
         >
           <el-form-item label="昵称" prop="nickname">
-            <el-input v-model="editForm.nickname" placeholder="请输入昵称" />
+            <el-input v-model="editForm.nickname" placeholder="请输入昵称" class="glass-input" />
           </el-form-item>
           <el-form-item label="签名" prop="bio">
             <el-input
@@ -256,10 +268,11 @@
               type="textarea"
               :rows="3"
               placeholder="请输入个人签名"
+              class="glass-input"
             />
           </el-form-item>
           <el-form-item label="WCA ID" prop="wcaId">
-            <el-input v-model="editForm.wcaId" placeholder="如有请填写" />
+            <el-input v-model="editForm.wcaId" placeholder="如有请填写" class="glass-input" />
           </el-form-item>
         </el-form>
       </div>
@@ -281,54 +294,49 @@
       v-model="recordDetailVisible"
       title="成绩详情"
       width="500px"
+      class="glass-dialog"
     >
       <div v-if="selectedRecord" class="record-details">
-        <div class="detail-item">
-          <span class="detail-label">项目:</span>
-          <span class="detail-value">{{ getEventName(selectedRecord.event) }}</span>
+        <div class="detail-row highlight">
+          <span class="label">项目</span>
+          <span class="value">{{ getEventName(selectedRecord.event) }}</span>
         </div>
         
-        <template v-if="!isNaN(selectedRecord.singleSeconds)">
-          <div class="detail-item">
-            <span class="detail-label">单次成绩:</span>
-            <span class="detail-value">{{ formatTime(selectedRecord.singleSeconds) }}</span>
+        <div class="detail-group" v-if="!isNaN(selectedRecord.singleSeconds)">
+          <div class="detail-row">
+            <span class="label">单次成绩</span>
+            <span class="value time">{{ formatTime(selectedRecord.singleSeconds) }}</span>
           </div>
-          
-          <div class="detail-item" v-if="selectedRecord.singleRank">
-            <span class="detail-label">单次排名:</span>
-            <span class="detail-value">#{{ selectedRecord.singleRank }}</span>
+          <div class="detail-row" v-if="selectedRecord.singleRank">
+            <span class="label">单次排名</span>
+            <span class="value rank">#{{ selectedRecord.singleRank }}</span>
           </div>
-        </template>
-        
-        <template v-if="!isNaN(selectedRecord.averageSeconds)">
-          <div class="detail-item">
-            <span class="detail-label">平均成绩:</span>
-            <span class="detail-value">{{ formatTime(selectedRecord.averageSeconds) }}</span>
-          </div>
-          
-          <div class="detail-item" v-if="selectedRecord.averageRank">
-            <span class="detail-label">平均排名:</span>
-            <span class="detail-value">#{{ selectedRecord.averageRank }}</span>
-          </div>
-        </template>
-        
-        <!-- 魔方信息 -->
-        <div class="detail-item" v-if="isValidField(selectedRecord.cube)">
-          <span class="detail-label">使用魔方:</span>
-          <span class="detail-value">{{ selectedRecord.cube }}</span>
         </div>
         
-        <!-- 方法信息 -->
-        <div class="detail-item" v-if="isValidField(selectedRecord.method)">
-          <span class="detail-label">解法:</span>
-          <span class="detail-value">{{ selectedRecord.method }}</span>
+        <div class="detail-group" v-if="!isNaN(selectedRecord.averageSeconds)">
+          <div class="detail-row">
+            <span class="label">平均成绩</span>
+            <span class="value time">{{ formatTime(selectedRecord.averageSeconds) }}</span>
+          </div>
+          <div class="detail-row" v-if="selectedRecord.averageRank">
+            <span class="label">平均排名</span>
+            <span class="value rank">#{{ selectedRecord.averageRank }}</span>
+          </div>
         </div>
         
-        <!-- 已移除感想与视频链接字段展示 -->
+        <div class="detail-row" v-if="isValidField(selectedRecord.cube)">
+          <span class="label">使用魔方</span>
+          <span class="value">{{ selectedRecord.cube }}</span>
+        </div>
         
-        <div class="detail-item">
-          <span class="detail-label">提交时间:</span>
-          <span class="detail-value">{{ formatDate(selectedRecord.timestamp, true) }}</span>
+        <div class="detail-row" v-if="isValidField(selectedRecord.method)">
+          <span class="label">解法</span>
+          <span class="value">{{ selectedRecord.method }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">提交时间</span>
+          <span class="value">{{ formatDate(selectedRecord.timestamp, true) }}</span>
         </div>
       </div>
     </el-dialog>
@@ -337,6 +345,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/stores/user'
 import { useRecordsStore } from '@/stores/records'
 import { formatTime as formatTimeUtil, normalizeFloat } from '@/utils/timeFormatter'
@@ -345,13 +354,13 @@ import { useRouter } from 'vue-router'
 import ElementTransition from '@/components/ElementTransition.vue'
 import { categories, events, getEventName, getEventType, getAllEvents } from '@/config/events'
 import api from '@/api'
-import { Icon } from '@iconify/vue'
+import { Trophy, Timer, DataAnalysis, ArrowRight, EditPen, Camera } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
 const userStore = useUserStore()
 const recordsStore = useRecordsStore()
-const { user } = userStore
+const { user } = storeToRefs(userStore)
 const loading = ref(false)
 
 // 新增：个人最佳、历史记录和统计分析相关
@@ -363,9 +372,29 @@ const selectedCategory = ref('all')
 const selectedEvent = ref('all')
 const sortOrder = ref('latest')
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(20)
 const recordDetailVisible = ref(false)
 const selectedRecord = ref(null)
+
+// 编辑资料相关
+const showEditDialog = ref(false)
+const editFormRef = ref(null)
+const fileInput = ref(null)
+const editForm = reactive({
+  nickname: '',
+  bio: '',
+  wcaId: ''
+})
+
+const editRules = {
+  nickname: [
+    { required: true, message: '请输入昵称', trigger: 'blur' },
+    { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
+  ],
+  bio: [
+    { max: 100, message: '签名不能超过 100 个字符', trigger: 'blur' }
+  ]
+}
 
 // 格式化个人最佳数据，添加项目名称
 const formattedPersonalBests = computed(() => {
@@ -894,98 +923,71 @@ const sortedTopThreeRecords = computed(() => {
   return sortedRecords
 })
 
-// 获取第一名的记录
-const firstPlaceRecords = computed(() => {
-  const result = {}
-  for (const [eventCode, record] of Object.entries(personalBests.value)) {
-    // 排除整活项目
-    const eventType = getEventType(eventCode)
-    if (eventType === 'meme') {
-      continue
-    }
-    
-    if (record.singleRank === 1 || record.averageRank === 1) {
-      result[eventCode] = record
-    }
-  }
-  return result
-})
-
-// 编辑资料相关
-const showEditDialog = ref(false)
-const editFormRef = ref()
-const editForm = reactive({
-  nickname: '',
-  bio: '',
-  wcaId: ''
-})
-
-const editRules = {
-  nickname: [
-    { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
-  ],
-  bio: [
-    { max: 200, message: '签名不能超过200个字符', trigger: 'blur' }
-  ],
-  wcaId: [
-    { max: 20, message: 'WCA ID 最多20字符', trigger: 'blur' }
-  ]
+// 头像上传
+const triggerFileUpload = () => {
+  fileInput.value.click()
 }
 
-const refreshUserInfo = async () => {
-  // 重新获取用户信息
-  await userStore.initUser()
+const handleAvatarChange = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
   
-  // 强制更新视图中的用户信息
-  if (user.value) {
-    // 直接更新页面上显示的信息
-    nextTick(() => {
-      try {
-        // 更新昵称和签名
-        const nicknameElement = document.querySelector('.nickname')
-        const bioElement = document.querySelector('.bio')
-        
-        if (nicknameElement) {
-          nicknameElement.textContent = user.value.nickname || ''
-        }
-        
-        if (bioElement) {
-          bioElement.textContent = user.value.bio || '这个人很懒，什么都没写~'
-        }
-        
-        // 更新WCA ID显示
-        let wcaIdElement = document.querySelector('.wca-id')
-        
-        if (user.value.wcaId) {
-          // 如果有WCA ID
-          if (wcaIdElement) {
-            // 如果元素已存在，更新内容
-            wcaIdElement.textContent = `WCA ID: ${user.value.wcaId}`
-            wcaIdElement.style.display = 'block'
-          } else {
-            // 如果元素不存在，创建一个新元素
-            wcaIdElement = document.createElement('p')
-            wcaIdElement.className = 'wca-id'
-            wcaIdElement.textContent = `WCA ID: ${user.value.wcaId}`
-            
-            // 插入到签名后面
-            if (bioElement && bioElement.parentNode) {
-              bioElement.parentNode.insertBefore(wcaIdElement, bioElement.nextSibling)
-            }
+  // 检查文件大小 (2MB)
+  if (file.size > 2 * 1024 * 1024) {
+    ElMessage.warning('图片大小不能超过 2MB')
+    return
+  }
+  
+  // 检查文件类型
+  if (!file.type.startsWith('image/')) {
+    ElMessage.warning('请上传图片文件')
+    return
+  }
+  
+  try {
+      const formData = new FormData()
+      formData.append('avatar', file)
+      
+      const result = await api.uploadAvatar(formData)
+      
+      if (result.code === 200) {
+        ElMessage.success('头像上传成功')
+        // 更新用户Store中的头像
+        if (result.data && result.data.avatar) {
+          // 直接更新本地状态
+          if (user.value) {
+            user.value.avatar = result.data.avatar
+            // 同时更新localStorage
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+            userInfo.avatar = result.data.avatar
+            localStorage.setItem('userInfo', JSON.stringify(userInfo))
           }
-        } else if (wcaIdElement) {
-          // 如果没有WCA ID但元素存在，隐藏它
-          wcaIdElement.style.display = 'none'
+        } else {
+          // 如果后端没有返回新的头像URL，重新获取用户信息
+          await userStore.initUser()
         }
-        
-      } catch (error) {
-        console.error('更新页面时出错:', error)
+      } else {
+        ElMessage.error(result.message || '头像上传失败')
       }
-    })
+    } catch (error) {
+    console.error('上传头像出错:', error)
+    ElMessage.error('上传头像出错，请稍后重试')
   }
 }
 
-// 取消编辑
+// 编辑资料
+const openEditDialog = () => {
+  showEditDialog.value = true
+}
+
+const fillFormWithUserData = () => {
+  if (user.value) {
+    editForm.nickname = user.value.nickname || ''
+    editForm.bio = user.value.bio || ''
+    editForm.wcaId = user.value.wcaId || ''
+  }
+}
+
 const cancelEdit = () => {
   showEditDialog.value = false
 }
@@ -995,689 +997,591 @@ const handleEditSubmit = async () => {
   
   await editFormRef.value.validate(async (valid) => {
     if (valid) {
-      // 显示加载状态
-      const loadingInstance = ElMessage({
-        message: '正在更新资料...',
-        type: 'info',
-        duration: 0
-      })
-      
       try {
-        // 检查用户是否已登录
-        if (!userStore.user) {
-          loadingInstance.close()
-          ElMessage.error('请先登录')
-          router.push('/login')
-          return
-        }
-
-        // 检查token是否存在
-        const token = localStorage.getItem('token')
-        if (!token) {
-          loadingInstance.close()
-          ElMessage.error('登录状态已过期，请重新登录')
-          router.push('/login')
-          return
-        }
-
-        // 调用store的更新方法
-        const result = await userStore.updateProfile(editForm)
+        // 使用 store action 更新资料
+        const success = await userStore.updateProfile(editForm)
         
-        // 关闭加载提示
-        loadingInstance.close()
-        
-        // 关闭对话框
-        showEditDialog.value = false
-        
-        // 显示成功消息
-        ElMessage.success('个人资料更新成功')
-        
-        // 刷新用户信息并立即更新页面
-        await refreshUserInfo()
-      } catch (error) {
-        loadingInstance.close()
-        console.error('资料更新失败:', error)
-        
-        // 处理不同类型的错误
-        if (error.message && error.message.includes('登录')) {
-          ElMessage.error('登录状态已过期，请重新登录')
-          // 清除可能已损坏的登录状态
-          localStorage.removeItem('token')
-          userStore.clearToken()
-          router.push('/login')
+        if (success) {
+          ElMessage.success('资料更新成功')
+          showEditDialog.value = false
         } else {
-          ElMessage.error(error.message || '更新失败，请重试')
+          ElMessage.error('更新失败')
         }
+      } catch (error) {
+        console.error('更新资料出错:', error)
+        ElMessage.error(error.message || '更新资料出错，请稍后重试')
       }
     }
   })
 }
 
-// 监听用户数据变化
-watch(() => userStore.user, (newUser, oldUser) => {
-  if (newUser && showEditDialog.value) {
-    // 如果对话框打开且用户数据更新，重新设置表单数据
-    editForm.nickname = newUser.nickname || ''
-    editForm.bio = newUser.bio || ''
-    editForm.wcaId = newUser.wcaId || ''
+// 监听用户ID变化，加载数据
+watch(() => user.value?.id || user.value?._id, (newId) => {
+  if (newId) {
+    fetchUserRecords(newId)
+    fetchUserHistoryRecords(newId)
   }
-  
-  // 如果新获取到用户信息，且之前没有用户信息或用户ID发生变化，则获取成绩记录
-  if (newUser && (!oldUser || (newUser._id || newUser.id) !== (oldUser._id || oldUser.id))) {
-    console.log('用户信息已更新，重新获取成绩记录')
-    
-    // 确保ID字段存在
-    if (!newUser._id && newUser.id) {
-      newUser._id = newUser.id
-      console.log('添加_id字段:', newUser._id)
-    }
-    
-    if (!newUser.id && newUser._id) {
-      newUser.id = newUser._id
-      console.log('添加id字段:', newUser.id)
-    }
-    
-    const userId = newUser._id || newUser.id
-    if (userId) {
-      fetchUserRecords(userId)
-      fetchUserHistoryRecords(userId)
-    } else {
-      console.error('监听到用户变化，但没有有效的ID字段')
-    }
-  }
-}, { deep: true })
+}, { immediate: true })
 
-// 测试API是否可用
-// 初始化函数，确保正确加载所有数据
-const initializeData = async () => {
-  console.log('开始初始化数据...')
-  
-  try {
-    // 从控制台输出可以看到，用户对象结构为 {_id: '68359567c0efb590c7e1092f', ...}
-    // 尝试多种方式获取用户ID
-    let currentUserId = null
-    
-    // 检查用户对象
-    if (user.value) {
-      console.log('用户对象存在，尝试获取ID')
-      console.log('用户对象结构:', JSON.stringify(user.value))
-      
-      // 尝试从各种可能的位置获取ID
-      if (user.value._id) {
-        currentUserId = user.value._id
-        console.log('从user.value._id获取ID:', currentUserId)
-      } else if (user.value.id) {
-        currentUserId = user.value.id
-        console.log('从user.value.id获取ID:', currentUserId)
-      } else if (typeof user.value === 'string') {
-        // 如果用户对象本身就是ID字符串
-        currentUserId = user.value
-        console.log('用户对象本身是ID字符串:', currentUserId)
-      }
-    }
-    
-    // 如果没有用户ID，尝试等待用户信息加载
-    if (!currentUserId) {
-      console.log('用户ID未找到，尝试等待用户信息加载...')
-      
-      // 尝试从localStorage获取token和用户信息
-      const token = localStorage.getItem('token')
-      const cachedUserInfo = localStorage.getItem('userInfo')
-      
-      if (cachedUserInfo) {
-        try {
-          console.log('从localStorage获取缓存的用户信息')
-          const userInfo = JSON.parse(cachedUserInfo)
-          if (userInfo && (userInfo._id || userInfo.id)) {
-            currentUserId = userInfo._id || userInfo.id
-            console.log('从缓存用户信息获取ID:', currentUserId)
-          }
-        } catch (e) {
-          console.error('解析缓存用户信息失败:', e)
-        }
-      }
-      
-      if (!currentUserId && token) {
-        console.log('发现token，尝试初始化用户信息')
-        try {
-          // 尝试初始化用户
-          await userStore.initUser()
-          
-          // 重新获取用户信息
-          if (user.value) {
-            if (user.value._id) {
-              currentUserId = user.value._id
-            } else if (user.value.id) {
-              currentUserId = user.value.id
-            }
-            console.log('用户初始化后的ID:', currentUserId)
-          }
-        } catch (e) {
-          console.error('初始化用户失败:', e)
-        }
-      }
-    }
-    
-    // 从控制台输出看到的固定ID
-    if (!currentUserId) {
-      console.log('尝试使用控制台显示的ID')
-      currentUserId = '68359567c0efb590c7e1092f'
-      console.log('使用固定ID:', currentUserId)
-    }
-    
-    // 如果仍然没有用户ID，显示提示并返回
-    if (!currentUserId) {
-      console.error('无法获取用户ID，用户可能未登录')
-      ElMessage.warning('请先登录后查看个人资料')
-      router.push('/') // 可选：重定向到首页
-      return
-    }
-    
-    console.log('使用当前用户ID获取成绩记录:', currentUserId)
-    
-    // 使用统一 API 并映射到 seconds 结构
-    await fetchUserRecords(currentUserId)
-    await fetchUserHistoryRecords(currentUserId)
-    await ensureRecordsLoaded(currentUserId)
-    
-    console.log('初始化完成，检查排名结果:', {
-      personalBestsCount: Object.keys(personalBests.value).length,
-      historyRecordsCount: historyRecords.value.length,
-      topThreeCount: topThreeCount.value,
-      firstPlaceCount: firstPlaceCount.value,
-      topThreeRecordsCount: Object.keys(topThreeRecords.value).length,
-      sortedTopThreeRecordsCount: sortedTopThreeRecords.value.length
-    })
-  } catch (error) {
-    console.error('初始化数据失败:', error)
+onMounted(() => {
+  const currentUserId = user.value?.id || user.value?._id
+  if (currentUserId) {
+    fetchUserRecords(currentUserId)
+    fetchUserHistoryRecords(currentUserId)
   }
-}
-
-// 在组件挂载时检查并显示消息
-onMounted(async () => {
-  console.log('ProfileView 组件挂载开始')
-  
-  // 检查用户登录状态
-  const currentUserId = user.value?._id || user.value?.id
-  console.log('组件挂载时的用户ID:', currentUserId || '未登录')
-  
-  // 初始化数据
-  await initializeData()
-  
-  // 显示消息
-  const message = localStorage.getItem('profile_message')
-  if (message === 'edit_success') {
-    ElMessage.success('资料更新成功')
-  }
-  // 清除消息标记
-  localStorage.removeItem('profile_message')
-  
-  console.log('ProfileView 组件挂载完成')
-})
-
-// 在用户点击"编辑资料"按钮时预先填充表单
-const openEditDialog = () => {
-  // 先填充数据，再打开对话框
-  if (user.value) {
-    editForm.nickname = user.value.nickname || ''
-    editForm.bio = user.value.bio || ''
-    editForm.wcaId = user.value.wcaId || ''
-    console.log('预填充表单数据:', editForm)
-  }
-  showEditDialog.value = true
-}
-
-// 头像上传相关
-const fileInput = ref(null)
-const uploading = ref(false)
-
-// 触发文件选择
-const triggerFileUpload = () => {
-  fileInput.value.click()
-}
-
-// 处理头像选择并上传
-const handleAvatarChange = async (event) => {
-  const file = event.target.files[0]
-  if (!file) {
-    ElMessage.error('未选择文件')
-    return
-  }
-  
-  console.log('选择的文件:', file.name, '类型:', file.type, '大小:', (file.size / 1024).toFixed(2), 'KB')
-  
-  // 验证文件类型
-  if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件')
-    return
-  }
-  
-  // 验证文件大小（限制为2MB）
-  if (file.size > 2 * 1024 * 1024) {
-    ElMessage.error('图片大小不能超过2MB')
-    return
-  }
-  
-  uploading.value = true
-  ElMessage.info('正在上传头像...')
-  
-  try {
-    // 使用FileReader读取文件为base64
-    const reader = new FileReader()
-    
-    // 设置读取完成的回调
-    reader.onload = async (e) => {
-      try {
-        const base64Data = e.target.result
-        console.log('文件已转换为base64，长度:', base64Data.length)
-        
-        // 提取base64数据部分 (移除前缀 "data:image/png;base64,")
-        const base64Content = base64Data.split(',')[1]
-        
-        // 准备请求数据
-        const requestData = {
-          userId: userStore.user?._id,
-          fileName: file.name,
-          fileType: file.type,
-          fileSize: file.size,
-          fileData: base64Content
-        }
-        
-        console.log('发送数据:', {
-          userId: requestData.userId,
-          fileName: requestData.fileName,
-          fileType: requestData.fileType,
-          fileSize: requestData.fileSize,
-          fileDataLength: requestData.fileData.length
-        })
-        
-        // 获取授权token
-        const token = localStorage.getItem('token')
-        console.log('有token:', !!token)
-        
-        // API URL
-        // 使用统一API上传头像
-        console.log('开始发送上传请求...')
-        const result = await api.uploadAvatar(requestData)
-        console.log('解析响应:', result)
-        
-        if (result.code === 200 && result.data?.avatarUrl) {
-          // 更新用户头像
-          if (user.value) {
-            console.log('更新头像URL:', result.data.avatarUrl)
-            user.value.avatar = result.data.avatarUrl
-            // 更新localStorage中的用户信息
-            localStorage.setItem('userInfo', JSON.stringify(user.value))
-          }
-          ElMessage.success('头像更新成功')
-        } else {
-          throw new Error(result.message || '上传失败')
-        }
-      } catch (error) {
-        console.error('处理上传失败:', error)
-        ElMessage.error(error.message || '上传头像失败，请重试')
-        uploading.value = false
-      }
-    }
-    
-    // 读取错误处理
-    reader.onerror = (error) => {
-      console.error('文件读取失败:', error)
-      ElMessage.error('文件读取失败')
-      uploading.value = false
-    }
-    
-    // 开始读取文件
-    reader.readAsDataURL(file)
-    
-  } catch (error) {
-    console.error('上传头像失败:', error)
-    ElMessage.error(error.message || '上传头像失败，请重试')
-    uploading.value = false
-  } finally {
-    if (fileInput.value) {
-      fileInput.value.value = ''
-    }
-  }
-}
-
-// 在组件挂载时填充表单数据
-const fillFormWithUserData = () => {
-  console.log('对话框已打开，填充表单数据')
-  
-  // 延迟一下，确保对话框完全打开
-  setTimeout(() => {
-    if (user.value) {
-      // 直接设置表单值
-      editForm.nickname = user.value.nickname || ''
-      editForm.bio = user.value.bio || ''
-      editForm.wcaId = user.value.wcaId || ''
-      console.log('表单数据已填充:', editForm)
-    } else {
-      console.warn('用户数据不存在，无法填充表单')
-      // 尝试重新获取用户数据
-      userStore.initUser().then(() => {
-        if (user.value) {
-          editForm.nickname = user.value.nickname || ''
-          editForm.bio = user.value.bio || ''
-          editForm.wcaId = user.value.wcaId || ''
-          console.log('重新获取用户数据后填充表单:', editForm)
-        }
-      })
-    }
-  }, 100)
-}
-
-// 项目分组
-const eventGroups = computed(() => {
-  return getAllEvents()
 })
 </script>
 
 <style scoped>
-.profile-container {
-  max-width: 1200px;
+.view-container {
+  min-height: 100vh;
+  padding: var(--space-xl);
+  position: relative;
+  overflow-x: hidden;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
 }
 
+/* 动态背景光球 */
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: 0;
+  opacity: 0.4;
+  animation: float 10s infinite ease-in-out;
+}
+
+.orb-1 {
+  top: 5%;
+  right: 5%;
+  width: 400px;
+  height: 400px;
+  background: var(--primary-gradient);
+}
+
+.orb-2 {
+  bottom: 10%;
+  left: 5%;
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  animation-delay: -5s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -30px); }
+}
+
+/* Bento Card 通用样式 */
+.bento-card {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur-lg));
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg));
+  border: var(--glass-border);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.bento-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* 个人信息头部 */
 .profile-header {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .user-profile {
   display: flex;
-  gap: 32px;
-  align-items: flex-start;
+  align-items: center;
+  gap: 40px;
 }
 
-.avatar-container {
+.avatar-wrapper {
   position: relative;
   cursor: pointer;
-  border-radius: 50%;
-  overflow: hidden;
 }
 
 .avatar {
-  display: block;
+  border: 4px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.avatar-wrapper:hover .avatar {
+  transform: scale(1.05) rotate(5deg);
 }
 
 .avatar-overlay {
   position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(0, 0, 0, 0.5);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
   border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
   opacity: 0;
   transition: opacity 0.3s;
-  color: #fff;
+  font-size: 32px;
+  pointer-events: none; /* 让点击事件穿透到wrapper */
 }
 
-.avatar-container:hover .avatar-overlay {
+.avatar-wrapper:hover .avatar-overlay {
   opacity: 1;
+}
+
+.avatar-text {
+  font-size: 48px;
+  font-weight: bold;
+  color: var(--primary-color);
 }
 
 .user-info {
   flex: 1;
 }
 
+.info-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
 .nickname {
-  font-size: 24px;
-  font-weight: bold;
-  margin: 0 0 8px;
-  color: var(--el-text-color-primary);
+  font-size: 36px;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #2c3e50 0%, #4facfe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.edit-btn {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #666;
+  transition: all 0.3s;
+}
+
+.edit-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: scale(1.1);
 }
 
 .bio {
-  margin: 0 0 16px;
-  color: var(--el-text-color-secondary);
+  font-size: 16px;
+  color: #666;
+  margin: 0 0 20px;
+  line-height: 1.6;
+  max-width: 600px;
 }
 
-.wca-id {
-  margin: 0 0 16px;
-  color: var(--el-text-color-secondary);
+.wca-tag {
   font-size: 14px;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 12px;
-}
-
-.edit-button {
-  background-color: #f5f7fa;
-  border-color: #e4e7ed;
-  color: #606266;
+  padding: 6px 12px;
   border-radius: 8px;
-  padding: 8px 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Tabs 样式 */
+.tabs-container {
+  position: relative;
+  z-index: 1;
+}
+
+.glass-tabs :deep(.el-tabs__header) {
+  margin-bottom: 24px;
+}
+
+.glass-tabs :deep(.el-tabs__nav-wrap::after) {
+  background-color: transparent;
+}
+
+.glass-tabs :deep(.el-tabs__item) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #666;
+  padding: 0 24px;
   transition: all 0.3s ease;
 }
 
-.edit-button:hover {
-  background-color: #e4e7ed;
-  border-color: #d3d4d6;
-  color: #409eff;
+.glass-tabs :deep(.el-tabs__item.is-active) {
+  color: var(--primary-color);
+  font-size: 18px;
 }
 
-.loading-text {
-  text-align: center;
-  padding: 20px;
-  color: var(--el-text-color-secondary);
+.glass-tabs :deep(.el-tabs__active-bar) {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--primary-gradient);
+  box-shadow: 0 2px 8px rgba(66, 211, 146, 0.4);
 }
 
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.profile-tabs {
-  margin-bottom: 20px;
-}
-
-/* 简化标签栏样式，移除白色背景 */
-.profile-tabs :deep(.el-tabs__header) {
-  background: transparent;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.profile-tabs :deep(.el-tabs__nav-wrap::after) {
-  background-color: rgba(220, 223, 230, 0.3);
-}
-
-.profile-tabs :deep(.el-tabs__item) {
-  background: transparent;
-  color: var(--el-text-color-regular);
-  transition: color 0.3s ease;
-}
-
-.profile-tabs :deep(.el-tabs__item:hover) {
-  color: var(--el-color-primary);
-}
-
-.profile-tabs :deep(.el-tabs__item.is-active) {
-  background: transparent;
-  color: var(--el-color-primary);
-  font-weight: 600;
-}
-
-.profile-tabs :deep(.el-tabs__active-bar) {
-  background-color: var(--el-color-primary);
+/* 标签页内容 */
+.tab-content {
+  min-height: 400px;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .section-title {
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c3e50;
   margin: 0;
-  color: var(--el-text-color-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title .el-icon {
+  color: var(--primary-color);
+  font-size: 24px;
 }
 
 .filter-controls {
   display: flex;
-  gap: 12px;
+  gap: 16px;
+}
+
+/* Glass Inputs */
+:deep(.glass-select .el-input__wrapper),
+:deep(.glass-input .el-input__wrapper),
+:deep(.glass-input .el-textarea__inner) {
+  background: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: none !important;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 4px 12px;
+  transition: all 0.3s;
+}
+
+:deep(.glass-input .el-textarea__inner) {
+  padding: 12px;
+}
+
+:deep(.glass-select .el-input__wrapper:hover),
+:deep(.glass-input .el-input__wrapper:hover),
+:deep(.glass-input .el-textarea__inner:hover),
+:deep(.glass-select .el-input__wrapper.is-focus),
+:deep(.glass-input .el-input__wrapper.is-focus),
+:deep(.glass-input .el-textarea__inner:focus) {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color-light) !important;
+}
+
+/* Glass Table */
+.glass-table {
+  background: transparent !important;
+  --el-table-border-color: rgba(0, 0, 0, 0.05);
+  --el-table-header-bg-color: transparent;
+  --el-table-row-hover-bg-color: rgba(66, 211, 146, 0.1);
+}
+
+:deep(.el-table__inner-wrapper::before) {
+  display: none;
+}
+
+.event-cell {
+  display: flex;
+  align-items: center;
+}
+
+.event-name {
+  font-weight: 600;
+  color: #2c3e50;
 }
 
 .record-value {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.time {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.rank-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  border: none;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);
+  box-shadow: 0 2px 8px rgba(238, 82, 83, 0.4);
+}
+
+.empty-value {
+  color: #ccc;
+}
+
+.record-cell {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: all 0.2s;
+}
+
+.record-cell:hover .detail-btn {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.detail-btn {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--primary-color);
+}
+
+/* 统计概览 */
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.stats-card {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: transform 0.3s;
+}
+
+.stats-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.stats-card.highlight {
+  background: linear-gradient(135deg, rgba(66, 211, 146, 0.1) 0%, rgba(47, 144, 185, 0.1) 100%);
+  border-color: rgba(66, 211, 146, 0.2);
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #666;
   font-weight: 600;
 }
 
-/* 历史成绩表格中的成绩数据字体 */
-.time-value {
-  font-family: 'Consolas', 'Monaco', monospace;
-  font-weight: 500;
-}
-
-.stats-container {
-  margin-bottom: 24px;
-  padding: 16px;
-  background-color: var(--el-fill-color-light);
-  border-radius: 8px;
-}
-
-.stats-message {
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--el-text-color-primary);
+.empty-stats {
+  grid-column: 1 / -1;
   text-align: center;
+  padding: 40px;
+  color: #999;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
 }
 
-.highlight-number {
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--el-color-primary);
-  margin: 0 4px;
-}
-
-.medal-container {
+/* 排名分布 */
+.medal-section {
   margin-top: 24px;
-  margin-bottom: 24px;
 }
 
-.rank-list {
+.subsection-title {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.rank-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.rank-card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.rank-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background-color: var(--el-fill-color-light);
-  border-radius: 6px;
+.rank-event {
+  font-weight: 700;
+  color: #2c3e50;
+  font-size: 16px;
 }
 
 .rank-badges {
   display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
+.rank-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rank-1 { background: rgba(255, 107, 107, 0.1); color: #ff6b6b; }
+.rank-2 { background: rgba(255, 159, 67, 0.1); color: #ff9f43; }
+.rank-3 { background: rgba(10, 189, 227, 0.1); color: #0abde3; }
+
+.badge-val {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* 分页 */
 .pagination-container {
-  margin-top: 20px;
+  margin-top: 24px;
   display: flex;
   justify-content: center;
 }
 
+:deep(.glass-pagination .el-pagination.is-background .el-pager li:not(.is-disabled).is-active) {
+  background-color: var(--primary-color);
+}
+
+:deep(.glass-pagination .el-pagination.is-background .el-pager li) {
+  background-color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* 记录详情 */
 .record-details {
-  padding: 16px;
+  padding: 10px;
 }
 
-.detail-item {
-  margin-bottom: 12px;
+.detail-row {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.detail-label {
-  font-weight: bold;
-  width: 100px;
-  color: var(--el-text-color-secondary);
+.detail-row:last-child {
+  border-bottom: none;
 }
 
-.detail-value {
-  flex: 1;
+.detail-row.highlight {
+  background: rgba(66, 211, 146, 0.05);
+  padding: 12px;
+  border-radius: 8px;
+  margin: 4px 0;
+  border-bottom: none;
 }
 
-.gr-tag {
-  background-color: #f56c6c;
-  border-color: #f56c6c;
-  color: white;
-  font-weight: bold;
-  border-radius: 4px;
-  padding: 0 5px;
-  font-size: 12px;
-  line-height: 1;
+.detail-group {
+  margin: 8px 0;
 }
 
+.label {
+  color: #666;
+  font-weight: 500;
+}
+
+.value {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.value.time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  color: var(--primary-color);
+}
+
+.value.rank {
+  color: #ff6b6b;
+}
+
+/* 响应式 */
 @media (max-width: 768px) {
-  .user-profile {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 16px;
+  .view-container {
+    padding: 16px;
   }
   
-  .action-buttons {
+  .bento-card {
+    padding: 20px;
+    border-radius: 16px;
+  }
+  
+  .user-profile {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+  
+  .avatar {
+    width: 100px !important;
+    height: 100px !important;
+  }
+  
+  .avatar-text {
+    font-size: 36px;
+  }
+  
+  .info-header {
     justify-content: center;
   }
-
+  
   .section-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 16px;
   }
   
   .filter-controls {
     width: 100%;
+    flex-direction: column;
   }
   
-  .event-name {
-    width: 60px;
+  .glass-select {
+    width: 100% !important;
   }
-}
-
-.chart-title {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 16px;
-  color: var(--el-text-color-primary);
-}
-
-.record-cell {
-  position: relative;
-  cursor: pointer;
-  padding: 8px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  font-family: 'Consolas', 'Monaco', monospace;
-}
-
-.detail-text {
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  margin-left: auto;
-  color: #67a9e0;
-  font-size: 14px;
-}
-
-.record-cell:hover .detail-text {
-  opacity: 1;
+  
+  .stats-overview {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 </style>

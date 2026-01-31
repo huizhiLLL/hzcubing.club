@@ -1,7 +1,9 @@
 <template>
-  <div class="card">
+  <div class="submit-form-content">
     <div class="header-with-tip">
-      <h2 class="text-2xl font-bold mb-6">上传成绩</h2>
+      <h2 class="form-title">
+        <el-icon class="title-icon"><Upload /></el-icon> 上传成绩
+      </h2>
     </div>
     
     <div class="form-scroll-container">
@@ -248,6 +250,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Upload } from '@element-plus/icons-vue'
 import { useRecordsStore } from '@/stores/records'
 import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
@@ -550,31 +553,49 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.card {
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
-  transition: all 0.4s cubic-bezier(0.215, 0.610, 0.355, 1.000);
-  animation: cardAppear 0.6s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+.submit-form-content {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  max-height: 600px; /* 设置最大高度 */
-  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* 定义动画 */
-@keyframes cardAppear {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.form-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+  /* 自定义滚动条 */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
 }
 
+.form-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.form-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.form-scroll-container::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.form-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 24px;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-icon {
+  color: var(--primary-color);
+  font-size: 28px;
+}
 
 .form-container {
   background: transparent;
@@ -594,7 +615,8 @@ onMounted(async () => {
 :deep(.el-input__wrapper),
 :deep(.el-textarea__inner),
 :deep(.el-select .el-input__wrapper) {
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset;
   transition: all 0.3s;
 }
@@ -602,7 +624,7 @@ onMounted(async () => {
 :deep(.el-input__wrapper:hover),
 :deep(.el-textarea__inner:hover),
 :deep(.el-select .el-input__wrapper:hover) {
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.8);
   box-shadow: 0 0 0 1px var(--el-color-primary) inset;
 }
 
@@ -655,7 +677,8 @@ onMounted(async () => {
 }
 
 .time-input-field :deep(.el-input__wrapper) {
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset;
 }
 
