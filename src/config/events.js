@@ -66,10 +66,11 @@ export const events = {
       { label: '枫叶', value: '枫叶' },
       { label: 'CTO', value: 'CTO' },
       { label: 'REDI', value: 'REDI' },
+      { label: '二重奏', value: '二重奏' },
       { label: '八阶速拧', value: '八阶速拧' },
       { label: '九阶速拧', value: '九阶速拧' },
       { label: '十阶速拧', value: '十阶速拧' },
-      { label: '十一阶速拧', value: '十一阶速拧' }
+      { label: '十一阶速拧', value: '十一阶速拧' },
     ]
   },
   meme: {
