@@ -1043,10 +1043,20 @@ export default async function (ctx) {
             return (seconds === null || Number.isNaN(seconds)) ? null : seconds
           }
           
-          // 查询该用户的所有记录
+          // 查询该用户的所有记录（分批拉取，避免单次查询条数上限导致数据缺失）
           const cond = event ? { userId, event } : { userId }
-          const recordsRes = await db.collection('records').where(cond).get()
-          const items = recordsRes.data || []
+          const pageSize = 200
+          const items = []
+          let skip = 0
+
+          while (true) {
+            const recordsRes = await db.collection('records').where(cond).skip(skip).limit(pageSize).get()
+            const batch = recordsRes.data || []
+            items.push(...batch)
+
+            if (batch.length < pageSize) break
+            skip += pageSize
+          }
           
           // 按项目分组，找出每个项目的最佳成绩
           const bestMap = new Map() // event -> { event, bestSingleSeconds, bestAverageSeconds }
@@ -1109,4 +1119,3 @@ export default async function (ctx) {
     }
   }
 }
-
