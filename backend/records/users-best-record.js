@@ -33,8 +33,19 @@ export default async function (ctx) {
     if (!userId) return { code: 400, message: '缺少用户ID参数' }
 
     const cond = event ? { userId, event } : { userId }
-    const res = await db.collection('records').where(cond).get()
-    const items = res.data || []
+    const pageSize = 200
+    const items = []
+    let skip = 0
+
+    // 分批拉取，避免单次查询默认条数限制导致记录过多时遗漏后续成绩
+    while (true) {
+      const batchRes = await db.collection('records').where(cond).skip(skip).limit(pageSize).get()
+      const batch = batchRes.data || []
+      items.push(...batch)
+
+      if (batch.length < pageSize) break
+      skip += pageSize
+    }
 
     const bestMap = new Map() // event -> { event, bestSingleSeconds, bestAverageSeconds }
     for (const r of items) {
