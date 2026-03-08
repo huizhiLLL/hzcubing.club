@@ -258,7 +258,18 @@ export default async function (ctx) {
         return { code: 403, message: '只能修改自己的记录' }
       }
       
-      const doc = normalizeForWrite(updateData)
+      // 更新时使用已有记录兜底，避免前端部分更新导致关键字段（如 event）丢失
+      // 同时强制保留记录归属，防止通过请求体篡改 userId
+      const mergedData = {
+        ...existingRecord.data,
+        ...updateData,
+        userId: existingRecord.data.userId,
+        event: updateData.event || existingRecord.data.event,
+        timestamp: existingRecord.data.timestamp || updateData.timestamp,
+        nickname: updateData.nickname || existingRecord.data.nickname || currentUser.nickname
+      }
+
+      const doc = normalizeForWrite(mergedData)
       await db.collection('records').doc(recordId).update(doc)
       return { code: 200, message: '更新成功' }
     }
