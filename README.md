@@ -18,3 +18,5 @@
 - **部署**: Vercel + Sealos
 
 更新时间：2025-12-28
+
+> hzcubing 现已完成全面重构 见[hzcubing](https://github.com/huizhiLLL/hzcubing) 因此旧仓库不再进行维护
